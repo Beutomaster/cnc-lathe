@@ -5,6 +5,8 @@
 volatile char command_completed=0;
 volatile char pause=0;
 
+//test
+
 //functions
 void next_cnc_code() {
 }
