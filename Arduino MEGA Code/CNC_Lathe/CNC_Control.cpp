@@ -6,6 +6,8 @@
 volatile char command_completed=0;
 volatile char pause=0;
 
+//test
+
 //functions
 void next_cnc_code() {
 }
@@ -33,9 +35,14 @@ void G01(int X, int Z, int F){
 
 //Circular interpolation Clockwise
 void G02(int X, int Z, int F){
-   set_xz_move(X, Z, F, INTERPOLATION_CIRCULAR);
+   set_xz_move(X, Z, F, INTERPOLATION_CIRCULAR_CLOCKWISE);
 }
-void G03(int X, int Z, int F); //Circular interpolation Counter clockwise
+
+//Circular interpolation Counter clockwise
+void G03(int X, int Z, int F){
+  set_xz_move(X, Z, F, INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE); 
+}
+
 void G04(int X); //Dwell (X = Dwell)
 void G20(); //Intermediate Stop (obsolete, backward compatibility for M00)
 void G21(); //Empty Line

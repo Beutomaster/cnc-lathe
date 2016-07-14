@@ -2,7 +2,8 @@
 #define Motion_Control_h
 
 #define INTERPOLATION_LINEAR 0
-#define INTERPOLATION_CIRCULAR 1
+#define INTERPOLATION_CIRCULAR_CLOCKWISE 1
+#define INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE 2
 
 void set_xz_coordinates();
 void get_incremental_coordinates(int, int, int, int);
