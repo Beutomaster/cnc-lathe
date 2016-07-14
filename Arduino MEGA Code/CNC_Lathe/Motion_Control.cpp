@@ -3,15 +3,16 @@
 #include "Spindle_Control.h"
 #include "Step_Motor_Control.h"
 
-void set_xy_coordinates() {
+void set_xz_coordinates() {
 }
 
 void get_incremental_coordinates(int abs_X, int abs_Z, int target_X, int target_Z) {
 }
 
-void set_xy_move(int inc_X, int inc_Z, int feed, char interpolationmode) {
+void set_xz_move(int inc_X, int inc_Z, int feed, char interpolationmode) {
   int x_feed=feed;
   int z_feed=feed;
+ 
 
   if (interpolationmode==0) { //interpolationmode=0 = linear
     //x_feed=inc_X/inc_Z*feed; //not finished
