@@ -29,8 +29,8 @@ char process_cnc_listing() {
 void G00(int X, int Z); //Rapid traverse
 
 //Linear interpolation
-void G01(int X, int Z, int F){
-  set_xz_move(X, Z, F, INTERPOLATION_LINEAR); 
+void G01(int X, int Z, int feed){
+  set_xz_move(X, Z, feed, INTERPOLATION_LINEAR); 
 }
 
 //Circular interpolation Clockwise
