@@ -34,7 +34,9 @@ void G01(int X, int Z, int feed){
 }
 
 //Circular interpolation Clockwise
-void G02(int X, int Z, int F); 
+void G02(int X, int Z, int F){
+   set_xz_move(X, Z, F, INTERPOLATION_CIRCULAR);
+}
 void G03(int X, int Z, int F); //Circular interpolation Counter clockwise
 void G04(int X); //Dwell (X = Dwell)
 void G20(); //Intermediate Stop (obsolete, backward compatibility for M00)
