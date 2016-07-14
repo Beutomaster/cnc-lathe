@@ -29,10 +29,10 @@ void set_xz_move(int inc_X, int inc_Z, int feed, char interpolationmode) {
   set_z_steps(z_steps, z_feed);
 }
 
-void get_xy_coordinates() {
+void get_xz_coordinates() {
 }
 
-int get_xy_feed() {
+int get_xz_feed() {
 	int feed=0; //Stub
 	return feed;
 }
