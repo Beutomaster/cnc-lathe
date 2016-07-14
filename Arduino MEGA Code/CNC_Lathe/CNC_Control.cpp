@@ -1,5 +1,6 @@
 #include "CNC_Lathe.h"
 #include "CNC_Control.h"
+#include "Motion_Control.h"
 
 //global vars
 volatile char command_completed=0;
@@ -26,8 +27,14 @@ char process_cnc_listing() {
 
 //G-/M-/S-/T-Codes:
 void G00(int X, int Z); //Rapid traverse
-void G01(int X, int Z, int F); //Linear interpolation
-void G02(int X, int Z, int F); //Circular interpolation Clockwise
+
+//Linear interpolation
+void G01(int X, int Z, int F){
+  set_xz_move(X, Z, F, INTERPOLATION_LINEAR); 
+}
+
+//Circular interpolation Clockwise
+void G02(int X, int Z, int F); 
 void G03(int X, int Z, int F); //Circular interpolation Counter clockwise
 void G04(int X); //Dwell (X = Dwell)
 void G20(); //Intermediate Stop (obsolete, backward compatibility for M00)

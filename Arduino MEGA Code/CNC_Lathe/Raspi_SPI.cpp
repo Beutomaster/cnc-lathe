@@ -45,7 +45,7 @@ void spi_buffer_handling() {
     //for debugging
     Serial.println (rx_buf);
     set_revolutions(get_SERVO_CONTROL_POTI());
-    set_xy_move(50, 50, 15, 0); //feed noch in rpm
+    set_xz_move(50, 50, 15, 0); //feed noch in rpm
     
     pos = 0;
     byte_received = false; //reset flag
