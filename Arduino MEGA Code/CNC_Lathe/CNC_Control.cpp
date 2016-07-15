@@ -6,8 +6,6 @@
 volatile char command_completed=0;
 volatile char pause=0;
 
-//test
-
 //functions
 void next_cnc_code() {
 }
@@ -18,7 +16,8 @@ void programm_abort() {
 char process_cnc_listing() {
 	char success=0;
     if (command_completed && !pause) {
-        next_cnc_code();
+      command_completed=0;
+      next_cnc_code();
 		success=1;
 	}
 	return success;
@@ -84,5 +83,6 @@ void M99(int I, char K); //Circle parameter (I, K = Center point coordinates)
 
 //Timer-Interrupt-isr:
 void command_complete() {
+  command_completed=1;
 }
 
