@@ -5,6 +5,8 @@
 //global vars
 volatile char command_completed=0;
 volatile char pause=0;
+struct cnc_code_block cnc_code[1000]; //fixed length should be replaced
+
 
 //functions
 void next_cnc_code() {
@@ -15,9 +17,9 @@ void programm_abort() {
 
 char process_cnc_listing() {
 	char success=0;
-    if (command_completed && !pause) {
-      command_completed=0;
-      next_cnc_code();
+  if (command_completed && !pause) {
+    command_completed=0;
+    next_cnc_code();
 		success=1;
 	}
 	return success;
