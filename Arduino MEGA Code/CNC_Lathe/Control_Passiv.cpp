@@ -1,6 +1,6 @@
+#include <Arduino.h>
 #include "CNC_Lathe.h"
 #include "Control_Passiv.h"
-#include <Arduino.h>
 
 char get_control_active() {
 	char control_active = !(digitalRead(PIN_CONTROL_INACTIVE)); //LOW-Active (GND = Control activ)

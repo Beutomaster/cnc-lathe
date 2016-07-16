@@ -1,9 +1,11 @@
 #ifndef CNC_Control_h 
-#define CNC_Control_h 
+#define CNC_Control_h
+
+#define CNC_CODE_NMAX 500
 
 struct cnc_code_block { //not finished, Format von Siemens NX???
-   int N; //block number
-   char GM; //G/M-Code
+   char GM; //G or M-Code
+   char GM_NO; //G/M-Code-Number
    int XI; //X/I-Parameter
    int ZK; //Z/K-Parameter (K for M99)
    int FTLK; //F/T/L/K-Parameter (K for G33 and G78)
@@ -13,10 +15,12 @@ struct cnc_code_block { //not finished, Format von Siemens NX???
 //global vars
 extern volatile char command_completed;
 extern volatile char pause;
-extern struct cnc_code_block cnc_code[1000]; //fixed length should be replaced
+extern struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
 
 //functions
-void next_cnc_code();
+void programm_start(int);
+void programm_pause();
+void programm_stop();
 void programm_abort();
 char process_cnc_listing();
 
