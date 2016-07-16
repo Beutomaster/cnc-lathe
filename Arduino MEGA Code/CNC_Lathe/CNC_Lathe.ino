@@ -45,7 +45,7 @@ int const zsteps_per_turn=72; //Steps per z-turn
 unsigned char ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-unsigned char STATE=0; //bit5_stepper|bit4_spindle|bit3_inch|bit2_manual|bit1_init|bit0_control_active
+unsigned char STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 int STATE_RPM=0;
 int STATE_X=0;
 int STATE_Z=0;
@@ -88,6 +88,7 @@ void setup() {
   
   //SPI
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
+  create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
   SPI.attachInterrupt();  //turn on interrupt
 }
 
@@ -109,7 +110,7 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   //SPI-Communication
-  if (!byte_received) create_machine_state_msg();
+  if (!byte_received && tx_buf[0]==100) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress and no other message has to be sent
   spi_buffer_handling();
 
   //Control CNC-Lathe

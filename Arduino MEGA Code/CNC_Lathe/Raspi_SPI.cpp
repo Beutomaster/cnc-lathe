@@ -27,6 +27,7 @@ From Arduino:
 #include "CNC_Lathe.h"
 #include "Raspi_SPI.h"
 #include "Motion_Control.h"
+#include "CNC_Control.h"
 #include "Spindle_Control.h"
 
 char rx_buf [100]; //SPI receive-buffer
@@ -40,12 +41,17 @@ volatile boolean process_it=false; //not end of string (newline received)
 // SPI-Transmission - wait for flag set in interrupt routine
 void spi_buffer_handling() {
   if (process_it){
-    rx_buf [pos] = 0;
-    
+    rx_buf [pos] = 0; //set end of string
+
+    /*
     //for debugging
     Serial.println (rx_buf);
     set_revolutions(get_SERVO_CONTROL_POTI());
     set_xz_move(50, 50, 15, 0); //feed noch in rpm
+    */
+
+    if (process_incomming_msg()) send_spi_error();
+    else create_machine_state_msg();
     
     pos = 0;
     byte_received = false; //reset flag
@@ -58,7 +64,55 @@ char CRC8 (char * buf, char len) {
   return crc_8;
 }
 
-void process_incomming_msg() {
+char process_incomming_msg() {
+  char success=0; //0=success, 1=failure
+  int N=0;
+  switch(rx_buf[0]) {
+    case 0:   //Transfererror of last Block
+              break;
+    case 1:   //Programm Start at Block
+              programm_start((((int)rx_buf[1])<<8) + rx_buf[2]);
+              break;
+    case 2:   //Programm Stop
+              programm_pause();
+              break;
+    case 3:   //Programm Pause
+              programm_stop();
+              break;
+    case 4:   //Spindle on with RPM
+              break;
+    case 5:   //Spindle off
+              break;
+    case 6:   //Stepper on with Feed
+              break;
+    case 7:   //Stepper off
+              break;
+    case 8:   //Set Tool-Position (and INIT)
+              break;
+    case 9:   //Origin-Offset
+              set_xz_coordinates(((((int)rx_buf[1])<<8) + rx_buf[2]), ((((int)rx_buf[3])<<8) + rx_buf[4]));
+              break;
+    case 10:  //metric or inch
+              break;
+    case 11:  //New CNC-Programm wit N Blocks in metric or inch
+              if ((STATE>>STATE_PAUSE_BIT)&1) {
+                //stub
+                //some Error-Handling needed
+              }
+              break;
+    case 12:  //CNC-Code-Block
+              N = (((int)rx_buf[1])<<8) + rx_buf[2];
+              cnc_code[N].GM = rx_buf[3];
+              cnc_code[N].GM_NO = rx_buf[4];
+              cnc_code[N].XI = (((int)rx_buf[5])<<8) + rx_buf[6];
+              cnc_code[N].ZK = (((int)rx_buf[7])<<8) + rx_buf[8];
+              cnc_code[N].FTLK = (((int)rx_buf[9])<<8) + rx_buf[10];
+              cnc_code[N].HS = (((int)rx_buf[11])<<8) + rx_buf[12];
+              break;
+    default:  //SPI-Error "PID unkown"
+              success=1;
+  }
+  return success;
 }
 
 char receive_cnc_code() {
@@ -72,7 +126,7 @@ void receive_control_signal() {
 
 void create_machine_state_msg() {
   tx_buf [0] = 100; //PID
-  tx_buf [1] = STATE; //bit5_stepper|bit4_spindle|bit3_inch|bit2_manual|bit1_init|bit0_control_active
+  tx_buf [1] = STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
   tx_buf [2] = STATE_RPM>>8;
   tx_buf [3] = STATE_RPM;
   tx_buf [4] = STATE_X>>8;
@@ -90,6 +144,11 @@ void create_machine_state_msg() {
   tx_buf [16] = CRC8(tx_buf, SPI_MSG_LENGTH);
   SPDR = tx_buf [0]; //first byte for sending at next interrupt
 }
+
+void send_spi_error() {
+  tx_buf [0] = 0; //PID
+  tx_buf [2] = CRC8(tx_buf, 2);
+}  //end of send_spi_error
 
 /* obsolete
 void send_error_number(char error_number) {
