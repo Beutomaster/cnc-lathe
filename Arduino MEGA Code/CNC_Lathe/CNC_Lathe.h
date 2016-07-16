@@ -8,9 +8,10 @@
 #define STATE_CONTROL_ACTIVE_BIT 0
 #define STATE_INIT_BIT 1
 #define STATE_MANUAL_BIT 2
-#define STATE_INCH_BIT 3
-#define STATE_SPINDLE_BIT 4
-#define STATE_STEPPER_BIT 5
+#define STATE_PAUSE_BIT 3
+#define STATE_INCH_BIT 4
+#define STATE_SPINDLE_BIT 5
+#define STATE_STEPPER_BIT 6
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
 #define ERROR_SPI_BIT 0;
@@ -54,7 +55,7 @@ extern const int zsteps_per_turn; //Steps per z-turn
 extern unsigned char ERROR_NO;
 
 //Machine State
-extern unsigned char STATE; //bit5_stepper|bit4_spindle|bit3_inch|bit2_manual|bit1_init|bit0_control_active
+extern unsigned char STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 extern int STATE_RPM;
 extern int STATE_X;
 extern int STATE_Z;
