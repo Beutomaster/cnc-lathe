@@ -1,9 +1,20 @@
 #ifndef CNC_Lathe_h
 #define CNC_Lathe_h
 
-//many global vars could be replaced by defines (no short names, because compiler reports no errors)
-//some chars should be boolean
+//includes
+#include <Arduino.h>
+#include "CNC_Control.h"
+#include "Control_Passiv.h"
+#include "Initialization.h"
+#include "Motion_Control.h"
+#include "Raspi_SPI.h"
+#include "Spindle_Control.h"
+#include "Step_Motor_Control.h"
+#include "Tool_Changer_Control.h"
 
+//many global vars could be replaced by defines (no short names, because compiler reports no errors)
+
+//defines
 //Bit Postions of STATE
 #define STATE_CONTROL_ACTIVE_BIT 0
 #define STATE_INIT_BIT 1
@@ -14,43 +25,40 @@
 #define STATE_STEPPER_BIT 6
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
-#define ERROR_SPI_BIT 0;
-#define ERROR_CNC_CODE_BIT 1;
-#define ERROR_SPINDLE_BIT 2;
+#define ERROR_SPI_BIT 0
+#define ERROR_CNC_CODE_BIT 1
+#define ERROR_SPINDLE_BIT 2
 
 //PINs
-extern const char PIN_CONTROL_INACTIVE; 			//Switch between EMCO and alternative Control
-extern const char PIN_ROUTING_SWITCH; 				//Switch for Routing Signals to alternative Control
-extern const char PIN_SERVO;						//PWM for Servo (Poti to set Revolutions)
-extern const char PIN_STEPPER_X_A;				//X35, PIN5 (A), Stepper X
-extern const char PIN_STEPPER_X_B;				//X35, PIN6 (B), Stepper X
-extern const char PIN_STEPPER_Z_A;				//X34, PIN5 (A), Stepper Z
-extern const char PIN_STEPPER_Z_B;				//X34, PIN6 (B), Stepper Z
-extern const char PIN_TOOL_CHANGER_HOLD;			//Tool-Changer hold (-3,3V)
-extern const char PIN_TOOL_CHANGER_CHANGE;			//Tool-Changer change (+12,9V)
-extern const char PIN_TOOL_CHANGER_FIXING;			//Tool-Changer fixing (-4,35V)
-extern const char PIN_SPINDLE_ON;					//Spindle on
-extern const char PIN_REVOLUTIONS_SYNC;			//A8: Revolution-Sensor SYNC
-extern const char PIN_REVOLUTIONS_COUNT;			//A9: Revolution-Sensor COUNT
-extern const char PIN_OLD_CONTROL_STEPPER_X_A;	//A10: X42, PIN5 (A), Stepper X (Watching old Control)
-extern const char PIN_OLD_CONTROL_STEPPER_X_B;	//A11: X42, PIN6 (B), Stepper X (Watching old Control)
-extern const char PIN_OLD_CONTROL_STEPPER_Z_A;	//A12: X41, PIN5 (A), Stepper Z (Watching old Control)
-extern const char PIN_OLD_CONTROL_STEPPER_Z_B;	//A13: X41, PIN6 (B), Stepper Z (Watching old Control)
-//D68=A14 (IN):	WZW Näherungssensor Position 0 ???
-extern const char PIN_SPI_MISO;					//D50 (OUT): SPI RaspBerry (Master) <-> Arduino (Slave)
-extern const char PIN_SPI_MOSI;					//D51 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
-extern const char PIN_SPI_SCK;					//D52 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
-extern const char PIN_SPI_SS;						//D53 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
-extern const char PIN_USART0_RX; 					//D0 (OUT): Spindelplatine Niko: Drehzahlvorgabe per USART
-extern const char PIN_USART0_TX; 					//D1 (IN) : Spindelplatine Niko: Drehzahlvorgabe per USART
+#define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control
+#define PIN_ROUTING_SWITCH 3        //Switch for Routing Signals to alternative Control
+#define PIN_SERVO_ENGINE 9           //PWM for Servo (Poti to set Revolutions)
+#define PIN_STEPPER_X_A 10        //X35, PIN5 (A), Stepper X
+#define PIN_STEPPER_X_B 11        //X35, PIN6 (B), Stepper X
+#define PIN_STEPPER_Z_A 12        //X34, PIN5 (A), Stepper Z
+#define PIN_STEPPER_Z_B 13        //X34, PIN6 (B), Stepper Z
+#define PIN_TOOL_CHANGER_HOLD 4     //Tool-Changer hold (-3,3V)
+#define PIN_TOOL_CHANGER_CHANGE 5     //Tool-Changer change (+12,9V)
+#define PIN_TOOL_CHANGER_FIXING 6     //Tool-Changer fixing (-4,35V)
+#define PIN_SPINDLE_ON 7          //Spindle on
+#define PIN_REVOLUTIONS_SYNC 62     //A8: Revolution-Sensor SYNC
+#define PIN_REVOLUTIONS_COUNT 63      //A9: Revolution-Sensor COUNT
+#define PIN_OLD_CONTROL_STEPPER_X_A 64  //A10: X42, PIN5 (A), Stepper X (Watching old Control)
+#define PIN_OLD_CONTROL_STEPPER_X_B 65  //A11: X42, PIN6 (B), Stepper X (Watching old Control)
+#define PIN_OLD_CONTROL_STEPPER_Z_A 66  //A12: X41, PIN5 (A), Stepper Z (Watching old Control)
+#define PIN_OLD_CONTROL_STEPPER_Z_B 67  //A13: X41, PIN6 (B), Stepper Z (Watching old Control)
+//D68=A14 (IN): WZW Näherungssensor Position 0 ???
+#define PIN_SPI_MISO 50         //D50 (OUT): SPI RaspBerry (Master) <-> Arduino (Slave)
+#define PIN_SPI_MOSI 51         //D51 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
+#define PIN_SPI_SCK 52          //D52 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
+#define PIN_SPI_SS 53           //D53 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
+//#define PIN_USART1_TX 18           //D18 (OUT) : Spindelplatine Niko: Drehzahlvorgabe per USART
+//#define PIN_USART1_RX 19           //D19 (IN): Spindelplatine Niko: Drehzahlvorgabe per USART
 
 //for use with analogRead(Analog-PIN-NR)
-extern const char APIN_SERVO_CONTROL_POTI;		//CONTROL-POTI to manually set revolutions (Analog-IN)
+#define APIN_SERVO_CONTROL_POTI 15    //CONTROL-POTI to manually set revolutions (Analog-IN)
 
-//Stepper
-extern const int xsteps_per_turn; //Steps per x-turn
-extern const int zsteps_per_turn; //Steps per z-turn
-
+//global vars
 //ERROR-Numbers
 extern unsigned char ERROR_NO;
 
@@ -67,7 +75,6 @@ extern int STATE_N;
 //functions
 void set_error(char);
 void reset_error(char);
-char process_control_signal();
 
 #endif
 

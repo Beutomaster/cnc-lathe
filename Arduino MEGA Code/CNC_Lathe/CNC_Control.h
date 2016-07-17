@@ -1,6 +1,12 @@
 #ifndef CNC_Control_h 
 #define CNC_Control_h
 
+//includes
+#include <Arduino.h>
+#include "CNC_Lathe.h"
+#include "Motion_Control.h"
+
+//defines
 #define CNC_CODE_NMAX 500
 
 struct cnc_code_block { //not finished, Format von Siemens NX???
@@ -13,8 +19,8 @@ struct cnc_code_block { //not finished, Format von Siemens NX???
 };
 
 //global vars
-extern volatile char command_completed;
-extern volatile char pause;
+extern volatile boolean command_completed;
+extern volatile boolean pause;
 extern struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
 
 //functions
@@ -22,7 +28,7 @@ void programm_start(int);
 void programm_pause();
 void programm_stop();
 void programm_abort();
-char process_cnc_listing();
+boolean process_cnc_listing();
 
 //G-/M-/S-/T-Codes:
 void G00(int, int); //Rapid traverse
