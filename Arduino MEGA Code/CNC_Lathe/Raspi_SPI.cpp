@@ -28,8 +28,8 @@ From Arduino:
 (101 4 ERROR_Number CRC-8 #Error) obsolete
 */
 
-char rx_buf [100]; //SPI receive-buffer
-char tx_buf [100]; //SPI send-buffer
+char rx_buf [SPI_MSG_LENGTH]; //SPI receive-buffer
+char tx_buf [SPI_MSG_LENGTH]; //SPI send-buffer
 volatile byte pos=0; // buffer empty
 volatile boolean byte_received=false; //first byte of transmission received)
 volatile boolean process_it=false; //not end of string (newline received)
@@ -39,7 +39,7 @@ volatile boolean process_it=false; //not end of string (newline received)
 // SPI-Transmission - wait for flag set in interrupt routine
 void spi_buffer_handling() {
   if (process_it){
-    rx_buf [pos] = 0; //set end of string
+    //rx_buf [pos] = 0; //set end of string
 
     /*
     //for debugging
@@ -193,8 +193,6 @@ ISR (SPI_STC_vect) {
   // add to rx_buffer if room and write next tx_buffer-value in SPDR-Register
   if (pos < sizeof rx_buf) {
     rx_buf [pos++] = c; //received byte
-    SPDR = tx_buf [pos]; //byte for sending at next interrupt
-
     /*
     // newline means time to process buffer
     if (c == '\n') {
@@ -203,6 +201,10 @@ ISR (SPI_STC_vect) {
     */ 
   }  // end of room available
 
+  if (pos < sizeof tx_buf) {
+    SPDR = tx_buf [pos]; //byte for sending at next interrupt
+  }
+  
   //process buffer at fixed SPI_MSG_LENGTH
   if (pos == (SPI_MSG_LENGTH) ) {
     process_it = true;

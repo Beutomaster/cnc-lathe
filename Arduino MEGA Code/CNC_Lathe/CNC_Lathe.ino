@@ -52,11 +52,11 @@ void setup() {
   SPI.attachInterrupt();  //turn on interrupt
 }
 
-void set_error(char error_number) {
+void set_error(unsigned char error_number) {
   ERROR_NO |= error_number;
 }
 
-void reset_error(char error_number) {
+void reset_error(unsigned char error_number) {
   ERROR_NO &= ~error_number;
 }
 
