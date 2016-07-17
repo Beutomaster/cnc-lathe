@@ -1,10 +1,6 @@
-#include "CNC_Lathe.h"
-#include "CNC_Control.h"
 #include "Motion_Control.h"
-#include "Spindle_Control.h"
-#include "Step_Motor_Control.h"
 
-char incremental=0;
+boolean incremental=0;
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
@@ -25,6 +21,7 @@ void set_xz_move(int X, int Z, int feed, char interpolationmode) {
   int x_feed=0;
   int z_feed=0;
   int command_time=0;
+  STATE_F = feed;
 
   if (incremental){
     X=get_inc_X(X);
@@ -64,7 +61,7 @@ void get_xz_coordinates() { //calculate Coordinates
   
 }
 
-int get_xz_feed() { //readout rpm-sensor
+int get_xz_feed() {
 	int feed=0; //Stub
 	return feed;
 }
@@ -73,5 +70,10 @@ void command_running(int command_time) {
   //Timer for Command has to be set
   
   command_completed=0;
+}
+
+void command_completed_ISR() {
+  STATE_F = 0;
+  command_completed=1;
 }
 
