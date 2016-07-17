@@ -10,8 +10,8 @@
 
 extern volatile boolean initialized;
 
-void intitialize();
-void initialize_tool_position(char);
+//void intitialize();
+//void initialize_tool_position(char);
 void reset_initialization();
 
 #endif
