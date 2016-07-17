@@ -14,7 +14,7 @@
 #define SPI_MSG_LENGTH 17
 
 extern volatile boolean byte_received;
-extern char tx_buf [100]; //SPI send-buffer
+extern char tx_buf [SPI_MSG_LENGTH]; //SPI send-buffer
 
 //Controlled by (Timer-) Interrupts:
 void spi_buffer_handling();
