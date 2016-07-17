@@ -1,24 +1,24 @@
-#include <Arduino.h>
-#include "CNC_Lathe.h"
 #include "CNC_Control.h"
-#include "Motion_Control.h"
 
 //global vars
-volatile char command_completed=1; //0=command in progress, 1=command_completed
-volatile char pause=1; //0=programm running, 1=pause
+volatile boolean command_completed=1; //0=command in progress, 1=command_completed
+volatile boolean pause=1; //0=programm running, 1=pause
 struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
 
 
 //functions
 void programm_start(int N) { //start at block N
   STATE_N = N;
+  STATE &= ~(_BV(STATE_MANUAL_BIT)); //set STATE_bit2 = 0
   pause=0;
-  STATE &= ~(_BV(STATE_PAUSE_BIT)); //delete STATE_bit1 = STATE_PAUSE
+  STATE &= ~(_BV(STATE_PAUSE_BIT)); //delete STATE_bit3 = STATE_PAUSE
+  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
 }
 
 void programm_pause() { //intermediate stop
+  STATE |= _BV(STATE_MANUAL_BIT); //set STATE_bit2 = 1
   pause=1;
-  STATE |= _BV(STATE_PAUSE_BIT); //set STATE_bit1 = STATE_PAUSE
+  STATE |= _BV(STATE_PAUSE_BIT); //set STATE_bit3 = STATE_PAUSE
 }
 
 void programm_stop() { //stop and jump back to block 0
@@ -29,12 +29,12 @@ void programm_stop() { //stop and jump back to block 0
 void programm_abort() {
   programm_stop();
   //immediate stop of all engines needed!!!
+  
 }
 
 
-char process_cnc_listing() {
-	char success=0; //0=success, 1=failure
-  if (command_completed && !pause) {    
+boolean process_cnc_listing() {
+	boolean success=0; //0=success, 1=failure    
     //next_cnc_code
     if (cnc_code[STATE_N].GM =='G') {
       switch(cnc_code[STATE_N].GM_NO) {
@@ -55,7 +55,13 @@ char process_cnc_listing() {
         case 22: G22();
                 break;
         case 24: G24();
-                break; 
+                break;
+        case 25: G25(cnc_code[STATE_N].FTLK);
+                break;
+        case 26: G26(cnc_code[STATE_N].XI, cnc_code[STATE_N].ZK, cnc_code[STATE_N].FTLK);
+                break;
+        case 27: G27(cnc_code[STATE_N].FTLK);
+                break;
         default:  //Error "G-Code unkown"
                   success=1;       
       }
@@ -64,9 +70,7 @@ char process_cnc_listing() {
         default:  //Error "M-Code unkown"
                   success=1;       
       }
-    } else success=1; //Error "Code Type unkown"   
-	}
- 
+    } else success=1; //Error "Code Type unkown" 
 	return success;
 }
 
