@@ -128,6 +128,7 @@ boolean process_cnc_listing() {
                   success=1;       
       }
     } else success=1; //Error "Code Type unkown" 
+    if (command_completed) STATE_N++;
 	return success;
 }
 
@@ -172,8 +173,8 @@ void G24() {} //Radius programing
 
 //Sub-routine call-up (L = Jump address)
 void G25(int L) {
-  jumpback_N = STATE_N+1;
-  STATE_N = L;
+  jumpback_N = STATE_N;
+  STATE_N = L-1;
 }
 
 void G26(int X, int Z, char T) {} //Tool correction and tool call-up (obsolete, backward compatibility for M06)
@@ -221,5 +222,6 @@ void M99(int I, char K) {} //Circle parameter (I, K = Center point coordinates)
 //Timer-Interrupt-isr:
 void command_complete() {
   command_completed=1;
+  STATE_N++; // maybe there is a better position for that
 }
 

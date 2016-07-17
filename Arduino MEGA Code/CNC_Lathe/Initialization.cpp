@@ -6,6 +6,7 @@
 //vars
 volatile boolean initialized=0; //could be replaced by (STATE>>STATE_INIT_BIT)&1
 
+/* obsolete
 //functions
 void intitialize() { //without sensors useless
 }
@@ -17,6 +18,7 @@ void initialize_tool_position(char tool) {
     initialized=1;
   }
 }
+*/
 
 void reset_initialization() {
   STATE_T = 0; //reset tool-position
