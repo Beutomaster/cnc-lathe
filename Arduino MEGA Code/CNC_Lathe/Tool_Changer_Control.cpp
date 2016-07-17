@@ -1,6 +1,3 @@
-#include "CNC_Lathe.h"
-#include "CNC_Control.h"
-#include "Motion_Control.h"
 #include "Tool_Changer_Control.h"
 
 //Positionssensor oder Eingabe benoetigt
