@@ -13,6 +13,7 @@
 #include "Tool_Changer_Control.h"
 
 //many global vars could be replaced by defines (no short names, because compiler reports no errors)
+//many functions and vars should be private
 
 //defines
 //Bit Postions of STATE
@@ -73,8 +74,8 @@ extern char STATE_T; //0 = uninitialized
 extern int STATE_N;
 
 //functions
-void set_error(char);
-void reset_error(char);
+void set_error(unsigned char);
+void reset_error(unsigned char);
 
 #endif
 

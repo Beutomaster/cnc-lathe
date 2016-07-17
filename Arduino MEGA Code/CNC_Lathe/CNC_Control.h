@@ -11,7 +11,7 @@
 
 struct cnc_code_block { //not finished, Format von Siemens NX???
    char GM; //G or M-Code
-   char GM_NO; //G/M-Code-Number
+   unsigned char GM_NO; //G/M-Code-Number
    int XI; //X/I-Parameter
    int ZK; //Z/K-Parameter (K for M99)
    int FTLK; //F/T/L/K-Parameter (K for G33 and G78)
