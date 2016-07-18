@@ -43,7 +43,7 @@ void set_xz_move(int X, int Z, int feed, char interpolationmode) {
   }
   else if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE)
   {                      //interpolationmode = CIRCULAR_CLOCKWISE
-                                                     
+    //???
   }
   else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE)
   {                      //interpolationmode = CIRCULAR_COUNTERCLOCKWISE

@@ -1,9 +1,6 @@
 #ifndef Motion_Control_h
 #define Motion_Control_h
 
-//Defined LookUp for Quarter Circle
-//volatile int lookup_cosinus[91] = {10000, 9998, 9993, 9986, 9976, 9962, 9945, 9925, 9903, 9877, 9848, 9816, 9781, 9743, 9702, 9659, 
-
 //includes
 #include <Arduino.h>
 #include "CNC_Lathe.h"
@@ -17,6 +14,9 @@
 #define INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE 2
 #define WAIT_TIME 1000; //waiting time for savety
 #define STEPS_PER_DISTANCE 1 //needs the right value in the right Q-Format
+
+//Cosinus LookUp-Table for Quarter Circle
+//volatile int lookup_cosinus[91] = {10000, 9998, 9993, 9986, 9976, 9962, 9945, 9925, 9903, 9877, 9848, 9816, 9781, 9743, 9702, 9659} //not finished
 
 extern boolean incremental;
 
