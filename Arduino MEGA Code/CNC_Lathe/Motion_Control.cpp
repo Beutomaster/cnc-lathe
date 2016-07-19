@@ -93,19 +93,19 @@ void command_completed_ISR() {
 }
 
 /*
-ISR timer2_circular () {
+ISR(TIMER2_OVF_vect) {
   //actual x/z-feed
   int x_feed = ((long)STATE_F * phi[i]))>>15;
   int z_feed = ((long)STATE_F * phi[91-i])>>15;
 
   //next i
-  long clk_x =((long)xfeed * STEPS_PER_DISTANCE))>>8;
-  long clk_z =((long)zfeed * STEPS_PER_DISTANCE))>>8;
+  long clk_x =((long)x_feed * STEPS_PER_DISTANCE))>>8;
+  long clk_z =((long)z_feed * STEPS_PER_DISTANCE))>>8;
 
   ix_next = CLK_TIMER2 / clk_x;
 
   //X-Steps
-  if (i == ix_next) {
+  if ((i%ix_next)==0) {
     if (jxstep==0) { //in witch step are we actual
       digitalWrite(PIN_STEPPER_X_A, LOW);
       digitalWrite(PIN_STEPPER_X_B, LOW);
@@ -128,7 +128,7 @@ ISR timer2_circular () {
   }
 
   //Z-Steps
-  if (i == iz_next) {
+  if ((i%iz_next)==0) {
     if (jzstep==0) { //in witch step are we actual
       digitalWrite(PIN_STEPPER_Z_A, LOW);
       digitalWrite(PIN_STEPPER_Z_B, LOW);
@@ -152,14 +152,27 @@ ISR timer2_circular () {
 
   //direction
   if (X<0) {
-    jxstep--;
-  } else jxstep++;
+    if (jxstep==0){
+      jxstep=3;
+    } else jxstep--;
+  }
+  else {
+    if (jxstep==3){
+      jxstep=0;
+    } else jxstep++;
+  }
 
   if (Z<0) {
-    jzstep--;
-  } else jzstep++;
+    if (jzstep==0){
+      jzstep=3;
+    } else jzstep--;
+  }
+  else {
+    if (jzstep==3){
+      jzstep=0;
+    } else jzstep++;
+  }
   
-
   //counter
   i++;
   
