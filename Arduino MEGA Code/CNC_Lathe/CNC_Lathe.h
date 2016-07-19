@@ -32,7 +32,6 @@
 
 //PINs
 #define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control
-#define PIN_ROUTING_SWITCH 3        //Switch for Routing Signals to alternative Control
 #define PIN_SERVO_ENGINE 9           //PWM for Servo (Poti to set Revolutions)
 #define PIN_STEPPER_X_A 10        //X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11        //X35, PIN6 (B), Stepper X
