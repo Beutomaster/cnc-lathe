@@ -1,6 +1,9 @@
 #include "Motion_Control.h"
 
 boolean incremental=0;
+//ISR
+volatile unsigned int i=0, ISR_X=0, ISR_Z=0, ix_next=0, iz_next=0;
+volatile char jxstep=0, jzstep=0;
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
@@ -28,16 +31,28 @@ void set_xz_move(int X, int Z, int feed, char interpolationmode) {
     Z=get_inc_Z(Z);
   }
 
-  x_steps = (X*STEPS_PER_DISTANCE)>>0; //not finished, needs right fixpoint values
-  z_steps = (Z*STEPS_PER_DISTANCE)>>0; //not finished, needs right fixpoint values
+  ISR_X=X;
+  ISR_Z=Z;
+
+  x_steps = (X*STEPS_PER_HUNDRETS_OF_MM)>>15; //not finished, needs right fixpoint values
+  z_steps = (Z*STEPS_PER_HUNDRETS_OF_MM)>>15; //not finished, needs right fixpoint values
 
   if (interpolationmode==INTERPOLATION_LINEAR) { //interpolationmode = linear
-    x_feed=X/Z*feed; //not finished
-    z_feed=Z/X*feed; //not finished
+    if (Z==0) {
+      x_feed=feed;
+    } else x_feed=(long)X*feed/Z; //not finished
+    if (X==0) {
+      z_feed=feed;
+    } else z_feed=(long)Z*feed/X; //not finished
 
     //calculate time of motion
-    command_time=X/x_feed;
-    if ((Z/z_feed) > command_time) command_time=Z/z_feed;
+    if (x_feed==0) {
+      command_time=0;
+    } command_time=((long)X*100/x_feed); //not finished
+    
+    if (z_feed==0) {
+      command_time=0;
+    } if ((Z/z_feed*100) > command_time) command_time=((long)Z*100)/z_feed;  //not finished zfeed could be 0
     command_time += WAIT_TIME; //for savety
     
   }
@@ -77,3 +92,90 @@ void command_completed_ISR() {
   command_completed=1;
 }
 
+/*
+ISR(TIMER2_OVF_vect) {
+  //actual x/z-feed
+  int x_feed = ((long)STATE_F * phi[i]))>>15;
+  int z_feed = ((long)STATE_F * phi[91-i])>>15;
+
+  //next i
+  long clk_x =((long)x_feed * STEPS_PER_DISTANCE))>>8;
+  long clk_z =((long)z_feed * STEPS_PER_DISTANCE))>>8;
+
+  ix_next = CLK_TIMER2 / clk_x;
+
+  //X-Steps
+  if ((i%ix_next)==0) {
+    if (jxstep==0) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_X_A, LOW);
+      digitalWrite(PIN_STEPPER_X_B, LOW);
+    }
+
+    if (jxstep==1) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_X_A, LOW);
+      digitalWrite(PIN_STEPPER_X_B, HIGH);
+    }
+
+    if (jxstep==2) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_X_A, HIGH);
+      digitalWrite(PIN_STEPPER_X_B, HIGH);
+    }
+
+    if (jxstep==3) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_X_A, HIGH);
+      digitalWrite(PIN_STEPPER_X_B, LOW);
+    }
+  }
+
+  //Z-Steps
+  if ((i%iz_next)==0) {
+    if (jzstep==0) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_Z_A, LOW);
+      digitalWrite(PIN_STEPPER_Z_B, LOW);
+    }
+
+    if (jzstep==1) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_Z_A, LOW);
+      digitalWrite(PIN_STEPPER_Z_B, HIGH);
+    }
+
+    if (jzstep==2) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_Z_A, HIGH);
+      digitalWrite(PIN_STEPPER_Z_B, HIGH);
+    }
+
+    if (jzstep==3) { //in witch step are we actual
+      digitalWrite(PIN_STEPPER_Z_A, HIGH);
+      digitalWrite(PIN_STEPPER_Z_B, LOW);
+    }
+  }
+
+  //direction
+  if (X<0) {
+    if (jxstep==0){
+      jxstep=3;
+    } else jxstep--;
+  }
+  else {
+    if (jxstep==3){
+      jxstep=0;
+    } else jxstep++;
+  }
+
+  if (Z<0) {
+    if (jzstep==0){
+      jzstep=3;
+    } else jzstep--;
+  }
+  else {
+    if (jzstep==3){
+      jzstep=0;
+    } else jzstep++;
+  }
+  
+  //counter
+  i++;
+  
+  //reset INTR-flag
+}
+*/
