@@ -50,6 +50,20 @@ void setup() {
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
   create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
   SPI.attachInterrupt();  //turn on interrupt
+
+  //Timer2
+  //ASSR &= ~(_BV(AS2)); //set 0 to Select clk_T2S=CLK_IO
+  //Prescaler 256
+  //TCCR2B &= ~(_BV(CS20)); //set 0
+  //TCCR2B |= _BV(CS21); //set 1
+  //TCCR2B |= _BV(CS22); //set 1
+  //Normal Mode
+  //TCCR2A &= ~(_BV(WGM20)); //set 0
+  //TCCR2A &= ~(_BV(WGM21)); //set 0
+  //TCCR2B &= ~(_BV(WGM22)); //set 0
+  //Timer Overflows INTR enable
+  //TIMSK2 |= _BV(TOIE2); //set 1
+  //cli() //global INTR enable
 }
 
 void set_error(unsigned char error_number) {
