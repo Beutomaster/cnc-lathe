@@ -21,10 +21,17 @@ void initialize_tool_position(char tool) {
 */
 
 void reset_initialization() {
+  STATE_X = 0; //reset X-position
+  STATE_Z = 0; //reset Z-position
+  STATE_F = 0; //reset feed
+  STATE_H = 0; //reset H
   STATE_T = 0; //reset tool-position
+  STATE_H = 0; //reset N
   spindle_off();
   stepper_off();
   STATE &= ~(_BV(STATE_INIT_BIT)); //delete STATE_bit1 = STATE_INIT
   initialized=0;
+  programm_pause();
+  STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
 }
 

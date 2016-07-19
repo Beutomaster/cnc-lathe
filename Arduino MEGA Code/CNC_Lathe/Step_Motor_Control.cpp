@@ -42,6 +42,7 @@ void set_zstepper(int feed, char negativ_direction) {
   command_running(MANUAL_IMPULSE);
 }
 
+//can not run in both directions
 void set_x_steps(int x_steps, int x_feed) {
 	int rpms=x_feed; //not finished
 	xstepper.setSpeed(rpms);
@@ -71,7 +72,7 @@ void get_current_x_step() { //needed to switch on stepper without movement
   //???
 }
 
-void get_current_z_step() { //needed to switch on stepper without movement
+void get_current_z_step() { //needed to switch on stepper without movement, save in eprom
 	current_z_step=0; //stub
   //???
 }
