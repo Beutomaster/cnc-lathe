@@ -51,6 +51,7 @@ void setup() {
   SPI.attachInterrupt();  //turn on interrupt
 
   //Timer2
+  //TCCR2B = 0x00;        //Disbale Timer2 while we set it up
   //ASSR &= ~(_BV(AS2)); //set 0 to Select clk_T2S=CLK_IO
   //Prescaler 256
   //TCCR2B &= ~(_BV(CS20)); //set 0
