@@ -2,7 +2,7 @@
 
 //Positionssensor oder Eingabe benoetigt
 
-void set_tool_position(char tool) {
+void set_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
     //set new Tool Postion
     STATE_T=tool;
@@ -25,8 +25,8 @@ void set_tool_position(char tool) {
   }
 }
 
-char get_tool_position() { //maybe not needed
-	char tool_position=0; //Stub
+byte get_tool_position() { //maybe not needed
+	byte tool_position=0; //Stub
 	return tool_position;
 }
 

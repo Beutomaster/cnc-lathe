@@ -11,7 +11,7 @@
 extern volatile boolean initialized;
 
 //void intitialize();
-//void initialize_tool_position(char);
+//void initialize_tool_position(byte);
 void reset_initialization();
 
 #endif
