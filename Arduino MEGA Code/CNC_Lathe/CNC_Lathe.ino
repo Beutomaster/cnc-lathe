@@ -50,7 +50,14 @@ void setup() {
   create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
   SPI.attachInterrupt();  //turn on interrupt
 
+  //TIMER
+  //get_revolutions, get_feed ???
+  
+  //Timer0, millis(), micros()
+  //Stepper-Timeout
+  
   //Timer2
+  //Toolchanger command_complete
   //TCCR2B = 0x00;        //Disbale Timer2 while we set it up
   //ASSR &= ~(_BV(AS2)); //set 0 to Select clk_T2S=CLK_IO
   //Prescaler 256
@@ -64,6 +71,12 @@ void setup() {
   //Timer Overflows INTR enable
   //TIMSK2 |= _BV(TOIE2); //set 1
   //cli() //global INTR enable
+
+  
+  //Timer3,4
+  //2x Stepper active and passsive, command_complete
+
+  //Timer5 Servo
 }
 
 void set_error(byte error_number) {
