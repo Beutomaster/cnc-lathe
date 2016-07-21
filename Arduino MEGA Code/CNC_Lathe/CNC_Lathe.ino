@@ -2,16 +2,16 @@
 
 //global vars
 //ERROR-Numbers
-unsigned char ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
+byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-unsigned char STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+byte STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 int STATE_RPM=0;
 int STATE_X=0;
 int STATE_Z=0;
 int STATE_F=0;
 int STATE_H=0;
-char STATE_T=0; //0 = uninitialized
+byte STATE_T=0; //0 = uninitialized
 int STATE_N=0;
 
 void setup() {
@@ -66,11 +66,11 @@ void setup() {
   //cli() //global INTR enable
 }
 
-void set_error(unsigned char error_number) {
+void set_error(byte error_number) {
   ERROR_NO |= error_number;
 }
 
-void reset_error(unsigned char error_number) {
+void reset_error(byte error_number) {
   ERROR_NO &= ~error_number;
 }
 

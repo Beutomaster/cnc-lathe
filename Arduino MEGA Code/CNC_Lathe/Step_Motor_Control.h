@@ -4,7 +4,7 @@
 //includes
 #include <Arduino.h>
 #include "CNC_Lathe.h"
-#include <Stepper.h>
+#include <Stepper.h> //we can't use it, because it uses a while loop instead of a timer!!!
 
 //defines
 //Stepper
@@ -26,6 +26,11 @@ int count_x_steps();
 int count_z_steps();
 void get_current_x_step();
 void get_current_z_step();
+void get_feed();
+void save_current_x_step();
+void save_current_z_step();
+void read_last_x_step();
+void read_last_z_step();
 void stepper_timeout_ISR();
 
 #endif

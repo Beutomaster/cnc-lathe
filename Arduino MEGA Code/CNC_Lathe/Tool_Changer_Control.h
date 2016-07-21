@@ -12,8 +12,8 @@
 
 //Positionssensor oder Eingabe benoetigt
 
-void set_tool_position(char);
-char get_tool_position();
+void set_tool_position(byte);
+byte get_tool_position();
 
 #endif
 
