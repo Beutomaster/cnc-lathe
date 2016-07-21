@@ -34,8 +34,8 @@ void set_xz_move(int X, int Z, int feed, byte interpolationmode) {
   ISR_X=X;
   ISR_Z=Z;
 
-  x_steps = X*STEPS_PER_DISTANCE; //not finished, maybe overflow
-  z_steps = Z*STEPS_PER_DISTANCE; //not finished, maybe overflow
+  x_steps = X*STEPS_PER_MM; //not finished, maybe overflow
+  z_steps = Z*STEPS_PER_MM; //not finished, maybe overflow
 
   if (interpolationmode==INTERPOLATION_LINEAR) { //interpolationmode = linear
     if (Z==0) {
@@ -99,8 +99,8 @@ ISR(TIMER2_OVF_vect) {
   int z_feed = ((long)STATE_F * phi[91-i])>>15;
 
   //next i
-  long clk_x =(long)x_feed * STEPS_PER_DISTANCE; //clk_x in 1/min
-  long clk_z =(long)z_feed * STEPS_PER_DISTANCE; //clk_z in 1/min
+  long clk_x =(long)x_feed * STEPS_PER_MM; //clk_x in 1/min
+  long clk_z =(long)z_feed * STEPS_PER_MM; //clk_z in 1/min
 
   ix_next = CLK_TIMER2 / clk_x;
 
