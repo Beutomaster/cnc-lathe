@@ -33,11 +33,17 @@
 
 //PINs
 #define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control
+#define PIN_SPINDELBOARD_NIKO 3       //Switch between Niko's Board and Hannes Servo
+#define PIN_SPINDELPWM_NIKO 8           //PWM for Servo (Poti to set Revolutions)
 #define PIN_SERVO_ENGINE 9           //PWM for Servo (Poti to set Revolutions)
 #define PIN_STEPPER_X_A 10        //X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11        //X35, PIN6 (B), Stepper X
-#define PIN_STEPPER_Z_A 12        //X34, PIN5 (A), Stepper Z
-#define PIN_STEPPER_Z_B 13        //X34, PIN6 (B), Stepper Z
+#define PIN_STEPPER_X_C 12        //X35, PIN3 (C), Stepper X
+#define PIN_STEPPER_X_D 13        //X35, PIN4 (D), Stepper X
+#define PIN_STEPPER_Z_A 14        //X34, PIN5 (A), Stepper Z
+#define PIN_STEPPER_Z_B 15        //X34, PIN6 (B), Stepper Z
+#define PIN_STEPPER_Z_C 16        //X34, PIN3 (C), Stepper Z
+#define PIN_STEPPER_Z_D 17        //X34, PIN4 (D), Stepper Z
 #define PIN_TOOL_CHANGER_HOLD 4     //Tool-Changer hold (-3,3V)
 #define PIN_TOOL_CHANGER_CHANGE 5     //Tool-Changer change (+12,9V)
 #define PIN_TOOL_CHANGER_FIXING 6     //Tool-Changer fixing (-4,35V)
