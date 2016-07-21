@@ -25,7 +25,7 @@ extern boolean incremental;
 void set_xz_coordinates(int, int);
 int get_inc_X(int abs_X);
 int get_inc_Z(int abs_Z);
-void set_xz_move(int, int, int, char);
+void set_xz_move(int, int, int, byte);
 void get_xz_coordinates();
 int get_xz_feed();
 void command_running(int);

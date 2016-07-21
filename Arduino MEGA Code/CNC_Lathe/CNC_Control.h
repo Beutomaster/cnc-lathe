@@ -11,7 +11,7 @@
 
 struct cnc_code_block { //not finished, Format von Siemens NX???
    char GM; //G or M-Code
-   unsigned char GM_NO; //G/M-Code-Number
+   byte GM_NO; //G/M-Code-Number
    int XI; //X/I-Parameter
    int ZK; //Z/K-Parameter (K for M99)
    int FTLK; //F/T/L/K-Parameter (K for G33 and G78)
@@ -41,7 +41,7 @@ void G21(); //Empty Line
 void G22(); //End of program (obsolete, backward compatibility for M30)
 void G24(); //Radius programing
 void G25(int); //Sub-routine call-up (L = Jump address)
-void G26(int, int Z, char T); //Tool correction and tool call-up (obsolete, backward compatibility for M06)
+void G26(int, int Z, byte T); //Tool correction and tool call-up (obsolete, backward compatibility for M06)
 void G27(int); //Jump instruction
 void G33(int, char); //Threading with constant pitch (K = Thread Pitch)
 void G64(); //Feed motors currentless
@@ -68,7 +68,7 @@ void G196(int); //new: set max. rev. in 1/min for G96
 void M00(); //Programmed stop
 void M03(); //Main spindle ON. right hand direction run
 void M05(); //Main Spindle OFF
-void M06(int, int, char); //Tool length compensation (T = Tool address)
+void M06(int, int, byte); //Tool length compensation (T = Tool address)
 void M17(); //return command to the main program
 void M30(); //End of Program
 void M98(int, int); //Automatic compensation of play

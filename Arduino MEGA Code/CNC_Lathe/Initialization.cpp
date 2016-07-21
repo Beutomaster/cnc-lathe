@@ -11,7 +11,7 @@ volatile boolean initialized=0; //could be replaced by (STATE>>STATE_INIT_BIT)&1
 void intitialize() { //without sensors useless
 }
 
-void initialize_tool_position(char tool) {
+void initialize_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
     STATE_T = tool;
     STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
