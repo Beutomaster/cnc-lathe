@@ -3,7 +3,7 @@
 boolean incremental=0;
 //ISR
 volatile unsigned int i=0, ISR_X=0, ISR_Z=0, ix_next=0, iz_next=0;
-volatile char jxstep=0, jzstep=0;
+volatile byte jxstep=0, jzstep=0;
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
@@ -18,7 +18,7 @@ int get_inc_Z(int abs_Z) { //get incremental z-Coordinate
   return abs_Z-STATE_Z;
 }
 
-void set_xz_move(int X, int Z, int feed, char interpolationmode) {
+void set_xz_move(int X, int Z, int feed, byte interpolationmode) {
   int x_steps=0;
   int z_steps=0;
   int x_feed=0;
