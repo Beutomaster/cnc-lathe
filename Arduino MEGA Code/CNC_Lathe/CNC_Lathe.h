@@ -3,6 +3,7 @@
 
 //includes
 #include <Arduino.h>
+#include <EEPROM.h>
 #include "CNC_Control.h"
 #include "Control_Passiv.h"
 #include "Initialization.h"
@@ -32,7 +33,6 @@
 
 //PINs
 #define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control
-#define PIN_ROUTING_SWITCH 3        //Switch for Routing Signals to alternative Control
 #define PIN_SERVO_ENGINE 9           //PWM for Servo (Poti to set Revolutions)
 #define PIN_STEPPER_X_A 10        //X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11        //X35, PIN6 (B), Stepper X
@@ -59,23 +59,27 @@
 //for use with analogRead(Analog-PIN-NR)
 #define APIN_SERVO_CONTROL_POTI 15    //CONTROL-POTI to manually set revolutions (Analog-IN)
 
+//EEPROM-Adresses
+#define LAST_X_STEP_ADDRESS 0
+#define LAST_Z_STEP_ADDRESS 1
+
 //global vars
 //ERROR-Numbers
-extern unsigned char ERROR_NO;
+extern byte ERROR_NO;
 
 //Machine State
-extern unsigned char STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+extern byte STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 extern int STATE_RPM;
 extern int STATE_X;
 extern int STATE_Z;
 extern int STATE_F;
 extern int STATE_H;
-extern char STATE_T; //0 = uninitialized
+extern byte STATE_T; //0 = uninitialized
 extern int STATE_N;
 
 //functions
-void set_error(unsigned char);
-void reset_error(unsigned char);
+void set_error(byte);
+void reset_error(byte);
 
 #endif
 

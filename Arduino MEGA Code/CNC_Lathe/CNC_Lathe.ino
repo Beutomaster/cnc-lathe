@@ -2,16 +2,16 @@
 
 //global vars
 //ERROR-Numbers
-unsigned char ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
+byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-unsigned char STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+byte STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 int STATE_RPM=0;
 int STATE_X=0;
 int STATE_Z=0;
 int STATE_F=0;
 int STATE_H=0;
-char STATE_T=0; //0 = uninitialized
+byte STATE_T=0; //0 = uninitialized
 int STATE_N=0;
 
 void setup() {
@@ -24,7 +24,6 @@ void setup() {
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
-  pinMode(PIN_ROUTING_SWITCH, OUTPUT);
   pinMode(PIN_SERVO_ENGINE, OUTPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
@@ -50,13 +49,28 @@ void setup() {
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
   create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
   SPI.attachInterrupt();  //turn on interrupt
+
+  //Timer2
+  //TCCR2B = 0x00;        //Disbale Timer2 while we set it up
+  //ASSR &= ~(_BV(AS2)); //set 0 to Select clk_T2S=CLK_IO
+  //Prescaler 256
+  //TCCR2B &= ~(_BV(CS20)); //set 0
+  //TCCR2B |= _BV(CS21); //set 1
+  //TCCR2B |= _BV(CS22); //set 1
+  //Normal Mode
+  //TCCR2A &= ~(_BV(WGM20)); //set 0
+  //TCCR2A &= ~(_BV(WGM21)); //set 0
+  //TCCR2B &= ~(_BV(WGM22)); //set 0
+  //Timer Overflows INTR enable
+  //TIMSK2 |= _BV(TOIE2); //set 1
+  //cli() //global INTR enable
 }
 
-void set_error(unsigned char error_number) {
+void set_error(byte error_number) {
   ERROR_NO |= error_number;
 }
 
-void reset_error(unsigned char error_number) {
+void reset_error(byte error_number) {
   ERROR_NO &= ~error_number;
 }
 

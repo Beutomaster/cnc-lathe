@@ -177,7 +177,7 @@ void G25(int L) {
   STATE_N = L-1;
 }
 
-void G26(int X, int Z, char T) {} //Tool correction and tool call-up (obsolete, backward compatibility for M06)
+void G26(int X, int Z, byte T) {} //Tool correction and tool call-up (obsolete, backward compatibility for M06)
 
 //Jump instruction
 void G27(int L) {STATE_N = L;}
@@ -210,7 +210,7 @@ void M00() {programm_pause();};
 
 void M03() {spindle_on();} //Main spindle ON. right hand direction run
 void M05() {spindle_off();} //Main Spindle OFF
-void M06(int X, int Z, char T) {} //Tool length compensation (T = Tool address)
+void M06(int X, int Z, byte T) {} //Tool length compensation (T = Tool address)
 void M17() {STATE_N = jumpback_N;} //return command to the main program
 
 //End of Program
