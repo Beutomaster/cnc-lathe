@@ -22,6 +22,7 @@ To Arduino:
 012 4 metric CRC-8 #metric or inch (maybe not needed)
 013 6 NN metric CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
 014 15 NN GG XX ZZ FF HH CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
+015 CRC-8 #shutdown
 
 From Arduino:
 100 18 byte2=bit5_stepper|bit4_spindle|bit3_inch|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
@@ -177,7 +178,7 @@ void create_spi_error_msg() {
 }  //end of send_spi_error
 
 /* obsolete
-void send_error_number(char error_number) {
+void send_error_number(byte error_number) {
   tx_buf [0] = 101; //PID
   tx_buf [1] = 3; //length
   tx_buf [2] = error_number;
