@@ -13,8 +13,6 @@
 #define INTERPOLATION_CIRCULAR_CLOCKWISE 1
 #define INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE 2
 #define WAIT_TIME 1000; //waiting time for savety
-#define STEPS_PER_HUNDRETS_OF_MM 23592 // 9Steps/(125*10^-6 m)*2^15 in Q15
-#define STEPS_PER_DISTANCE 18432 // 9Steps/(125*10^-3 m)*2^8 in Q8
 #define CLK_TIMER2 3750000 //in 1/min, CLK_T2=CLK_IO/(Prescaler 256)
 
 //Cosinus LookUp-Table for Quarter Circle in Q15

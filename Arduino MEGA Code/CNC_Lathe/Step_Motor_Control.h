@@ -8,6 +8,7 @@
 
 //defines
 //Stepper
+#define STEPS_PER_MM 72 //Steps/mm
 #define XSTEPS_PER_TURN 72 //Steps per x-turn
 #define ZSTEPS_PER_TURN 72 //Steps per z-turn
 #define MANUAL_IMPULSE 10 //time stepper is active, if key is pressed

@@ -21,28 +21,28 @@ void stepper_off() {
 void set_xstep(byte nextstep) {
   switch (nextstep) {
       case 0:  // 1010
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
+        digitalWrite(PIN_STEPPER_X_A, HIGH);
+        digitalWrite(PIN_STEPPER_X_B, LOW);
+        digitalWrite(PIN_STEPPER_X_C, HIGH);
+        digitalWrite(PIN_STEPPER_X_D, LOW);
       break;
       case 1:  // 0110
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
+        digitalWrite(PIN_STEPPER_X_A, LOW);
+        digitalWrite(PIN_STEPPER_X_B, HIGH);
+        digitalWrite(PIN_STEPPER_X_C, HIGH);
+        digitalWrite(PIN_STEPPER_X_D, LOW);
       break;
       case 2:  //0101
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
+        digitalWrite(PIN_STEPPER_X_A, LOW);
+        digitalWrite(PIN_STEPPER_X_B, HIGH);
+        digitalWrite(PIN_STEPPER_X_C, LOW);
+        digitalWrite(PIN_STEPPER_X_D, HIGH);
       break;
       case 3:  //1001
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
+        digitalWrite(PIN_STEPPER_X_A, HIGH);
+        digitalWrite(PIN_STEPPER_X_B, LOW);
+        digitalWrite(PIN_STEPPER_X_C, LOW);
+        digitalWrite(PIN_STEPPER_X_D, HIGH);
     }
 }
 */
