@@ -69,7 +69,12 @@
 #define LAST_X_STEP_ADDRESS 0
 #define LAST_Z_STEP_ADDRESS 1
 
+
 //global vars
+
+//Cosinus LookUp-Table for Quarter Circle in Q15
+extern volatile const int lookup_cosinus[91];
+
 //ERROR-Numbers
 extern byte ERROR_NO;
 
