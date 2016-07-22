@@ -1,9 +1,6 @@
 #include "Motion_Control.h"
 
 boolean incremental=0;
-//ISR
-volatile unsigned int i=0, ISR_X=0, ISR_Z=0, ix_next=0, iz_next=0;
-volatile byte jxstep=0, jzstep=0;
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
@@ -19,8 +16,8 @@ int get_inc_Z(int abs_Z) { //get incremental z-Coordinate
 }
 
 void set_xz_move(int X, int Z, int feed, byte interpolationmode) {
-  int x_steps=0;
-  int z_steps=0;
+  //int x_steps=0; //has to be global for ISR
+  //int z_steps=0; //has to be global for ISR
   int x_feed=0;
   int z_feed=0;
   int command_time=0;
@@ -30,9 +27,6 @@ void set_xz_move(int X, int Z, int feed, byte interpolationmode) {
     X=get_inc_X(X);
     Z=get_inc_Z(Z);
   }
-
-  ISR_X=X;
-  ISR_Z=Z;
 
   x_steps = X*STEPS_PER_MM; //not finished, maybe overflow
   z_steps = Z*STEPS_PER_MM; //not finished, maybe overflow
@@ -81,6 +75,9 @@ int get_xz_feed() {
 	return feed;
 }
 
+
+//should be replaced by command_completed=1; in Stepper and Toolchanger ISR
+
 void command_running(int command_time) {
   //Timer for Command has to be set
   
@@ -92,90 +89,3 @@ void command_completed_ISR() {
   command_completed=1;
 }
 
-/*
-ISR(TIMER2_OVF_vect) {
-  //actual x/z-feed
-  int x_feed = ((long)STATE_F * phi[i]))>>15;
-  int z_feed = ((long)STATE_F * phi[91-i])>>15;
-
-  //next i
-  long clk_x =(long)x_feed * STEPS_PER_MM; //clk_x in 1/min
-  long clk_z =(long)z_feed * STEPS_PER_MM; //clk_z in 1/min
-
-  ix_next = CLK_TIMER2 / clk_x;
-
-  //X-Steps
-  if ((i%ix_next)==0) {
-    if (jxstep==0) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_X_A, LOW);
-      digitalWrite(PIN_STEPPER_X_B, LOW);
-    }
-
-    if (jxstep==1) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_X_A, LOW);
-      digitalWrite(PIN_STEPPER_X_B, HIGH);
-    }
-
-    if (jxstep==2) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_X_A, HIGH);
-      digitalWrite(PIN_STEPPER_X_B, HIGH);
-    }
-
-    if (jxstep==3) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_X_A, HIGH);
-      digitalWrite(PIN_STEPPER_X_B, LOW);
-    }
-  }
-
-  //Z-Steps
-  if ((i%iz_next)==0) {
-    if (jzstep==0) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_Z_A, LOW);
-      digitalWrite(PIN_STEPPER_Z_B, LOW);
-    }
-
-    if (jzstep==1) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_Z_A, LOW);
-      digitalWrite(PIN_STEPPER_Z_B, HIGH);
-    }
-
-    if (jzstep==2) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_Z_A, HIGH);
-      digitalWrite(PIN_STEPPER_Z_B, HIGH);
-    }
-
-    if (jzstep==3) { //in witch step are we actual
-      digitalWrite(PIN_STEPPER_Z_A, HIGH);
-      digitalWrite(PIN_STEPPER_Z_B, LOW);
-    }
-  }
-
-  //direction
-  if (X<0) {
-    if (jxstep==0){
-      jxstep=3;
-    } else jxstep--;
-  }
-  else {
-    if (jxstep==3){
-      jxstep=0;
-    } else jxstep++;
-  }
-
-  if (Z<0) {
-    if (jzstep==0){
-      jzstep=3;
-    } else jzstep--;
-  }
-  else {
-    if (jzstep==3){
-      jzstep=0;
-    } else jzstep++;
-  }
-  
-  //counter
-  i++;
-  
-  //reset INTR-flag
-}
-*/

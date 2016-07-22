@@ -1,23 +1,34 @@
 #include "Step_Motor_Control.h"
 
-byte current_x_step; //has to be set by stepper routine
-byte current_z_step; //has to be set by stepper routine
+//ISR
+volatile int x_steps=0; //has to be global for ISR
+volatile int z_steps=0; //has to be global for ISR
+volatile unsigned int i=0, ix_next=0, iz_next=0;
+volatile byte current_x_step=0, current_z_step=0;
 
 Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Motor
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Motor
 
 void stepper_on() {
   STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT
-  //turn stepper on with last_x_step & last_z_step from eeprom
-  //???
+  //turn stepper on with last_x_step & last_z_step (at Init from eeprom)
+  set_xstep(current_x_step);
+  set_zstep(current_z_step);
 }
 
 void stepper_off() {
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT
   //A,B,C,D LOW (We have to change the logic, because Signals at the moment are always C=!A, D=!B !!!)
+  digitalWrite(PIN_STEPPER_X_A, LOW);
+  digitalWrite(PIN_STEPPER_X_B, LOW);
+  digitalWrite(PIN_STEPPER_X_C, LOW);
+  digitalWrite(PIN_STEPPER_X_D, LOW);
+  digitalWrite(PIN_STEPPER_Z_A, LOW);
+  digitalWrite(PIN_STEPPER_Z_B, LOW);
+  digitalWrite(PIN_STEPPER_Z_C, LOW);
+  digitalWrite(PIN_STEPPER_Z_D, LOW);
+  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT
 }
 
-/*
 void set_xstep(byte nextstep) {
   switch (nextstep) {
       case 0:  // 1010
@@ -45,7 +56,34 @@ void set_xstep(byte nextstep) {
         digitalWrite(PIN_STEPPER_X_D, HIGH);
     }
 }
-*/
+
+void set_zstep(byte nextstep) {
+  switch (nextstep) {
+      case 0:  // 1010
+        digitalWrite(PIN_STEPPER_Z_A, HIGH);
+        digitalWrite(PIN_STEPPER_Z_B, LOW);
+        digitalWrite(PIN_STEPPER_Z_C, HIGH);
+        digitalWrite(PIN_STEPPER_Z_D, LOW);
+      break;
+      case 1:  // 0110
+        digitalWrite(PIN_STEPPER_Z_A, LOW);
+        digitalWrite(PIN_STEPPER_Z_B, HIGH);
+        digitalWrite(PIN_STEPPER_Z_C, HIGH);
+        digitalWrite(PIN_STEPPER_Z_D, LOW);
+      break;
+      case 2:  //0101
+        digitalWrite(PIN_STEPPER_Z_A, LOW);
+        digitalWrite(PIN_STEPPER_Z_B, HIGH);
+        digitalWrite(PIN_STEPPER_Z_C, LOW);
+        digitalWrite(PIN_STEPPER_Z_D, HIGH);
+      break;
+      case 3:  //1001
+        digitalWrite(PIN_STEPPER_Z_A, HIGH);
+        digitalWrite(PIN_STEPPER_Z_B, LOW);
+        digitalWrite(PIN_STEPPER_Z_C, LOW);
+        digitalWrite(PIN_STEPPER_Z_D, HIGH);
+    }
+}
 
 void stepper_timeout() {
   //set timeout for stepper engines active after last move
@@ -135,4 +173,55 @@ void read_last_z_step() { //needed to switch on stepper without movement
 //Stepper-Timeout-ISR:
 void stepper_timeout_ISR() {
   stepper_off();
+}
+
+ISR(TIMER2_OVF_vect) {
+  //maybe seperation in circle-sections needed
+  
+  //actual x/z-feed
+  int x_feed = ((long)STATE_F * lookup_cosinus[i])>>15; //x_steps is missing in this calculation and i is not correct (increments with 62,5 kHz)
+  int z_feed = ((long)STATE_F * lookup_cosinus[91-i])>>15; //z_steps is missing in this calculation and i is not correct (increments with 62,5 kHz)
+
+  //next i
+  long clk_x =(long)x_feed * STEPS_PER_MM; //clk_x in 1/min
+  long clk_z =(long)z_feed * STEPS_PER_MM; //clk_z in 1/min
+
+  ix_next = CLK_TIMER2 / clk_x; //not shure, if this creates a circle
+
+  //X-Steps
+  if ((i%ix_next)==0) {
+    //next step in direction
+    if (x_steps<0) {
+      if (current_x_step==0){
+        current_x_step=3;
+      } else current_x_step--;
+    }
+    else {
+      if (current_x_step==3){
+        current_x_step=0;
+      } else current_x_step++;
+    }
+    set_xstep(current_x_step);
+  }
+
+  //Z-Steps
+  if ((i%iz_next)==0) {
+    //next step in direction
+    if (z_steps<0) {
+      if (current_z_step==0){
+        current_z_step=3;
+      } else current_z_step--;
+    }
+    else {
+      if (current_z_step==3){
+        current_z_step=0;
+      } else current_z_step++;
+    }
+    set_zstep(current_z_step);
+  }
+
+  //counter
+  i++;
+  
+  //reset INTR-flag
 }
