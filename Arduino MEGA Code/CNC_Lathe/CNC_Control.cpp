@@ -4,7 +4,7 @@
 volatile boolean command_completed=1; //0=command in progress, 1=command_completed
 volatile boolean pause=1; //0=programm running, 1=pause
 struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
-int jumpback_N = CNC_CODE_NMAX-1;
+int jumpback_N = CNC_CODE_NMAX-1; //Return adress for CNC
 
 
 //functions
