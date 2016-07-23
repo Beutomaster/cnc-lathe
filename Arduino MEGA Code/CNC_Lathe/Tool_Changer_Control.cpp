@@ -12,10 +12,30 @@ void set_tool_position(byte tool) {
       char i = tool - STATE_T;
       if (i<0) i = 6 + i;
       
-      //set PINS with Timerinterrupt
+      //Step1 TOOL_CHANGER_CHANGE 2,9s
+      command_completed=0;
+      digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+      digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
+
+      /*
+      //Step2 and 3 set PINS with Timerinterrupt
+      //start Timer
       
+      //Step2 TOOL_CHANGER_FIXING 3,5s
+      digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
+      digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
+      
+      //Step3 TOOL_CHANGER_HOLD
+      digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
+      digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+      //stop Timer
+      command_completed=1;
+      */
+
+      /* not needed anymore
       //set command duration
       command_running(TOOL_TIME * i);
+      */
     }
     else {
       //initialize
