@@ -2,21 +2,21 @@
 
 //global vars
 
-//Cosinus LookUp-Table for Quarter Circle in Q15
+//Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
 volatile const int lookup_cosinus[91] = {32768, 32763, 32748, 32723, 32688, 32643, 32588, 32524, 32449, 32365, 32270, 32166, 32052, 31928, 31795, 31651, 31499, 31336, 31164, 30983, 30792, 30592, 30382, 30163, 29935, 29698, 29452, 29197, 28932, 28660, 28378, 28088, 27789, 27482, 27166, 26842, 26510, 26170, 25822, 25466, 25102, 24730, 24351, 23965, 23571, 23170, 22763, 22348, 21926, 21498, 21063, 20622, 20174, 19720, 19261, 18795, 18324, 17847, 17364, 16877, 16384, 15886, 15384, 14876, 14365, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
 
 //ERROR-Numbers
-byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
+volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-byte STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
-int STATE_RPM=0;
-int STATE_X=0;
-int STATE_Z=0;
-int STATE_F=0;
-int STATE_H=0;
-byte STATE_T=0; //0 = uninitialized
-int STATE_N=0;
+volatile byte STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile int STATE_RPM=0;
+volatile int STATE_X=0;
+volatile int STATE_Z=0;
+volatile int STATE_F=0;
+volatile int STATE_H=0;
+volatile byte STATE_T=0; //0 = uninitialized
+volatile int STATE_N=0;
 
 void setup() {
   // put your setup code here, to run once:

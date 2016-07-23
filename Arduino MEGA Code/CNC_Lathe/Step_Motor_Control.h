@@ -15,8 +15,15 @@
 
 extern Stepper xstepper; //X-Motor-Object
 extern Stepper zstepper; //Z-Motor-Object
+extern volatile unsigned int i_T2ISR, ix_next, iz_next;
+extern volatile int x_step;
+extern volatile int z_step;
 extern volatile int x_steps; //has to be global for ISR
 extern volatile int z_steps; //has to be global for ISR
+extern volatile int x_feed; //has to be global for ISR
+extern volatile int z_feed; //has to be global for ISR
+extern volatile int phi_x;
+extern volatile int phi_z;
 extern volatile byte current_x_step, current_z_step;
 
 void stepper_on();
