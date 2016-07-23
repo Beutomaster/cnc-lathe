@@ -76,17 +76,17 @@
 extern volatile const int lookup_cosinus[91];
 
 //ERROR-Numbers
-extern byte ERROR_NO;
+extern volatile byte ERROR_NO;
 
 //Machine State
-extern byte STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
-extern int STATE_RPM;
-extern int STATE_X;
-extern int STATE_Z;
-extern int STATE_F;
-extern int STATE_H;
-extern byte STATE_T; //0 = uninitialized
-extern int STATE_N;
+extern volatile byte STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+extern volatile int STATE_RPM;
+extern volatile int STATE_X;
+extern volatile int STATE_Z;
+extern volatile int STATE_F;
+extern volatile int STATE_H;
+extern volatile byte STATE_T; //0 = uninitialized
+extern volatile int STATE_N;
 
 //functions
 void set_error(byte);
