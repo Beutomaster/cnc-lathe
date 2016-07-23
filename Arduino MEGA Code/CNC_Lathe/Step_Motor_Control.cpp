@@ -36,13 +36,16 @@ void stepper_off() {
   STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT
 }
 
-void set_xstep(byte nextstep) { //right step order for +X has to be verified
+void set_xstep(byte nextstep) {
+  //+X/+Z: B 90° before A,
+  //-X/-Z: A 90° before B,
+  //C=!A, D=!B
   switch (nextstep) {
-      case 0:  // 1010
-        digitalWrite(PIN_STEPPER_X_A, HIGH);
+      case 0:  // 0011
+        digitalWrite(PIN_STEPPER_X_A, LOW);
         digitalWrite(PIN_STEPPER_X_B, LOW);
         digitalWrite(PIN_STEPPER_X_C, HIGH);
-        digitalWrite(PIN_STEPPER_X_D, LOW);
+        digitalWrite(PIN_STEPPER_X_D, HIGH);
         current_x_step = 0;
       break;
       case 1:  // 0110
@@ -52,11 +55,11 @@ void set_xstep(byte nextstep) { //right step order for +X has to be verified
         digitalWrite(PIN_STEPPER_X_D, LOW);
         current_x_step = 1;
       break;
-      case 2:  //0101
-        digitalWrite(PIN_STEPPER_X_A, LOW);
+      case 2:  //1100
+        digitalWrite(PIN_STEPPER_X_A, HIGH);
         digitalWrite(PIN_STEPPER_X_B, HIGH);
         digitalWrite(PIN_STEPPER_X_C, LOW);
-        digitalWrite(PIN_STEPPER_X_D, HIGH);
+        digitalWrite(PIN_STEPPER_X_D, LOW);
         current_x_step = 2;
       break;
       case 3:  //1001
@@ -68,13 +71,16 @@ void set_xstep(byte nextstep) { //right step order for +X has to be verified
     }
 }
 
-void set_zstep(byte nextstep) { //right step order for +Z has to be verified
+void set_zstep(byte nextstep) {
+  //+X/+Z: B 90° before A,
+  //-X/-Z: A 90° before B,
+  //C=!A, D=!B
   switch (nextstep) {
-      case 0:  // 1010
-        digitalWrite(PIN_STEPPER_Z_A, HIGH);
+      case 0:  // 0011
+        digitalWrite(PIN_STEPPER_Z_A, LOW);
         digitalWrite(PIN_STEPPER_Z_B, LOW);
         digitalWrite(PIN_STEPPER_Z_C, HIGH);
-        digitalWrite(PIN_STEPPER_Z_D, LOW);
+        digitalWrite(PIN_STEPPER_Z_D, HIGH);
         current_z_step = 0;
       break;
       case 1:  // 0110
@@ -84,11 +90,11 @@ void set_zstep(byte nextstep) { //right step order for +Z has to be verified
         digitalWrite(PIN_STEPPER_Z_D, LOW);
         current_z_step = 1;
       break;
-      case 2:  //0101
-        digitalWrite(PIN_STEPPER_Z_A, LOW);
+      case 2:  //1100
+        digitalWrite(PIN_STEPPER_Z_A, HIGH);
         digitalWrite(PIN_STEPPER_Z_B, HIGH);
         digitalWrite(PIN_STEPPER_Z_C, LOW);
-        digitalWrite(PIN_STEPPER_Z_D, HIGH);
+        digitalWrite(PIN_STEPPER_Z_D, LOW);
         current_z_step = 2;
       break;
       case 3:  //1001
