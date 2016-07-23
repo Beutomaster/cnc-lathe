@@ -1,6 +1,8 @@
 #include "Motion_Control.h"
 
 boolean incremental=0;
+volatile byte interpolationmode=0;
+volatile long clk_feed = 0; //clk_feed in 1/min (Overflow possible?)
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
@@ -15,13 +17,15 @@ int get_inc_Z(int abs_Z) { //get incremental z-Coordinate
   return abs_Z-STATE_Z;
 }
 
-void set_xz_move(int X, int Z, int feed, byte interpolationmode) {
+void set_xz_move(int X, int Z, int feed, byte interpolation) {
   //int x_steps=0; //has to be global for ISR
   //int z_steps=0; //has to be global for ISR
-  int x_feed=0;
-  int z_feed=0;
-  int command_time=0;
+  //int x_feed=0; //has to be global for ISR
+  //int z_feed=0; //has to be global for ISR
+  //int command_time=0;
+  command_completed=0;
   STATE_F = feed;
+  interpolationmode=interpolation;
 
   if (incremental){
     X=get_inc_X(X);
@@ -31,39 +35,49 @@ void set_xz_move(int X, int Z, int feed, byte interpolationmode) {
   x_steps = X*STEPS_PER_MM; //not finished, maybe overflow
   z_steps = Z*STEPS_PER_MM; //not finished, maybe overflow
 
-  if (interpolationmode==INTERPOLATION_LINEAR) { //interpolationmode = linear
+  clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in 1/min (Overflow possible?)
+
+  if (interpolationmode==INTERPOLATION_LINEAR) {
     if (Z==0) {
       x_feed=feed;
-    } else x_feed=(long)X*feed/Z; //not finished
+    } else x_feed=(long)X*feed/Z;
     if (X==0) {
       z_feed=feed;
-    } else z_feed=(long)Z*feed/X; //not finished
+    } else z_feed=(long)Z*feed/X;
 
+    //set and start Timer
+
+/*
     //calculate time of motion
     if (x_feed==0) {
       command_time=0;
-    } command_time=((long)X*100/x_feed); //not finished
+    }
+    else command_time=(long)X*100/x_feed;
     
     if (z_feed==0) {
-      command_time=0;
-    } if ((Z/z_feed*100) > command_time) command_time=((long)Z*100)/z_feed;  //not finished zfeed could be 0
+      //command_time=0;
+    }
+    else if (((long)Z*100/z_feed) > command_time) command_time=(long)Z*100/z_feed;
     command_time += WAIT_TIME; //for savety
+*/
+
+  }
+  else if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
+    //set and start Timer
     
   }
-  else if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE)
-  {                      //interpolationmode = CIRCULAR_CLOCKWISE
-    //???
-  }
-  else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE)
-  {                      //interpolationmode = CIRCULAR_COUNTERCLOCKWISE
-    //???
-  }
+  else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
+    //set and start Timer
     
+  }
+
+  /*
   set_x_steps(x_steps, x_feed);
   set_z_steps(z_steps, z_feed);
 
   //set command duration
   command_running(command_time);
+  */
 }
 
 void get_xz_coordinates() { //calculate Coordinates
