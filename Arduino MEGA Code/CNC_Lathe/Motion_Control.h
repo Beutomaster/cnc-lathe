@@ -16,6 +16,8 @@
 #define CLK_TIMER2 3750000 //in 1/min, CLK_T2=CLK_IO/(Prescaler 256)
 
 extern boolean incremental;
+extern volatile byte interpolationmode;
+extern volatile long clk_feed;
 
 void set_xz_coordinates(int, int);
 int get_inc_X(int abs_X);
