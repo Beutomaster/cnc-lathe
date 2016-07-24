@@ -32,8 +32,8 @@
 #define ERROR_SPINDLE_BIT 2
 
 //PINs
-#define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control
-#define PIN_SPINDELBOARD_NIKO 3       //Switch between Niko's Board and Hannes Servo
+#define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control (Usable for extINTR !!!)
+#define PIN_SPINDELBOARD_NIKO 59       //Switch between Niko's Board and Hannes Servo
 #define PIN_SPINDELPWM_NIKO 8           //PWM for Servo (Poti to set Revolutions)
 #define PIN_SERVO_ENGINE 9           //PWM for Servo (Poti to set Revolutions)
 #define PIN_STEPPER_X_A 10        //X35, PIN5 (A), Stepper X
@@ -48,12 +48,16 @@
 #define PIN_TOOL_CHANGER_CHANGE 5     //Tool-Changer change (+12,9V)
 #define PIN_TOOL_CHANGER_FIXING 6     //Tool-Changer fixing (-4,35V)
 #define PIN_SPINDLE_ON 7          //Spindle on
-#define PIN_REVOLUTIONS_SYNC 62     //A8: Revolution-Sensor SYNC
-#define PIN_REVOLUTIONS_COUNT 63      //A9: Revolution-Sensor COUNT
-#define PIN_OLD_CONTROL_STEPPER_X_A 64  //A10: X42, PIN5 (A), Stepper X (Watching old Control)
-#define PIN_OLD_CONTROL_STEPPER_X_B 65  //A11: X42, PIN6 (B), Stepper X (Watching old Control)
-#define PIN_OLD_CONTROL_STEPPER_Z_A 66  //A12: X41, PIN5 (A), Stepper Z (Watching old Control)
-#define PIN_OLD_CONTROL_STEPPER_Z_B 67  //A13: X41, PIN6 (B), Stepper Z (Watching old Control)
+#define PIN_REVOLUTIONS_SYNC 3     //Revolution-Sensor SYNC (Usable for extINTR !!!)
+#define PIN_REVOLUTIONS_COUNT 62      //A08: Revolution-Sensor COUNT
+#define PIN_OLD_CONTROL_STEPPER_X_A 63  //A09: X42, PIN5 (A), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_X_B 64  //A10: X42, PIN6 (B), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_X_C 65  //A11: X42, PIN3 (C), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_X_D 60  //A06: X42, PIN4 (D), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_Z_A 66  //A12: X41, PIN5 (A), Stepper Z (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_Z_B 67  //A13: X41, PIN6 (B), Stepper Z (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_Z_C 68  //A12: X41, PIN3 (C), Stepper Z (Watching old Control) (NOT Usable for extINTR !!!)
+#define PIN_OLD_CONTROL_STEPPER_Z_D 61  //A07: X41, PIN4 (D), Stepper Z (Watching old Control) (NOT Usable for extINTR !!!)
 //D68=A14 (IN): WZW Näherungssensor Position 0 ???
 #define PIN_SPI_MISO 50         //D50 (OUT): SPI RaspBerry (Master) <-> Arduino (Slave)
 #define PIN_SPI_MOSI 51         //D51 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave)
@@ -71,6 +75,7 @@
 
 
 //global vars
+extern boolean debug;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
 extern volatile const int lookup_cosinus[91];
