@@ -73,6 +73,9 @@
 #define LAST_X_STEP_ADDRESS 0
 #define LAST_Z_STEP_ADDRESS 1
 
+//TIMER
+#define CLK_TIMER1 3750000 //in 1/min
+#define CLK_TIMER3 3750000 //in 1/min
 
 //global vars
 extern boolean debug;
