@@ -75,13 +75,16 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_B),get_current_z_step,CHANGE);
 
   //TIMER
-  //get_revolutions, get_feed ???
   
   //Timer0, millis(), micros()
+  //get_revolutions, get_feed
   //Stepper-Timeout
-  
-  //Timer2
+
+  //Timer1
   //Toolchanger command_complete
+  
+  //Timer2 
+  //tone() function uses Timer2
   //TCCR2B = 0x00;        //Disbale Timer2 while we set it up
   //ASSR &= ~(_BV(AS2)); //set 0 to Select clk_T2S=CLK_IO
   //Prescaler 256
