@@ -13,11 +13,8 @@ boolean get_control_active() {
 }
 
 void observe_machine() {
-  //functions should be able to observe the machine in control active and passive mode
-  get_current_x_step(); //maybe better in an ISR
-  get_current_z_step(); //maybe better in an ISR
-  get_feed();
   //get feed and direction
+  get_feed();
   //maybe count from last coordinates
   //maybe get tool position (not wired yet)
 }
