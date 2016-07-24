@@ -24,8 +24,10 @@ void set_xz_move(int X, int Z, int feed, byte interpolation) {
   //int z_feed=0; //has to be global for ISR
   //int command_time=0;
   command_completed=0;
-  STATE_F = feed;
+  STATE_F = feed; 
   interpolationmode=interpolation;
+
+  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
 
   if (incremental){
     X=get_inc_X(X);
@@ -91,6 +93,7 @@ int get_xz_feed() {
 
 
 //should be replaced by command_completed=1; in Stepper and Toolchanger ISR
+//still needed for G04
 
 void command_running(int command_time) {
   //Timer for Command has to be set

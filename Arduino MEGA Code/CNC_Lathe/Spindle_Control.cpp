@@ -1,9 +1,13 @@
 #include "Spindle_Control.h"
 
+//global ISR vars
+volatile unsigned long rpm_time=0, last_rpm_time=0;
+
 //Create new Servo Objekt
 Servo potiservo;
 
 void spindle_on() {
+  last_rpm_time = micros();
   digitalWrite(PIN_SPINDLE_ON, HIGH);
   STATE |= _BV(STATE_SPINDLE_BIT); //set STATE_bit5 = spindle
 }
@@ -19,9 +23,12 @@ void set_revolutions(int target_revolutions) {
 	set_poti_servo(poti_angle);
 
 	//Alternativ über serielle Schnittstelle an Niko's Platine (0 to 255)
-  int rev_niko=map(target_revolutions, 0, REVOLUTIONS_MAX, 0, 255);
-  Serial.println (rev_niko); //for debugging
-  Serial1.println (rev_niko);
+  byte rev_niko=map(target_revolutions, 0, REVOLUTIONS_MAX, 0, 255);
+  if (debug) { //for debugging
+    Serial.print("RPM-set-Value Niko: ");
+    Serial.println (rev_niko);
+  }
+  Serial1.write (rev_niko);
 }
 
 int get_SERVO_CONTROL_POTI() {
@@ -40,6 +47,8 @@ void set_poti_servo(int poti_angle){
 }
 
 void get_revolutions_ISR() { //read revolution-sensor
-  //has to be an Timer/Compare-ISR
-  STATE_RPM = 0; //stub
+  //first value may be wrong at passive modus, overflow of timer0 may cause errors
+  rpm_time = micros();
+  STATE_RPM = 600000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(100sync/U) = 600000
+  last_rpm_time = rpm_time;
 }

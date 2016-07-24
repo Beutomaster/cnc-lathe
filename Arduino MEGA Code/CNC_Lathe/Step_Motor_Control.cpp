@@ -1,6 +1,9 @@
 #include "Step_Motor_Control.h"
 
-//ISR
+//ISR vars get_current_step
+volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0;
+
+//TIMER ISR vars
 volatile unsigned int i_T2ISR=0, ix_next=0, iz_next=0;
 volatile int x_step=0;
 volatile int z_step=0;
@@ -13,8 +16,8 @@ volatile int phi_z=0;
 
 volatile byte current_x_step=0, current_z_step=0;
 
-Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Motor
-Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Motor
+Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
+Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
 
 void stepper_on() {
   STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT
@@ -171,18 +174,57 @@ int count_z_steps() {
 	return z_steps_moved;
 }
 
-void get_current_x_step() { //to observe EMCO Control, maybe better in an ISR
+void get_current_x_step() { //to observe EMCO Control (ISR)
   //needs all four stepper pins to detect stepper off !!!
-  current_x_step = 0; //not finished
+  //Problem: Switching Stepper off in Step 0 can't be detected
+  last_xstep_time=xstep_time;
+  xstep_time=micros();
+  byte step_bincode;
+  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A)))<<3;
+  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B)))<<2;
+  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_C)))<<1;
+  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_D));
+  switch (step_bincode) {
+    case 0: STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+            break;
+    case 3: current_x_step = 0;
+            break;
+    case 6: current_x_step = 1;
+            break;
+    case 12: current_x_step = 2;
+            break;
+    case 9: current_x_step = 3;
+  }
 }
 
-void get_current_z_step() { //to observe EMCO Control, maybe better in an ISR
+void get_current_z_step() { //to observe EMCO Control (ISR)
   //needs all four stepper pins to detect stepper off !!!
-  current_z_step = 0; //not finished
+  //Problem: Switching Stepper off in Step 0 can't be detected
+  last_zstep_time=zstep_time;
+  zstep_time=micros();
+  byte step_bincode;
+  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A)))<<3;
+  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B)))<<2;
+  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_C)))<<1;
+  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_D));
+  switch (step_bincode) {
+    case 0: STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+            break;
+    case 3: current_z_step = 0;
+            break;
+    case 6: current_z_step = 1;
+            break;
+    case 12: current_z_step = 2;
+            break;
+    case 9: current_z_step = 3;
+  }
 }
 
 void get_feed() { //to observe EMCO Control
-  STATE_F = 0; //not finished
+  //Errors at overflow of TIMER0
+  long x_feed = 60000000L/((xstep_time-last_xstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
+  long z_feed = 60000000L/((zstep_time-last_zstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
+  STATE_F = sqrt(x_feed*x_feed+z_feed*z_feed);
 }
 
 // Write/Erase Cycles:10,000 Flash/100,000 EEPROM
@@ -371,5 +413,5 @@ ISR(TIMER2_OVF_vect) {
   //counter
   i_T2ISR++;
   
-  //reset INTR-flag? OVF is resetted automatically
+  //reset INTR-flag? OVF resets automatically
 }
