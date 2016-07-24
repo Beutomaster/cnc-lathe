@@ -250,7 +250,12 @@ void stepper_timeout_ISR() {
   stepper_off();
 }
 
-ISR(TIMER2_OVF_vect) {
+ISR(TIMER3_OVF_vect) {
+  //many things to do
+  //a different timer operation mode or interrupt is needed for suitable frequency
+  //many calculations could be done before starting the timer
+  //changing timer settings inside the ISR could replace some calculations and optimize CPU-time
+  
   if (interpolationmode==INTERPOLATION_LINEAR) {
     //not finished
   }
@@ -308,7 +313,7 @@ ISR(TIMER2_OVF_vect) {
       }
       
       //next i for switching
-      ix_next += CLK_TIMER2 / clk_xfeed;
+      ix_next += CLK_TIMER3 / clk_xfeed;
       
       //next step in direction
       //every step hast to be executed, feed can't be zero
@@ -372,7 +377,7 @@ ISR(TIMER2_OVF_vect) {
         }
       
         //next i for switching
-        iz_next += CLK_TIMER2 / clk_zfeed;
+        iz_next += CLK_TIMER3 / clk_zfeed;
         
         //next step in direction
         if (z_step<=z_steps) {
