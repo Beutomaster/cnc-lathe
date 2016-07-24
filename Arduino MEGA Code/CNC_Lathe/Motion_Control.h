@@ -13,7 +13,6 @@
 #define INTERPOLATION_CIRCULAR_CLOCKWISE 1
 #define INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE 2
 #define WAIT_TIME 1000; //waiting time for savety
-#define CLK_TIMER2 3750000 //in 1/min, CLK_T2=CLK_IO/(Prescaler 256)
 
 extern boolean incremental;
 extern volatile byte interpolationmode;
