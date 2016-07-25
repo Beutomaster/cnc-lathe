@@ -35,7 +35,7 @@
 #define PIN_CONTROL_INACTIVE 2       //Switch between EMCO and alternative Control (Usable for extINTR !!!)
 #define PIN_SPINDELBOARD_NIKO 59       //Switch between Niko's Board and Hannes Servo
 #define PIN_SPINDELPWM_NIKO 8           //PWM for Servo (Poti to set Revolutions)
-#define PIN_SERVO_ENGINE 9           //PWM for Servo (Poti to set Revolutions)
+#define PIN_SERVO_ENGINE 46           //PWM for Servo (Poti to set Revolutions) Timer5 PWM on Pins 44,45,46 is occupied by Servo.h (but it is not necessary to choose these pins)
 #define PIN_STEPPER_X_A 10        //X35, PIN5 (A), Stepper X, PB4
 #define PIN_STEPPER_X_B 11        //X35, PIN6 (B), Stepper X, PB5
 #define PIN_STEPPER_X_C 12        //X35, PIN3 (C), Stepper X, PB6

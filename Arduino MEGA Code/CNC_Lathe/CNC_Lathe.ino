@@ -85,26 +85,22 @@ void setup() {
 
   //Timer1
   //Toolchanger + command_complete
-  TCCR1B = 0; //Disbale Timer while we set it up and Normal Mode
-  TCCR1A = 0; //Normal Mode
-  TCCR1C = 0; //Normal Mode
-  //Timer Overflow INTR enable
-  TIMSK1 |= _BV(TOIE1); //set 1
-  //Prescaler 1 and Start Timer => Overflow with 16MHz/((2^16)*Prescaler) = 244,14Hz/Prescaler => we need a different timer operation mode or interrupt !!!
-  TCCR1B |= _BV(CS10); //set 1
+  //+X-Stepper?
   
   //Timer2 
   //tone() function uses Timer2
     
   //Timer3
-  //2x Stepper output + command_complete while in active mode and maybe observing Stepper in passsive mode 
+  //(X-/)Y-Stepper output + command_complete while in active mode and maybe observing Stepper in passsive mode
+  /*
   TCCR3B = 0; //Disbale Timer while we set it up and Normal Mode
   TCCR3A = 0; //Normal Mode
-  TCCR3C = 0; //Normal Mode
+  TCCR3C = 0; //no Force of Output Compare
   //Timer Overflow INTR enable
   TIMSK3 |= _BV(TOIE3); //set 1
   //Prescaler 1 and Start Timer => Overflow with 16MHz/((2^16)*Prescaler) = 244,14Hz/Prescaler => we need a different timer operation mode or interrupt !!!
   TCCR3B |= _BV(CS30); //set 1
+  */
 
   //Timer4
   //Niko's spindle regulator
