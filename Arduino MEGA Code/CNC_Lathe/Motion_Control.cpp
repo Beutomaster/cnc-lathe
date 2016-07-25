@@ -2,7 +2,6 @@
 
 boolean incremental=0;
 volatile byte interpolationmode=0;
-volatile long clk_feed = 0; //clk_feed in 1/min (Overflow possible?)
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
@@ -47,7 +46,19 @@ void set_xz_move(int X, int Z, int feed, byte interpolation) {
       z_feed=feed;
     } else z_feed=(long)Z*feed/X;
 
-    //set and start Timer
+    clk_xfeed = (long)x_feed * STEPS_PER_MM; //clk_xfeed in 1/min (Overflow possible?)
+    clk_zfeed = (long)z_feed * STEPS_PER_MM; //clk_xfeed in 1/min (Overflow possible?)
+
+    //set and start Timer3 for 200Hz
+    TCCR3B = 0b00011000; //connect no Input-Compare-PINs, WGM33=1, WGM32=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+    TCCR3A = 0b00000011; //connect no Output-Compare-PINs and WGM31=1, WGM30=1 for Fast PWM
+    TCCR3C = 0; //no Force of Output Compare
+    OCR3A = 10000; //OCR3A = 16MHz/(Prescaler*F_OCF3A) = 16MHz/(8*200Hz) = 10000
+    TCNT3 = 0; //set Start Value
+    //Output Compare A Match Interrupt Enable
+    TIMSK3 |= _BV(OCIE3A); //set 1
+    //Prescaler 8 and Start Timer
+    TCCR3B |= _BV(CS31); //set 1
 
 /*
     //calculate time of motion

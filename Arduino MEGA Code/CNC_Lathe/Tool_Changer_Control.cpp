@@ -3,6 +3,7 @@
 //Positionssensor oder Eingabe benoetigt
 
 volatile byte tool_step=0;
+volatile char i_tool=0;
 
 void set_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
@@ -11,8 +12,8 @@ void set_tool_position(byte tool) {
   
     if (initialized){
       //calc how many changes to make
-      char i = tool - STATE_T;
-      if (i<0) i = 6 + i;
+      char i_tool = tool - STATE_T;
+      if (i_tool<0) i_tool = 6 + i_tool;
       
       //Step1 TOOL_CHANGER_CHANGE 2,9s
       tool_step=1;
@@ -66,10 +67,21 @@ ISR(TIMER1_COMPA_vect) {
         //Step3 TOOL_CHANGER_HOLD
         digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
         digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+        i_tool--;
+        if (i_tool==0) {
         //stop Timer1
         //Output Compare A Match Interrupt Disable
         TIMSK1 &= ~(_BV(OCIE1A)); //set 0
         command_completed=1;
+        }
+        else {
+          //Step1 TOOL_CHANGER_CHANGE 2,9s
+          tool_step=1;
+          digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+          digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
+          OCR1A = 45313; //OCR1A = T_OCF1A*16MHz/Prescaler = 2,9s*16MHz/1024 = 45312,5 = 45313
+          TCNT1 = 0; //set Start Value
+        }
         tool_step=0;
       }
 }

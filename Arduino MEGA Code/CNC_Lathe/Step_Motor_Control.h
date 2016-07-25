@@ -22,6 +22,8 @@ extern volatile int x_steps; //has to be global for ISR
 extern volatile int z_steps; //has to be global for ISR
 extern volatile int x_feed; //has to be global for ISR
 extern volatile int z_feed; //has to be global for ISR
+extern volatile long clk_feed; //clk_feed in 1/min (Overflow possible?)
+extern volatile long clk_xfeed, clk_zfeed;
 extern volatile int phi_x;
 extern volatile int phi_z;
 extern volatile byte current_x_step, current_z_step;
@@ -39,6 +41,7 @@ int count_x_steps();
 int count_z_steps();
 void get_current_x_step();
 void get_current_z_step();
+void get_stepper_on_off();
 void get_feed();
 void save_current_x_step();
 void save_current_z_step();

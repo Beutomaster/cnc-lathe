@@ -11,6 +11,7 @@ volatile int x_steps=0; //has to be global for ISR
 volatile int z_steps=0; //has to be global for ISR
 volatile int x_feed=0; //has to be global for ISR
 volatile int z_feed=0; //has to be global for ISR
+volatile long clk_feed = 0; //clk_feed in 1/min (Overflow possible?)
 volatile int phi_x=0;
 volatile int phi_z=0;
 
@@ -180,20 +181,16 @@ void get_current_x_step() { //to observe EMCO Control (ISR)
   last_xstep_time=xstep_time;
   xstep_time=micros();
   byte step_bincode;
-  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A)))<<3;
-  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B)))<<2;
-  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_C)))<<1;
-  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_D));
+  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A))<<1);
+  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B));
   switch (step_bincode) {
-    case 0: STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+    case 0: current_x_step = 0;
             break;
-    case 3: current_x_step = 0;
+    case 1: current_x_step = 1;
             break;
-    case 6: current_x_step = 1;
+    case 3: current_x_step = 2;
             break;
-    case 12: current_x_step = 2;
-            break;
-    case 9: current_x_step = 3;
+    case 2: current_x_step = 3;
   }
 }
 
@@ -203,20 +200,26 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
   last_zstep_time=zstep_time;
   zstep_time=micros();
   byte step_bincode;
-  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A)))<<3;
-  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B)))<<2;
-  step_bincode |= ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_C)))<<1;
-  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_D));
+  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A))<<1);
+  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B));
   switch (step_bincode) {
-    case 0: STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+    case 0: current_z_step = 0;
             break;
-    case 3: current_z_step = 0;
+    case 1: current_z_step = 1;
             break;
-    case 6: current_z_step = 1;
+    case 3: current_z_step = 2;
             break;
-    case 12: current_z_step = 2;
-            break;
-    case 9: current_z_step = 3;
+    case 2: current_z_step = 3;
+  }
+}
+
+void get_stepper_on_off() { //to observe EMCO Control (ISR)
+  //detect stepper off !!! (X-Stepper)
+  if (digitalRead(PIN_OLD_CONTROL_STEPPER_X_OFF)){
+    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+  }
+  else {
+    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
   }
 }
 
@@ -262,9 +265,6 @@ ISR(TIMER3_OVF_vect) {
   }
   else {
     //Circular Interpolation with different speed settings for x- and z-stepper
-    
-    //local Vars
-    long clk_xfeed, clk_zfeed;
     
     //Steps have to be seperated in max. 90 sections of same moving average feed.
     //For each of x_steps and z_steps an average phi of the section has to be calculated.

@@ -4,7 +4,7 @@
 boolean debug=true;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
-volatile const int lookup_cosinus[91] = {32768, 32763, 32748, 32723, 32688, 32643, 32588, 32524, 32449, 32365, 32270, 32166, 32052, 31928, 31795, 31651, 31499, 31336, 31164, 30983, 30792, 30592, 30382, 30163, 29935, 29698, 29452, 29197, 28932, 28660, 28378, 28088, 27789, 27482, 27166, 26842, 26510, 26170, 25822, 25466, 25102, 24730, 24351, 23965, 23571, 23170, 22763, 22348, 21926, 21498, 21063, 20622, 20174, 19720, 19261, 18795, 18324, 17847, 17364, 16877, 16384, 15886, 15384, 14876, 14365, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
+volatile const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
 
 //ERROR-Numbers
 volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
@@ -25,15 +25,12 @@ void setup() {
   pinMode(PIN_CONTROL_INACTIVE, INPUT_PULLUP); //LOW-Active (GND = Control activ)
   pinMode(PIN_REVOLUTIONS_SYNC, INPUT);
   pinMode(PIN_REVOLUTIONS_COUNT, INPUT);
+  pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
-  pinMode(PIN_OLD_CONTROL_STEPPER_X_C, INPUT);
-  pinMode(PIN_OLD_CONTROL_STEPPER_X_D, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
-  pinMode(PIN_OLD_CONTROL_STEPPER_Z_C, INPUT);
-  pinMode(PIN_OLD_CONTROL_STEPPER_Z_D, INPUT);
-  pinMode(PIN_SERVO_ENGINE, OUTPUT);
+  pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDELBOARD_NIKO, OUTPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
@@ -47,13 +44,13 @@ void setup() {
   pinMode(PIN_TOOL_CHANGER_CHANGE, OUTPUT);
   pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
-  //pinMode(PIN_USART1_RX, INPUT);
-  //pinMode(PIN_USART1_TX, OUTPUT);
+  pinMode(PIN_USART1_RX, INPUT);
+  pinMode(PIN_USART1_TX, OUTPUT);
   pinMode(PIN_SPI_MISO, OUTPUT); 		//Arduino is SPI-Slave
   pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SCK, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SS, INPUT); 	//Arduino is SPI-Slave
-  potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
+  //potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
   
   //Serial Communication
   Serial.begin(115200); //for Debugging with Serial Monitor
@@ -68,7 +65,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
 
   //Observing old Control
-  //Problem: Switching Stepper off in Step 0 can't be detected
+  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_OFF),get_stepper_on_off,CHANGE);
   attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_A),get_current_x_step,CHANGE);
   attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_B),get_current_x_step,CHANGE);
   attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_A),get_current_z_step,CHANGE);
@@ -94,19 +91,40 @@ void setup() {
   //Timer3
   //(X-/)Y-Stepper output + command_complete while in active mode and maybe observing Stepper in passsive mode
   /*
-  TCCR3B = 0; //Disbale Timer while we set it up and Normal Mode
-  TCCR3A = 0; //Normal Mode
+  //set and start Timer3 for 200Hz
+  TCCR3B = 0b00011000; //connect no Input-Compare-PINs, WGM33=1, WGM32=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+  TCCR3A = 0b00000011; //connect no Output-Compare-PINs and WGM31=1, WGM30=1 for Fast PWM
   TCCR3C = 0; //no Force of Output Compare
-  //Timer Overflow INTR enable
-  TIMSK3 |= _BV(TOIE3); //set 1
-  //Prescaler 1 and Start Timer => Overflow with 16MHz/((2^16)*Prescaler) = 244,14Hz/Prescaler => we need a different timer operation mode or interrupt !!!
-  TCCR3B |= _BV(CS30); //set 1
+  OCR3A = 10000; //OCR3A = 16MHz/(Prescaler*F_OCF3A) = 16MHz/(8*200Hz) = 10000
+  TCNT3 = 0; //set Start Value
+  //Output Compare A Match Interrupt Enable
+  TIMSK3 |= _BV(OCIE3A); //set 1
+  //Prescaler 8 and Start Timer
+  TCCR3B |= _BV(CS31)); //set 1
   */
 
   //Timer4
-  //Niko's spindle regulator
+  //Niko's spindle regulator and FAST PWM
+  //set and start Timer4 with 20 kHz
+  TCCR4B = 0b00011000; //connect no Input-Compare-PINs, WGM43=1, WGM42=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=0, WGM40=1 for Fast PWM with ICR4=TOP
+  TCCR4C = 0; //no Force of Output Compare
+  ICR4 = 800; //ICR4 = 16MHz/(Prescaler*f_ICR4) = 16MHz/(8*20kHz) = 800
+  OCR4C = 0; //OCR4C max. = ICR4 *0,55338792 = 442 !!! Engine is only for 180V DC
+  TCNT4 = 0; //set Start Value
+  //Prescaler 8 and Start Timer
+  TCCR4B |= _BV(CS51); //set 1
   
   //Timer5 Servo
+  //set and start Timer5 with 20ms TOP and 544µs to 2400µs OCR5A
+  TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+  TCCR5A = 0b10000011; //connect OC5A-PIN (PIN 46) to Output Compare and WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+  TCCR5C = 0; //no Force of Output Compare
+  ICR5 = 40000; //ICR5 = T_ICR5*16MHz/Prescaler = 20ms*16MHz/8 = 40000
+  OCR5A = 1088; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088
+  TCNT5 = 0; //set Start Value
+  //Prescaler 8 and Start Timer
+  TCCR5B |= _BV(CS51); //set 1
 
   //cli() //global INTR enable
 }
