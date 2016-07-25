@@ -4,7 +4,7 @@
 volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0;
 
 //TIMER ISR vars
-volatile unsigned int i_T2ISR=0, ix_next=0, iz_next=0;
+volatile unsigned int i_T3ISR=0, ix_next=0, iz_next=0;
 volatile int x_step=0;
 volatile int z_step=0;
 volatile int x_steps=0; //has to be global for ISR
@@ -255,6 +255,7 @@ ISR(TIMER3_OVF_vect) {
   //a different timer operation mode or interrupt is needed for suitable frequency
   //many calculations could be done before starting the timer
   //changing timer settings inside the ISR could replace some calculations and optimize CPU-time
+  //Start-/Stop-Frequency
   
   if (interpolationmode==INTERPOLATION_LINEAR) {
     //not finished
@@ -270,7 +271,7 @@ ISR(TIMER3_OVF_vect) {
     //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
     
     //next X-Step
-    if (i_T2ISR == ix_next) {
+    if (i_T3ISR == ix_next) {
       phi_x = (long)x_step*90/x_steps;
       
       if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
@@ -293,7 +294,7 @@ ISR(TIMER3_OVF_vect) {
         }
       }
       else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
-        //calculation of next z-clk (Direction)
+        //calculation of next x-clk (Direction)
         if (z_step < 0) {
           if (x_step < 0) {
           clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
@@ -335,11 +336,11 @@ ISR(TIMER3_OVF_vect) {
     }
     
     //next Z-Step
-    if (i_T2ISR == iz_next) {
+    if (i_T3ISR == iz_next) {
       phi_z = (long)z_step*90/z_steps;
       
       if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
-        //calculation of next x-clk (Direction)
+        //calculation of next z-clk (Direction)
         if (z_step < 0) {
           if (x_step < 0) {
           clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
@@ -402,7 +403,7 @@ ISR(TIMER3_OVF_vect) {
   }
   
   if ((x_step>=x_steps) && (z_step>=z_steps)) {
-    int i_T2ISR=0;
+    int i_T3ISR=0;
     int ix_next=0;
     int iz_next=0;
     phi_x=0;
@@ -416,7 +417,7 @@ ISR(TIMER3_OVF_vect) {
   }
   
   //counter
-  i_T2ISR++;
+  i_T3ISR++;
   
   //reset INTR-flag? OVF resets automatically
 }

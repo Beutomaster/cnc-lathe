@@ -81,6 +81,7 @@ void setup() {
   //millis() returns (unsigned long)
   //micros() returned value at 16 MHz is always a multiple of four microseconds in (unsigned long)
   //get_revolutions and get_feed with micros() in PIN triggerd ISR !!! micros reads out Timer0 even in an ISR, but overflow could be missed
+  //Dwell?
   //Stepper-Timeout
 
   //Timer1
