@@ -23,7 +23,7 @@ boolean process_incomming_msg();
 void create_machine_state_msg();
 void create_spi_error_msg();
 //void send_error_number(byte);
-ISR (SPI_STC_vect);
+//ISR (SPI_STC_vect);
 
 #endif
 

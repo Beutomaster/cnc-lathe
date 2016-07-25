@@ -2,6 +2,8 @@
 
 //Positionssensor oder Eingabe benoetigt
 
+volatile byte tool_step=0;
+
 void set_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
     //set new Tool Postion
@@ -13,24 +15,13 @@ void set_tool_position(byte tool) {
       if (i<0) i = 6 + i;
       
       //Step1 TOOL_CHANGER_CHANGE 2,9s
+      tool_step=1;
       command_completed=0;
       digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
       digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
 
-      /*
       //Step2 and 3 set PINS with Timerinterrupt
-      //start Timer
-      
-      //Step2 TOOL_CHANGER_FIXING 3,5s
-      digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
-      digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
-      
-      //Step3 TOOL_CHANGER_HOLD
-      digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
-      digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
-      //stop Timer
-      command_completed=1;
-      */
+      //set and start Timer1 for 2,9s
 
       /* not needed anymore
       //set command duration
@@ -48,5 +39,25 @@ void set_tool_position(byte tool) {
 byte get_tool_position() { //maybe not needed
 	byte tool_position=0; //Stub
 	return tool_position;
+}
+
+ISR(TIMER1_OVF_vect) {
+//Toolchanger-ISR
+      if (tool_step==1) {
+        //Step2 TOOL_CHANGER_FIXING 3,5s
+        tool_step=2;
+        digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
+        digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
+        //set and start Timer1 for 3,5s
+      }
+
+      if (tool_step==2) {
+        //Step3 TOOL_CHANGER_HOLD
+        digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
+        digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+        //stop Timer1
+        command_completed=1;
+        tool_step=0;
+      }
 }
 
