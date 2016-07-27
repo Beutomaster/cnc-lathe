@@ -44,6 +44,7 @@ void setup() {
   pinMode(PIN_TOOL_CHANGER_CHANGE, OUTPUT);
   pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
+  pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
   pinMode(PIN_USART1_RX, INPUT);
   pinMode(PIN_USART1_TX, OUTPUT);
   pinMode(PIN_SPI_MISO, OUTPUT); 		//Arduino is SPI-Slave

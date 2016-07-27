@@ -11,7 +11,11 @@
 #define REVOLUTIONS_MIN 460  //rpm
 #define OCR5A_min 1088
 #define OCR5A_max 4800
+#define OCR4C_min 0 //value for 460 rpm ???
 #define OCR4C_max 442
+
+#define K_P 1 //0,001 - 100 ???
+#define KI_TN 1 //1s
 
 //Create new Servo Objekt
 //extern Servo potiservo; //old Servo Lib
