@@ -24,6 +24,9 @@ To Arduino:
 014 15 NN GG XX ZZ FF HH CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
 015 CRC-8 #shutdown
 
+//Transmission-Factor needed for Calculation of Revolutions !!!
+//Change Spindle-Direction
+
 From Arduino:
 100 18 byte2=bit5_stepper|bit4_spindle|bit3_inch|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 (101 4 ERROR_Number CRC-8 #Error) obsolete
