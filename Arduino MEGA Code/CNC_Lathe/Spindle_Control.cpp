@@ -2,7 +2,8 @@
 
 //global ISR vars
 volatile unsigned long rpm_time=0, last_rpm_time=0;
-volatile long clk_xfeed=0, clk_zfeed=0;
+volatile long clk_xfeed=0, clk_zfeed=0, y=0, y_last=0;
+volatile int target_revolutions=0, delta_revolution_last=0;
 
 //Create new Servo Objekt
 //Servo potiservo;  //old Servo Lib
@@ -18,13 +19,13 @@ void spindle_off() {
   STATE &= ~(_BV(STATE_SPINDLE_BIT)); //delete STATE_bit5 = spindle
 }
 
-void set_revolutions(int target_revolutions) {
+void set_revolutions(int target_revolutions_local) {
 	//Poti-Servo
-	int poti_angle = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
+	int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
 	set_poti_servo(poti_angle);
  
 	//Alternativ über serielle Schnittstelle an Niko's Platine (0 to 255)
-  byte rev_niko=map(target_revolutions, 0, REVOLUTIONS_MAX, 0, 255);
+  byte rev_niko=map(target_revolutions_local, 0, REVOLUTIONS_MAX, 0, 255);
   if (debug) { //for debugging
     Serial.print("RPM-set-Value Niko: ");
     Serial.println (rev_niko);
@@ -35,7 +36,8 @@ void set_revolutions(int target_revolutions) {
   //min. 16KHz?
   //230V AC * sqrt(2) => ca. 325 V DC - deltaU/2 (Glättung)
   //Motor max. 180 V DC * 100 /325 V DC = 55,384615384615384615384615384615 %
-  OCR4C = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, OCR4C_max);
+  target_revolutions = target_revolutions_local;
+  OCR4C = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
   TCNT4 = 0; //set Start Value
 }
 
@@ -64,7 +66,17 @@ void get_revolutions_ISR() { //read revolution-sensor
 
 //spindle regulator
 ISR(TIMER4_OVF_vect){
-  //Regulator
-  //OCR4C = 0;
+  //PI-Regulator
+  //get Regulator-Parameter for 20KHz with 20 to 80% PWM and Ziegler-Nicols formula
+  //#define K_P 1; //0,001 - 100 ???
+  //#define KI_TN 1; //1s
+  //T_Regler=20ms
+/*
+  int delta_revolution = STATE_RPM - target_revolutions;
+  y = y_last + (((int32_t)K_P*(delta_revolution - delta_revolution_last))>>15) + (((int32_t)KI_TN * delta_revolution)>>15);
+  OCR4C = map(y, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
+  y_last = y;
+  delta_revolution_last = delta_revolution;
+*/
 }
 
