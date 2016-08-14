@@ -177,7 +177,7 @@ void G25(int L) {
   STATE_N = L-1;
 }
 
-void G26(int X, int Z, byte T) {} //Tool correction and tool call-up (obsolete, backward compatibility for M06)
+void G26(int X, int Z, byte T) { M06(X, Z, T);} //Tool correction and tool call-up (obsolete, backward compatibility for M06)
 
 //Jump instruction
 void G27(int L) {STATE_N = L;}

@@ -83,14 +83,15 @@ void setup() {
   //Stepper-Timeout
 
   //Timer1
-  //Toolchanger + command_complete
+  //Toolchanger + set command_completed
   //+X-Stepper?
+  //command_complete isr
   
   //Timer2 
   //tone() function uses Timer2
     
   //Timer3
-  //(X-/)Y-Stepper output + command_complete while in active mode and maybe observing Stepper in passsive mode
+  //(X-/)Y-Stepper output + set command_completed while in active mode and maybe observing Stepper in passsive mode
   /*
   //set and start Timer3 for 200Hz
   TCCR3B = 0b00011000; //connect no Input-Compare-PINs, WGM33=1, WGM32=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
