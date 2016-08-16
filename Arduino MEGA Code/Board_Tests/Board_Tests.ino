@@ -1,5 +1,7 @@
 #include "Board_Tests.h"
 
+int i=0;
+
 void setup() {
   // put your setup code here, to run once:
   //PINs
@@ -36,7 +38,7 @@ void setup() {
   
   //Serial Communication
   Serial.begin(115200); //for Debugging with Serial Monitor
-  
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -44,7 +46,7 @@ void loop() {
   //Stepper-Pins
   stepper_off();
   delay(20);
-  for (int i=0, i<4, i++) {
+  for (i=0; i<4; i++) {
     set_xstep(i);
     set_zstep(i);
     delay(20);
