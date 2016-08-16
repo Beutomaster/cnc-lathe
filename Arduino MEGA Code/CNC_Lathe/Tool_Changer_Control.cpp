@@ -63,7 +63,7 @@ ISR(TIMER1_COMPA_vect) {
         TCNT1 = 0; //set Start Value
       }
 
-      if (tool_step==2) {
+      else if (tool_step==2) {
         //Step3 TOOL_CHANGER_HOLD
         digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
         digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
