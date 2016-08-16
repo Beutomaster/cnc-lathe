@@ -10,7 +10,6 @@ void stepper_off() {
   digitalWrite(PIN_STEPPER_Z_B, LOW);
   digitalWrite(PIN_STEPPER_Z_C, LOW);
   digitalWrite(PIN_STEPPER_Z_D, LOW);
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT
 }
 
 void set_xstep(byte nextstep) {
