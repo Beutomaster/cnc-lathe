@@ -79,7 +79,16 @@ void set_xz_move(int X, int Z, int feed, byte interpolation) {
     if (Z) { 
       OCR3A = (62500L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz/clk_zfeed)-1
     }
+  }
 
+  else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
+    //set Timer-Compare-Values
+    if (X) {
+      OCR1A = 7514; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz*60/499s)-1
+    }
+    if (Z) { 
+      OCR3A = 7514; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz*60/499s)-1
+    }
   }
   
   else { //Circular Interpolation with different speed settings for x- and z-stepper
@@ -137,8 +146,9 @@ void set_xz_move(int X, int Z, int feed, byte interpolation) {
         }
       }
     }
+    
     //set Timer-Compare-Values
-    //every step hast to be executed, feed can't be zero
+    //every step has to be executed, feed can't be zero
     if (clk_xfeed) { //clock not zero
       OCR1A = (62500L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz/clk_xfeed)-1
     } else OCR1A = 62499L;
