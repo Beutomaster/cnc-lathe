@@ -21,7 +21,7 @@ Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
 
 void stepper_on() {
-  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT
+  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT
   //turn stepper on with last_x_step & last_z_step (at Init from eeprom)
   set_xstep(current_x_step);
   set_zstep(current_z_step);
@@ -37,7 +37,7 @@ void stepper_off() {
   digitalWrite(PIN_STEPPER_Z_B, LOW);
   digitalWrite(PIN_STEPPER_Z_C, LOW);
   digitalWrite(PIN_STEPPER_Z_D, LOW);
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT
+  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT
 }
 
 void set_xstep(byte nextstep) {
@@ -216,10 +216,10 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
 void get_stepper_on_off() { //to observe EMCO Control (ISR)
   //detect stepper off !!! (X-Stepper)
   if (digitalRead(PIN_OLD_CONTROL_STEPPER_X_OFF)){
-    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
   }
   else {
-    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
   }
 }
 

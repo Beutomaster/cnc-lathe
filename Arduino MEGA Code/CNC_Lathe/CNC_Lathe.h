@@ -24,7 +24,8 @@
 #define STATE_PAUSE_BIT 3
 #define STATE_INCH_BIT 4
 #define STATE_SPINDLE_BIT 5
-#define STATE_STEPPER_BIT 6
+#define STATE_SPINDLE_DIRECTION_BIT 6
+#define STATE_STEPPER_BIT 7
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
 #define ERROR_SPI_BIT 0
@@ -86,7 +87,7 @@ extern volatile const int lookup_cosinus[91];
 extern volatile byte ERROR_NO;
 
 //Machine State
-extern volatile byte STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+extern volatile byte STATE; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 extern volatile int STATE_RPM;
 extern volatile int STATE_X;
 extern volatile int STATE_Z;

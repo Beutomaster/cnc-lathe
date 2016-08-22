@@ -112,6 +112,8 @@ boolean process_cnc_listing() {
                 break;
         case 3: M03();
                 break;
+        case 4: M04();
+                break;
         case 5: M05();
                 break;
         case 6: M06(cnc_code[STATE_N].XI, cnc_code[STATE_N].ZK, cnc_code[STATE_N].FTLK);
@@ -208,7 +210,18 @@ void G196(int S) {} //new: set max. rev. in 1/min for G96
 //Programmed stop
 void M00() {programm_pause();};
 
-void M03() {spindle_on();} //Main spindle ON. right hand direction run
+//Main spindle ON. right hand direction run
+void M03() {
+  spindle_direction(LOW);
+  spindle_on();
+}
+
+//Main spindle ON. left hand direction run
+void M04() {
+  spindle_direction(HIGH);
+  spindle_on();
+}
+
 void M05() {spindle_off();} //Main Spindle OFF
 void M06(int X, int Z, byte T) {} //Tool length compensation (T = Tool address)
 void M17() {STATE_N = jumpback_N;} //return command to the main program
