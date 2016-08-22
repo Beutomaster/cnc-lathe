@@ -137,7 +137,7 @@ boolean process_cnc_listing() {
 
 //Rapid traverse
 void G00(int X, int Z) {
-  
+  set_xz_move(X, Z, 499, RAPID_LINEAR_MOVEMENT);
 }
 
 //Linear interpolation

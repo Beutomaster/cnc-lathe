@@ -117,6 +117,10 @@ void setup() {
   TCCR5B |= _BV(CS51); //set 1
 
   //cli() //global INTR enable
+
+  //read Last Steps
+  //read_last_x_step();
+  //read_last_z_step();
 }
 
 void set_error(byte error_number) {

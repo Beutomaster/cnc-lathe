@@ -148,6 +148,14 @@ boolean process_incomming_msg() {
                 cnc_code[N].HS = (((int)rx_buf[11])<<8) + rx_buf[12];
               }
               break;
+    case 15:  //Shutdown
+              programm_stop();
+              stepper_off();
+              spindle_off();
+              save_current_x_step();
+              save_current_z_step();
+              save_current_tool_position();
+              break;
     default:  //SPI-Error "PID unkown"
               success=1;
   }

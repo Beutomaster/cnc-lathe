@@ -21,8 +21,8 @@
 #define PIN_STEPPER_X_D 13        //PB7: X35, PIN4 (D), Stepper X
 #define PIN_STEPPER_Z_A 14        //PJ1: X34, PIN5 (A), Stepper Z
 #define PIN_STEPPER_Z_B 15        //PJ0: X34, PIN6 (B), Stepper Z
-#define PIN_STEPPER_Z_C 16        //PH0: PH1: X34, PIN3 (C), Stepper Z
-#define PIN_STEPPER_Z_D 17        //X34, PIN4 (D), Stepper Z
+#define PIN_STEPPER_Z_C 17 //Hotfix, planed was 16        //PH0: PH1: X34, PIN3 (C), Stepper Z
+#define PIN_STEPPER_Z_D 16 //Hotfix, planed was 17        //X34, PIN4 (D), Stepper Z
 #define PIN_USART1_TX 18           //D18 (OUT) : Spindelplatine Niko: Drehzahlvorgabe per USART
 #define PIN_USART1_RX 19           //D19 (IN): Spindelplatine Niko: Drehzahlvorgabe per USART
 #define PIN_SERVO_ENGINE 46         //PL3: PWM for Servo (Poti to set Revolutions) Timer5 PWM on Pins 44,45,46 is occupied by Servo.h (but it is not necessary to choose these pins)
