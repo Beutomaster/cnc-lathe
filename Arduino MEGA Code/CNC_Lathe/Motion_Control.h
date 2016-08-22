@@ -15,8 +15,9 @@
 #define WAIT_TIME 1000; //waiting time for savety
 
 extern boolean incremental;
-extern volatile byte interpolationmode;
-extern volatile long clk_feed;
+extern volatile byte interpolationmode, i_command_time;
+extern volatile long clk_feed, clk_xfeed, clk_zfeed;
+extern volatile int command_time;
 
 void set_xz_coordinates(int, int);
 int get_inc_X(int abs_X);
@@ -25,7 +26,6 @@ void set_xz_move(int, int, int, byte);
 void get_xz_coordinates();
 int get_xz_feed();
 void command_running(int);
-void command_completed_ISR();
 
 #endif
 

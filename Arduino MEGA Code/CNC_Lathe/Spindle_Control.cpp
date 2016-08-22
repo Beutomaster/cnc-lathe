@@ -2,7 +2,7 @@
 
 //global ISR vars
 volatile unsigned long rpm_time=0, last_rpm_time=0;
-volatile long clk_xfeed=0, clk_zfeed=0, y=0, y_last=0;
+volatile long y=0, y_last=0;
 volatile int target_revolutions=0, delta_revolution_last=0;
 
 //Create new Servo Objekt
