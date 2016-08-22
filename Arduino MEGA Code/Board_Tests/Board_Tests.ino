@@ -44,8 +44,8 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   //Stepper-Pins
-  stepper_off();
-  delay(20);
+  //stepper_off();
+  //delay(20);
   for (i=0; i<4; i++) {
     set_xstep(i);
     set_zstep(i);
