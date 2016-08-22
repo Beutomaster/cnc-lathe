@@ -24,7 +24,8 @@
 #define STATE_PAUSE_BIT 3
 #define STATE_INCH_BIT 4
 #define STATE_SPINDLE_BIT 5
-#define STATE_STEPPER_BIT 6
+#define STATE_SPINDLE_DIRECTION_BIT 6
+#define STATE_STEPPER_BIT 7
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
 #define ERROR_SPI_BIT 0
@@ -46,8 +47,8 @@
 #define PIN_STEPPER_X_D 13        //PB7: X35, PIN4 (D), Stepper X
 #define PIN_STEPPER_Z_A 14        //PJ1: X34, PIN5 (A), Stepper Z
 #define PIN_STEPPER_Z_B 15        //PJ0: X34, PIN6 (B), Stepper Z
-#define PIN_STEPPER_Z_C 16        //PH0: PH1: X34, PIN3 (C), Stepper Z
-#define PIN_STEPPER_Z_D 17        //X34, PIN4 (D), Stepper Z
+#define PIN_STEPPER_Z_C 17 //Hotfix, planed was 16        //PH0: PH1: X34, PIN3 (C), Stepper Z
+#define PIN_STEPPER_Z_D 16 //Hotfix, planed was 17        //X34, PIN4 (D), Stepper Z
 #define PIN_USART1_TX 18           //D18 (OUT) : Spindelplatine Niko: Drehzahlvorgabe per USART
 #define PIN_USART1_RX 19           //D19 (IN): Spindelplatine Niko: Drehzahlvorgabe per USART
 #define PIN_SERVO_ENGINE 46         //PL3: PWM for Servo (Poti to set Revolutions) Timer5 PWM on Pins 44,45,46 is occupied by Servo.h (but it is not necessary to choose these pins)
@@ -70,6 +71,7 @@
 //EEPROM-Adresses
 #define LAST_X_STEP_ADDRESS 0
 #define LAST_Z_STEP_ADDRESS 1
+#define LAST_TOOL_ADDRESS 3
 
 //TIMER
 #define CLK_TIMER1 3750000 //in 1/min
@@ -85,7 +87,7 @@ extern volatile const int lookup_cosinus[91];
 extern volatile byte ERROR_NO;
 
 //Machine State
-extern volatile byte STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+extern volatile byte STATE; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 extern volatile int STATE_RPM;
 extern volatile int STATE_X;
 extern volatile int STATE_Z;

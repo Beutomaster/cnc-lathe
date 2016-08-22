@@ -19,6 +19,36 @@ void spindle_off() {
   STATE &= ~(_BV(STATE_SPINDLE_BIT)); //delete STATE_bit5 = spindle
 }
 
+void spindle_direction(bool spindle_reverse) {
+  if (get_control_active()) { //Hotfix for Board V1.25, should be changed in V2.1
+    if (spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
+      spindle_off();
+      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
+      STATE |= _BV(STATE_SPINDLE_DIRECTION_BIT); //set STATE_bit6 = spindle_direction
+    }
+    else if (!spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
+      spindle_off();
+      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
+      STATE &= ~(_BV(STATE_SPINDLE_DIRECTION_BIT)); //delete STATE_bit6 = spindle_direction
+    }
+  } else {
+    if (spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
+      spindle_off();
+      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
+      STATE |= _BV(STATE_SPINDLE_DIRECTION_BIT); //set STATE_bit6 = spindle_direction
+    }
+    else if (!spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
+      spindle_off();
+      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
+      STATE &= ~(_BV(STATE_SPINDLE_DIRECTION_BIT)); //delete STATE_bit6 = spindle_direction
+    }
+  }
+}
+
 void set_revolutions(int target_revolutions_local) {
 	//Poti-Servo
 	int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
