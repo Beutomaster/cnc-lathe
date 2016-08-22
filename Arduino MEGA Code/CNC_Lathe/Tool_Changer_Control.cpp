@@ -46,6 +46,14 @@ byte get_tool_position() { //maybe not needed
 	return tool_position;
 }
 
+void save_current_tool_position() { //instead of initialization, save in eeprom !!!
+  EEPROM.write(LAST_TOOL_ADDRESS, STATE_T);
+}
+
+void read_current_tool_position() {
+  STATE_T = EEPROM.read(LAST_TOOL_ADDRESS);
+}
+
 ISR(TIMER1_COMPA_vect) {
 //Toolchanger-ISR
       if (tool_step==1) {
