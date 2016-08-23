@@ -1,3 +1,7 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     background-color: lightgrey;
 	font-family: verdana;
@@ -189,6 +193,7 @@ nav ul li>a:link    {color:white; background-color:transparent; text-decoration:
 nav ul li>a:visited {color:white; background-color:transparent; text-decoration:none}
 nav ul li>a:hover   {color:red; background-color:transparent; text-decoration:underline}
 nav ul li>a:active  {color:yellow; background-color:transparent; text-decoration:underline}
+
 
 table {
 	display:block;
