@@ -23,8 +23,8 @@ void setup() {
   // put your setup code here, to run once:
   //PINs
   pinMode(PIN_CONTROL_INACTIVE, INPUT_PULLUP); //LOW-Active (GND = Control activ)
-  pinMode(PIN_REVOLUTIONS_SYNC, INPUT);
-  pinMode(PIN_REVOLUTIONS_COUNT, INPUT);
+  pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
+  pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);

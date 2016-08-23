@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<machinestate>
+	<measure>
+		<rpm_measure>500</rpm_measure>
+		<x_actual>94</x_actual>
+		<z_actual>-120</z_actual>
+		<f_actual>200</f_actual>
+		<t_actual>1</t_actual>
+	</measure>
+	<error>
+		<errorno>0</errorno>
+	</error>
+	<cncblock>
+		<blockno>N0000</blockno>
+	</cncblock>
+</machinestate>
