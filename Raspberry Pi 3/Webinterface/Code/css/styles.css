@@ -1,0 +1,345 @@
+body {
+    background-color: lightgrey;
+	font-family: verdana;
+    font-size: 100%;
+}
+
+h1 {
+	color: deepskyblue;
+    font-size: 2.5em;
+	font-weight: bold;
+}
+
+h2 {
+    font-size: 1.75em;
+}
+
+p {
+    font-size: 0.875em;
+}
+
+form {
+    margin-bottom: 15px;
+}
+
+.button {
+    background-color: #4CAF50; /* green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    /*font-size: 16px;*/
+	font-size: 1rem;
+    font-weight: bold;
+    margin: 4px 2px;
+    cursor: pointer;
+	box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+	/*box-shadow: 0 9px #999;*/
+}
+
+.button:hover {background-color: #3e8e41}
+
+.button:active {
+  background-color: #3e8e41;
+  /*box-shadow: 0 5px #666;*/
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  transform: translateY(3px);
+}
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#shutdown, #spindle_off, #stepper_off {
+	background-color: #d3394c; /* red */
+}
+
+#shutdown:hover, #spindle_off:hover, #stepper_off:hover {
+    background-color: #722040;
+}
+
+#shutdown:active, #spindle_off:active, #stepper_off:active {
+    background-color: #722040;
+}
+
+/* Custom Input-File */
+
+.no-js .inputfile + label {
+    display: none;
+}
+
+.js .inputfile {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.inputfile + label {
+	max-width: 80%;
+    /*font-size: 1.25em;*/ /*20px */
+	font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background-color: black;
+    display: inline-block;
+	cursor: pointer; /* "hand" cursor */
+	padding: 15px 32px;
+}
+
+.inputfile:focus + label,
+.inputfile + label:hover {
+    background-color: red;
+}
+
+.inputfile:focus + label {
+	outline: 1px dotted #000;
+	outline: -webkit-focus-ring-color auto 5px;
+}
+
+.inputfile + label * {
+	pointer-events: none;
+}
+
+.inputfile:focus + label,
+.inputfile.has-focus + label {
+    outline: 1px dotted #000;
+    outline: -webkit-focus-ring-color auto 5px;
+}
+
+.inputfile + label svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    fill: currentColor;
+    margin-top: -0.25em;
+    /* 4px */
+    margin-right: 0.25em;
+    /* 4px */
+}
+
+/* style */
+
+.inputfile-1 + label {
+    color: #d3394c;
+}
+
+.inputfile-1 + label {
+    border: 1px solid #d3394c;
+    background-color: #f1e5e6;
+    padding: 0;
+	margin: 3px 1px;
+}
+
+.inputfile-1:focus + label,
+.inputfile-1.has-focus + label,
+.inputfile-1 + label:hover {
+    border-color: #722040;
+	color:white;
+}
+
+.inputfile-1 + label span,
+.inputfile-1 + label strong {
+	padding: 15px 32px;
+    /*padding: 0.625rem 1.25rem;*/ /* 10px 20px */
+}
+
+.inputfile-1 + label span {
+    width: 200px;
+    /*min-height: 2em;*/
+    display: inline-block;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: top;
+}
+
+.inputfile-1 + label strong {
+    height: 100%;
+	/*min-height: 2em;*/
+    color: #f1e5e6;
+    background-color: #d3394c;
+    display: inline-block;
+}
+
+.inputfile-1:focus + label strong,
+.inputfile-1.has-focus + label strong,
+.inputfile-1 + label:hover strong {
+    background-color: #722040;
+}
+
+@media screen and (max-width: 50em) {
+	.inputfile-1 + label strong {
+		display: block;
+	}
+}
+
+
+a:link    {color:green; background-color:transparent; text-decoration:none}
+a:visited {color:green; background-color:transparent; text-decoration:none}
+a:hover   {color:red; background-color:transparent; text-decoration:underline}
+a:active  {color:yellow; background-color:transparent; text-decoration:underline}
+
+nav ul li>a:link    {color:white; background-color:transparent; text-decoration:none}
+nav ul li>a:visited {color:white; background-color:transparent; text-decoration:none}
+nav ul li>a:hover   {color:red; background-color:transparent; text-decoration:underline}
+nav ul li>a:active  {color:yellow; background-color:transparent; text-decoration:underline}
+
+table {
+	display:block;
+    margin: 2px;
+    background-color: #f1f1c1;
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 15px;
+	width:15%
+}
+
+#controls {
+    text-align: center;
+}
+
+#controls input {
+	padding: 20px;
+    margin: 5px;
+	margin-left: 30px;
+	margin-right: 30px;
+	background-color:silver;
+}
+
+header, section, footer, aside, nav, main, article, figure {
+    display: block;
+}
+
+header,footer,nav,section,article {
+    /*border:1px solid grey;*/
+	margin:5px;
+	margin-bottom:15px;
+	padding:8px;
+	/*background-color:white;*/
+}
+
+article {
+    border:1px solid grey;
+	background-color:snow;
+}
+
+header,footer,nav,section,aside {
+	 box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+nav,aside {
+	background-color:snow;
+}
+
+header,footer {
+    color:white;
+	background-color:black;
+	margin-bottom:5px;
+}
+
+header {
+    text-align:center;
+    padding:5px;
+}
+
+nav {
+    line-height:30px;
+	color: white;
+    width:15%;
+    float:left;
+	margin:5px;
+    padding:5px;
+	text-align: center;
+}
+
+nav ul  {
+    margin:0;
+	padding:0;
+}
+
+nav ul li {
+	background-color: deepskyblue;
+	font-size: 1rem;
+    font-weight: bold;
+    padding: 10px;
+    margin: 30px;
+	list-style-type:none;
+	/*outline-color: lightgrey;
+	outline-style:outset;*/
+	cursor: pointer;
+	box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+nav ul li:hover {background-color: dodgerblue}
+
+nav ul li:active {
+  background-color: dodgerblue;
+  /*box-shadow: 0 5px #666;*/
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  transform: translateY(3px);
+}
+
+section {
+	width:60%;
+    background-color:gold;
+    float:left;
+    padding:10px;
+}
+
+article {
+    padding:20px;
+}
+
+aside {
+	display:inline;
+	float:right;
+	margin:5px;
+    padding:20px;
+	text-align: right;
+}
+
+aside input {
+	text-align: right;
+}
+
+footer {
+    clear:both;
+    text-align:center;
+    padding:5px;
+}
+
+#credits {
+    color:grey;
+    font-size:0.75rem;
+}
+
+.left {
+	display:inline;
+	float:left;
+}
+
+.right {
+	display:inline;
+	float:right;
+}
+
+.solo {
+	display:block;
+    clear: both;
+}
+
+.clearfix {
+    overflow: auto;
+}
