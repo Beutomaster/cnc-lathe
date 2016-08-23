@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cnccode>
+	<block>
+		<blockno>N0000</blockno>
+		<gmcode>G01</gmcode>
+		<xvalue>94</xvalue>
+		<zvalue>-120</zvalue>
+		<fvalue>200</fvalue>
+		<hvalue>160</hvalue>
+	</block>
+	<block>
+		<blockno>N0001</blockno>
+		<gmcode>G01</gmcode>
+		<xvalue>-94</xvalue>
+		<zvalue>120</zvalue>
+		<fvalue>200</fvalue>
+		<hvalue>160</hvalue>
+	</block>
+	<block>
+		<blockno>N0003</blockno>
+		<gmcode>M00</gmcode>
+		<xvalue>0</xvalue>
+		<zvalue>0</zvalue>
+		<fvalue>0</fvalue>
+		<hvalue>0</hvalue>
+	</block>
+</cnccode>
