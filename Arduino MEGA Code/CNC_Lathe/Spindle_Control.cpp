@@ -9,40 +9,38 @@ volatile int target_revolutions=0, delta_revolution_last=0;
 //Servo potiservo;  //old Servo Lib
 
 void spindle_on() {
-  last_rpm_time = micros();
-  digitalWrite(PIN_SPINDLE_ON, HIGH);
-  STATE |= _BV(STATE_SPINDLE_BIT); //set STATE_bit5 = spindle
+  //if (command_completed) { //not implemented yet, cammand-pipeline needed
+    last_rpm_time = micros();
+    digitalWrite(PIN_SPINDLE_ON, HIGH);
+    STATE |= _BV(STATE_SPINDLE_BIT); //set STATE_bit5 = spindle
+  //}
 }
 
 void spindle_off() {
-  digitalWrite(PIN_SPINDLE_ON, LOW);
-  STATE &= ~(_BV(STATE_SPINDLE_BIT)); //delete STATE_bit5 = spindle
+  if ((STATE>>STATE_SPINDLE_BIT)&1) {
+    digitalWrite(PIN_SPINDLE_ON, LOW);
+    STATE &= ~(_BV(STATE_SPINDLE_BIT)); //delete STATE_bit5 = spindle
+    command_running(WAIT_TIME);
+  }
 }
 
 void spindle_direction(bool spindle_reverse) {
   if (get_control_active()) { //Hotfix for Board V1.25, should be changed in V2.1
-    if (spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
       spindle_off();
-      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if (spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
       digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
       STATE |= _BV(STATE_SPINDLE_DIRECTION_BIT); //set STATE_bit6 = spindle_direction
     }
     else if (!spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
-      spindle_off();
-      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
       digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
       STATE &= ~(_BV(STATE_SPINDLE_DIRECTION_BIT)); //delete STATE_bit6 = spindle_direction
     }
   } else {
     if (spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
-      spindle_off();
-      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
       digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
       STATE |= _BV(STATE_SPINDLE_DIRECTION_BIT); //set STATE_bit6 = spindle_direction
     }
     else if (!spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
-      spindle_off();
-      //waiting time needed !!!!!!!!!!!!!!!!!!!!!!!!!!!
       digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
       STATE &= ~(_BV(STATE_SPINDLE_DIRECTION_BIT)); //delete STATE_bit6 = spindle_direction
     }
@@ -55,13 +53,15 @@ void set_revolutions(int target_revolutions_local) {
 	set_poti_servo(poti_angle);
  
 	//Alternativ über serielle Schnittstelle an Niko's Platine (0 to 255)
-  byte rev_niko=map(target_revolutions_local, 0, REVOLUTIONS_MAX, 0, 255);
-  if (debug) { //for debugging
-    Serial.print("RPM-set-Value Niko: ");
-    Serial.println (rev_niko);
-  }
-  Serial1.write (rev_niko);
+  //byte rev_niko=map(target_revolutions_local, 0, REVOLUTIONS_MAX, 0, 255);
+  //Serial1.write (rev_niko);
   
+  //Debug
+  if (debug) { //for debugging
+    Serial.print("RPM-set-Value: ");
+    Serial.println (target_revolutions_local);
+  }
+
   //Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
   //min. 16KHz?
   //230V AC * sqrt(2) => ca. 325 V DC - deltaU/2 (Glättung)
@@ -92,6 +92,17 @@ void get_revolutions_ISR() { //read revolution-sensor
   rpm_time = micros();
   STATE_RPM = 600000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(100sync/U) = 600000
   last_rpm_time = rpm_time;
+}
+
+void set_spindle_new(boolean spindle_new){
+    spindle_off();
+  if (spindle_new) {
+    digitalWrite(PIN_SPINDLE_NEW, HIGH);
+  }
+  else {
+    digitalWrite(PIN_SPINDLE_NEW, LOW);
+  }
+  spindle_direction((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1); //Hotfix for Board V1.25, should be changed in V2.1
 }
 
 //spindle regulator

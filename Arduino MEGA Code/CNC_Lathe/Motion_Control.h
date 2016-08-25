@@ -13,7 +13,7 @@
 #define INTERPOLATION_CIRCULAR_CLOCKWISE 1
 #define INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE 2
 #define RAPID_LINEAR_MOVEMENT 3
-#define WAIT_TIME 1000; //waiting time for savety
+#define WAIT_TIME 500 //waiting time for savety
 
 extern boolean incremental;
 extern volatile byte interpolationmode, i_command_time;
