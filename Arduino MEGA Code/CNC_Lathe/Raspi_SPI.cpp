@@ -11,7 +11,7 @@ To Arduino:
 001 5 NN CRC-8 #Programm Start at Block
 002 3 CRC-8 #Programm Stop
 003 3 CRC-8 #Programm Pause
-004 5 RPM_H&L CRC-8 #Spindle on with RPM
+004 5 RPM_H&L Direction CRC-8 #Spindle on with RPM
 005 3 CRC-8 #Spindle off
 006 5 CRC-8 #Stepper on
 007 3 CRC-8 #Stepper off
@@ -83,9 +83,10 @@ boolean process_incomming_msg() {
     case 3:   //Programm Pause
               programm_pause();
               break;
-    case 4:   //Spindle on with RPM
+    case 4:   //Spindle on with RPM and Direction
               if ((STATE>>STATE_MANUAL_BIT)&1) {
                 set_revolutions((((int)rx_buf[1])<<8) + rx_buf[2]);
+                spindle_direction(rx_buf[3]);
                 spindle_on();
               }
               break;
@@ -147,6 +148,14 @@ boolean process_incomming_msg() {
                 cnc_code[N].FTLK = (((int)rx_buf[9])<<8) + rx_buf[10];
                 cnc_code[N].HS = (((int)rx_buf[11])<<8) + rx_buf[12];
               }
+              break;
+    case 15:  //Shutdown
+              programm_stop();
+              stepper_off();
+              spindle_off();
+              save_current_x_step();
+              save_current_z_step();
+              save_current_tool_position();
               break;
     default:  //SPI-Error "PID unkown"
               success=1;

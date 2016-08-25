@@ -10,7 +10,7 @@ volatile const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 3264
 volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-volatile byte STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile byte STATE=0; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 volatile int STATE_RPM=0;
 volatile int STATE_X=0;
 volatile int STATE_Z=0;
@@ -23,8 +23,8 @@ void setup() {
   // put your setup code here, to run once:
   //PINs
   pinMode(PIN_CONTROL_INACTIVE, INPUT_PULLUP); //LOW-Active (GND = Control activ)
-  pinMode(PIN_REVOLUTIONS_SYNC, INPUT);
-  pinMode(PIN_REVOLUTIONS_COUNT, INPUT);
+  pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
+  pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
@@ -117,6 +117,10 @@ void setup() {
   TCCR5B |= _BV(CS51); //set 1
 
   //cli() //global INTR enable
+
+  //read Last Steps
+  //read_last_x_step();
+  //read_last_z_step();
 }
 
 void set_error(byte error_number) {
@@ -155,5 +159,6 @@ void loop() {
     reset_initialization();
     observe_machine();
     set_revolutions(get_SERVO_CONTROL_POTI());
+    //set spindle-direction
   }
 }

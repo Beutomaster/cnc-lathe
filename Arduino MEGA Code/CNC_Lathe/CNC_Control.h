@@ -67,6 +67,7 @@ void G97(int); //new: set const. revolutions in 1/min
 void G196(int); //new: set max. rev. in 1/min for G96
 void M00(); //Programmed stop
 void M03(); //Main spindle ON. right hand direction run
+void M04(); //Main spindle ON. left hand direction run
 void M05(); //Main Spindle OFF
 void M06(int, int, byte); //Tool length compensation (T = Tool address)
 void M17(); //return command to the main program
