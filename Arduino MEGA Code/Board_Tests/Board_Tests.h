@@ -14,7 +14,7 @@
 #define PIN_TOOL_CHANGER_CHANGE 5     //PE3: Tool-Changer change (+12,9V)
 #define PIN_TOOL_CHANGER_FIXING 6     //PH3: Tool-Changer fixing (-4,35V)
 #define PIN_SPINDLE_ON 7          //PH4: Spindle on
-#define PIN_SPINDLE_NEW 8           //PH5: Timer5 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
+#define PIN_SPINDELPWM_NIKO 8           //PH5: Timer5 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
 #define PIN_SPINDLE_DIRECTION 9         //PH6: HIGH=Inverse Direction
 #define PIN_STEPPER_X_A 10        //PB4: X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11        //PB5: X35, PIN6 (B), Stepper X
@@ -31,7 +31,7 @@
 //#define PIN_SPI_MOSI 51         //D51 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SCK 52          //D52 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SS 53           //D53 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
-#define PIN_SPINDELBOARD_NIKO 59    //PF5: Switch between Niko's Board and Hannes Servo
+#define PIN_SPINDLE_NEW 59    //PF5: Switch between Niko's Board and Hannes Servo
 #define PIN_REVOLUTIONS_COUNT 62    //PK0, A08: Revolution-Sensor COUNT
 #define PIN_OLD_CONTROL_STEPPER_X_OFF 65 //PK3, A09: X42, PIN3,4,5,6 !(A|B|C|D), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
 #define PIN_OLD_CONTROL_STEPPER_X_A 66  //PK4, A10: X42, PIN5 (A), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
