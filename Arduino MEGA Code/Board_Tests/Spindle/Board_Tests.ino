@@ -49,6 +49,6 @@ void loop() {
   for (i=0; i<4; i++) {
     set_xstep(i);
     set_zstep(i);
-    delay(20);
+    delay(100);
   }
 }
