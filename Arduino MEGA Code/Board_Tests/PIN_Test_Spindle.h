@@ -1,10 +1,8 @@
-#ifndef Spindle_Control_h
-#define Spindle_Control_h
+#ifndef PIN_Test_Spindle_h
+#define PIN_Test_Spindle_h
 
-//includes
 #include <Arduino.h>
-//#include <Servo.h>
-#include "CNC_Lathe.h"
+#include "Board_Tests.h"
 
 //defines
 #define REVOLUTIONS_MAX 3220 //rpm
@@ -22,12 +20,10 @@
 
 void spindle_on();
 void spindle_off();
-void spindle_direction(bool);
 void set_revolutions(int);
 int get_SERVO_CONTROL_POTI();
 void set_poti_servo(int);
 void set_spindle_new(boolean);
-void get_revolutions_ISR();
 
 #endif
 

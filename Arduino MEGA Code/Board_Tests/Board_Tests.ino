@@ -26,9 +26,9 @@ void setup() {
   //pinMode(PIN_TOOL_CHANGER_HOLD, OUTPUT);
   //pinMode(PIN_TOOL_CHANGER_CHANGE, OUTPUT);
   //pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
-  //pinMode(PIN_SPINDLE_ON, OUTPUT);
-  //pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
-  pinMode(PIN_USART1_RX, INPUT);
+  pinMode(PIN_SPINDLE_ON, OUTPUT);
+  pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
+  //pinMode(PIN_USART1_RX, INPUT);
   //pinMode(PIN_USART1_TX, OUTPUT);
   //pinMode(PIN_SPI_MISO, OUTPUT); 		//Arduino is SPI-Slave
   //pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
@@ -38,17 +38,71 @@ void setup() {
   
   //Serial Communication
   Serial.begin(115200); //for Debugging with Serial Monitor
+
+  //TIMER
+  
+  //Timer0
+  //millis() and micros() functions use Timer0
+  //millis() returns (unsigned long)
+  //micros() returned value at 16 MHz is always a multiple of four microseconds in (unsigned long)
+  //get_revolutions and get_feed with micros() in PIN triggerd ISR !!! micros reads out Timer0 even in an ISR, but overflow could be missed
+  //Dwell?
+  //Stepper-Timeout
+
+  //Timer1
+  //Toolchanger + set command_completed
+  //+X-Stepper
+  //command_complete isr
+  
+  //Timer2 
+  //tone() function uses Timer2
+    
+  //Timer3
+  //Z-Stepper output + set command_completed while in active mode and maybe observing Stepper in passive mode
+
+  //Timer4
+  //Niko's spindle regulator and FAST PWM
+  //set and start Timer4 with 20 kHz
+  TCCR4B = 0b00011000; //connect no Input-Compare-PINs, WGM43=1, WGM42=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=0, WGM40=1 for Fast PWM with ICR4=TOP
+  TCCR4C = 0; //no Force of Output Compare
+  ICR4 = 800; //ICR4 = 16MHz/(Prescaler*f_ICR4) = 16MHz/(8*20kHz) = 800
+  OCR4C = 0; //OCR4C max. = ICR4 *0,55338792 = 442 !!! Engine is only for 180V DC
+  TCNT4 = 0; //set Start Value
+  //Prescaler 8 and Start Timer
+  TCCR4B |= _BV(CS51); //set 1
+  
+  //Timer5 Servo
+  //set and start Timer5 with 20ms TOP and 544µs to 2400µs OCR5A
+  TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+  TCCR5A = 0b10000011; //connect OC5A-PIN (PIN 46) to Output Compare and WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+  TCCR5C = 0; //no Force of Output Compare
+  ICR5 = 40000; //ICR5 = T_ICR5*16MHz/Prescaler = 20ms*16MHz/8 = 40000
+  OCR5A = 1088; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088
+  TCNT5 = 0; //set Start Value
+  //Prescaler 8 and Start Timer
+  TCCR5B |= _BV(CS51); //set 1
+
+  //Spindle-Test
+  set_spindle_new(HIGH);
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  
+  //Spindle-Test
+  if (!digitalRead(PIN_CONTROL_INACTIVE)) {
+    spindle_on();
+  } else spindle_off();
+  set_revolutions(get_SERVO_CONTROL_POTI());
 
-  //Stepper-Pins
+  //Stepper-Test
   //stepper_off();
   //delay(20);
   for (i=0; i<4; i++) {
     set_xstep(i);
     set_zstep(i);
-    delay(20);
+    delay(100);
   }
 }
