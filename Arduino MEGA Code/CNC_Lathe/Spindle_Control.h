@@ -26,6 +26,7 @@ void spindle_direction(bool);
 void set_revolutions(int);
 int get_SERVO_CONTROL_POTI();
 void set_poti_servo(int);
+void set_spindle_new(boolean);
 void get_revolutions_ISR();
 
 #endif
