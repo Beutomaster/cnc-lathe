@@ -97,6 +97,7 @@ void loop() {
   } else spindle_off();
   set_revolutions(get_SERVO_CONTROL_POTI());
 
+  /*
   //Stepper-Test
   //stepper_off();
   //delay(20);
@@ -105,4 +106,5 @@ void loop() {
     set_zstep(i);
     delay(100);
   }
+  */
 }
