@@ -76,7 +76,7 @@ void setup() {
 
   //Spindle-Test
   set_spindle_new(HIGH);
-
+  cli();
 }
 
 void loop() {
