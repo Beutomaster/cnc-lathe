@@ -223,7 +223,14 @@ void M04() {
 }
 
 void M05() {spindle_off();} //Main Spindle OFF
-void M06(int X, int Z, byte T) {} //Tool length compensation (T = Tool address)
+
+//Tool length compensation (T = Tool address)
+void M06(int X, int Z, byte T) {
+  get_Tool_X(X);
+  get_Tool_Z(Z);
+  set_tool_position(T);
+}
+  
 void M17() {STATE_N = jumpback_N;} //return command to the main program
 
 //End of Program
