@@ -39,7 +39,7 @@
 #define PIN_TOOL_CHANGER_CHANGE 5     //PE3: Tool-Changer change (+12,9V)
 #define PIN_TOOL_CHANGER_FIXING 6     //PH3: Tool-Changer fixing (-4,35V)
 #define PIN_SPINDLE_ON 7          //PH4: Spindle on
-#define PIN_SPINDELPWM_NIKO 8           //PH5: Timer5 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
+#define PIN_SPINDELPWM_NIKO 8           //PH5: Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
 #define PIN_SPINDLE_DIRECTION 9         //PH6: HIGH=Inverse Direction
 #define PIN_STEPPER_X_A 10        //PB4: X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11        //PB5: X35, PIN6 (B), Stepper X
