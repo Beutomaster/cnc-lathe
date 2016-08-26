@@ -17,7 +17,7 @@ To Arduino:
 007 3 CRC-8 #Stepper off
 008 5 FF negativ_direction CRC-8 #X-Stepper move with feed
 009 5 FF negativ_direction CRC-8 #Z-Stepper move with feed
-010 4 T CRC-8 #Set Tool-Position (and INIT)
+010 4 XX ZZ T CRC-8 #Set Tool-Position (and INIT)
 011 7 XX ZZ CRC-8 #Origin-Offset
 012 4 metric CRC-8 #metric or inch (maybe not needed)
 013 6 NN metric CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
@@ -116,7 +116,9 @@ boolean process_incomming_msg() {
               }
     case 10:   //Set Tool-Position (and INIT)
               if ((STATE>>STATE_MANUAL_BIT)&1) {
-                set_tool_position(rx_buf[1]);
+                get_Tool_X((((int)rx_buf[1])<<8) + rx_buf[2]);
+                get_Tool_Z((((int)rx_buf[3])<<8) + rx_buf[4]);
+                set_tool_position(rx_buf[5]);
               }
               break;
     case 11:   //Origin-Offset
