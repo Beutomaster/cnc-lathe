@@ -30,7 +30,7 @@ void setup() {
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
-  pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
+  //pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
@@ -107,7 +107,8 @@ void setup() {
   //Timer5 Servo and spindle regulator
   set_Timer5();
 
-  //cli() //global INTR enable
+  //set interrupt enable
+  sei();
 
   //read Last Steps
   //read_last_x_step();
