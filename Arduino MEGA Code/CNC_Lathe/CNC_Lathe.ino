@@ -22,7 +22,7 @@ volatile int STATE_N=0;
 void setup() {
   // put your setup code here, to run once:
   //PINs
-  pinMode(PIN_CONTROL_INACTIVE, INPUT_PULLUP); //LOW-Active (GND = Control activ)
+  pinMode(PIN_CONTROL_ACTIVE, INPUT);
   pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
   pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
