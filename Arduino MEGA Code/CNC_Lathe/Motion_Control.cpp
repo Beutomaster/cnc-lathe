@@ -18,6 +18,14 @@ int get_inc_Z(int abs_Z) { //get incremental z-Coordinate
   return abs_Z-STATE_Z;
 }
 
+int get_Tool_X(int TOOL_X) { //get Tool x-Coordinate
+  return TOOL_X-STATE_X;
+}
+
+int get_Tool_Z(int Tool_Z) { //get Tool z-Coordinate
+  return Tool_Z-STATE_Z;
+}
+
 void set_xz_move(int X, int Z, int feed, byte interpolation) {
   //int x_steps=0; //has to be global for ISR
   //int z_steps=0; //has to be global for ISR
@@ -30,7 +38,7 @@ void set_xz_move(int X, int Z, int feed, byte interpolation) {
 
   //turn stepper on with last step
   if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
-
+  
   //get incremental coordinates
   if (incremental){
     X=get_inc_X(X);
