@@ -5,9 +5,9 @@ int i=0;
 void setup() {
   // put your setup code here, to run once:
   //PINs
-  pinMode(PIN_CONTROL_INACTIVE, INPUT_PULLUP); //LOW-Active (GND = Control activ)
-  pinMode(PIN_REVOLUTIONS_SYNC, INPUT);
-  pinMode(PIN_REVOLUTIONS_COUNT, INPUT);
+  pinMode(PIN_CONTROL_ACTIVE, INPUT);
+  pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
+  pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
@@ -87,9 +87,15 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   //Spindle-Test
-  if (!digitalRead(PIN_CONTROL_INACTIVE)) {
+  if (digitalRead(PIN_CONTROL_ACTIVE)) {
     spindle_on();
-  } else spindle_off();
+    //Debug
+    Serial.println("Ardino active");
+  } else {
+    spindle_off();
+    //Debug
+    Serial.println("Ardino inactive");
+  }
   set_revolutions(get_SERVO_CONTROL_POTI());
 
   /*
