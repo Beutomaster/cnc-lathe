@@ -4,6 +4,7 @@
 volatile unsigned long rpm_time=0, last_rpm_time=0;
 volatile long y=0, y_last=0;
 volatile int target_revolutions=0, delta_revolution_last=0;
+volatile bool spindle_new=LOW;
 
 //Create new Servo Objekt
 //Servo potiservo;  //old Servo Lib
@@ -94,30 +95,60 @@ void get_revolutions_ISR() { //read revolution-sensor
   last_rpm_time = rpm_time;
 }
 
-void set_spindle_new(boolean spindle_new){
-    spindle_off();
+void set_spindle_new(bool spindle_new_local){
+  spindle_new = spindle_new_local;
+  spindle_off();
   if (spindle_new) {
+    set_Timer5();
     digitalWrite(PIN_SPINDLE_NEW, HIGH);
   }
   else {
+    set_Timer5();
     digitalWrite(PIN_SPINDLE_NEW, LOW);
   }
   spindle_direction((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1); //Hotfix for Board V1.25, should be changed in V2.1
 }
 
+//Timer5 Servo and spindle regulator
+void set_Timer5 () {
+  if (spindle_new) { //spindle regulator
+    //set and start Timer5 with 1ms TOP
+    TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+    TCCR5A = 0b00000011; //WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+    TCCR5C = 0; //no Force of Output Compare
+    OCR5A = 1999; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 1000µs*16MHz/8 -1 = 1999
+    TCNT5 = 0; //set Start Value
+    //Prescaler 8 and Start Timer
+    TCCR5B |= _BV(CS51); //set 1
+  }
+  else { //Servo
+    //set and start Timer5 with 20ms TOP and 544µs to 2400µs OCR5A
+    TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+    TCCR5A = 0b10000011; //connect OC5A-PIN (PIN 46) to Output Compare and WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+    TCCR5C = 0; //no Force of Output Compare
+    ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
+    OCR5A = 1087; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1087
+    TCNT5 = 0; //set Start Value
+    //Prescaler 8 and Start Timer
+    TCCR5B |= _BV(CS51); //set 1
+  }
+}
+
 //spindle regulator
 ISR(TIMER4_OVF_vect){
-  //PI-Regulator
-  //get Regulator-Parameter for 20KHz with 20 to 80% PWM and Ziegler-Nicols formula
-  //#define K_P 1; //0,001 - 100 ???
-  //#define KI_TN 1; //1s
-  //T_Regler=20ms
-/*
-  int delta_revolution = STATE_RPM - target_revolutions;
-  y = y_last + (((int32_t)K_P*(delta_revolution - delta_revolution_last))>>15) + (((int32_t)KI_TN * delta_revolution)>>15);
-  OCR4C = map(y, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
-  y_last = y;
-  delta_revolution_last = delta_revolution;
-*/
+  if (spindle_new){
+    //PI-Regulator
+    //get Regulator-Parameter for 20KHz with 20 to 80% PWM and Ziegler-Nicols formula
+    //#define K_P 1; //0,001 - 100 ???
+    //#define KI_TN 1; //1s
+    //T_Regler=20ms
+  /*
+    int delta_revolution = STATE_RPM - target_revolutions;
+    y = y_last + (((int32_t)K_P*(delta_revolution - delta_revolution_last))>>15) + (((int32_t)KI_TN * delta_revolution)>>15);
+    OCR4C = map(y, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
+    y_last = y;
+    delta_revolution_last = delta_revolution;
+  */
+  }
 }
 
