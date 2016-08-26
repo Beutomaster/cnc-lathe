@@ -5,7 +5,7 @@ int i=0;
 void setup() {
   // put your setup code here, to run once:
   //PINs
-  pinMode(PIN_CONTROL_INACTIVE, INPUT); //LOW-Active (GND = Control activ)
+  pinMode(PIN_CONTROL_ACTIVE, INPUT);
   pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
   pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
@@ -87,7 +87,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   //Spindle-Test
-  if (!digitalRead(PIN_CONTROL_INACTIVE)) {
+  if (digitalRead(PIN_CONTROL_ACTIVE)) {
     spindle_on();
     //Debug
     Serial.println("Ardino active");
