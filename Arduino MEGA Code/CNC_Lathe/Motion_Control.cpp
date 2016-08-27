@@ -1,6 +1,6 @@
 #include "Motion_Control.h"
 
-boolean incremental=0;
+boolean incremental=0, feed_modus=0;
 volatile byte interpolationmode=0, i_command_time=0;
 volatile int command_time=0;
 
@@ -26,15 +26,19 @@ int get_Tool_Z(int Tool_Z) { //get Tool z-Coordinate
   return Tool_Z-STATE_Z;
 }
 
-void set_xz_move(int X, int Z, int feed, byte interpolation) {
+void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   //int x_steps=0; //has to be global for ISR
   //int z_steps=0; //has to be global for ISR
   //int x_feed=0; //has to be global for ISR
   //int z_feed=0; //has to be global for ISR
   //int command_time=0;
   command_completed=0;
-  STATE_F = feed; 
-  interpolationmode=interpolation;
+  
+  if (feed_modus==FEED_IN_MM_PER_REVOLUTION) {
+    STATE_F =  get_xz_feed_related_to_revolutions(feed);
+  } else STATE_F = feed;
+  
+  interpolationmode=local_interpolationmode;
 
   //turn stepper on with last step
   if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
@@ -63,17 +67,17 @@ void set_xz_move(int X, int Z, int feed, byte interpolation) {
 
   if (interpolationmode==INTERPOLATION_LINEAR) {
     if (Z==0) {
-      x_feed=feed;
+      x_feed=STATE_F;
       z_feed=0;
     } else {
-      x_feed=(long)X*feed/Z;
+      x_feed=(long)X*STATE_F/Z;
       if (x_feed==0) x_feed=1; //Minimum needed
     }
     if (X==0) {
       x_feed=0;
-      z_feed=feed;
+      z_feed=STATE_F;
     } else {
-      z_feed=(long)Z*feed/X;
+      z_feed=(long)Z*STATE_F/X;
       if (z_feed==0) z_feed=1; //Minimum needed
     }
 
@@ -191,6 +195,11 @@ void get_xz_coordinates() { //calculate Coordinates
 int get_xz_feed() {
 	int feed=0; //Stub
 	return feed;
+}
+
+int get_xz_feed_related_to_revolutions(int feed_per_revolution) { // for G95 - Feed in mm/rev.
+  int feed = feed_per_revolution*STATE_RPM;
+  return feed;
 }
 
 
