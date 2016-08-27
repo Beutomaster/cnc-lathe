@@ -14,8 +14,11 @@
 #define INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE 2
 #define RAPID_LINEAR_MOVEMENT 3
 #define WAIT_TIME 500 //waiting time for savety
+#define FEED_IN_MM_PER_MIN 0
+#define FEED_IN_MM_PER_REVOLUTION 1
+#define FEED_IN_M_PER_MIN_AT_INCR_REVOLUTIONS 2
 
-extern boolean incremental;
+extern boolean incremental, feed_modus;
 extern volatile byte interpolationmode, i_command_time;
 extern volatile long clk_feed, clk_xfeed, clk_zfeed;
 extern volatile int command_time;
@@ -28,6 +31,7 @@ int get_Tool_Z(int);
 void set_xz_move(int, int, int, byte);
 void get_xz_coordinates();
 int get_xz_feed();
+int get_xz_feed_related_to_revolutions(int);
 void command_running(int);
 
 #endif
