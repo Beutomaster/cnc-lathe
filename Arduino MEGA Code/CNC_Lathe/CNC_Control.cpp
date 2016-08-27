@@ -25,12 +25,25 @@ void programm_pause() { //intermediate stop
 void programm_stop() { //stop and jump back to block 0
   programm_pause();
   STATE_N=0;
+  max_revolutions = REVOLUTIONS_MAX;
+  incremental=0;
+  feed_modus=0;
+  interpolationmode=0;
 }
 
 void programm_abort() {
   programm_stop();
   //immediate stop of all engines needed!!!
-  
+  //disable all Timer
+}
+
+void set_cnc_code_error(boolean cnc_code_error) {
+  if (cnc_code_error) {
+    ERROR_NO |= _BV(ERROR_CNC_CODE_BIT); //set ERROR_bit1
+  }
+  else {
+    ERROR_NO &= ~(_BV(ERROR_CNC_CODE_BIT)); //delete ERROR_bit1
+  }
 }
 
 
@@ -201,11 +214,16 @@ void G89(int Z, int F) {} //Reaming and drilling with dwell
 void G90() {incremental=1;} //Absolute value programing
 void G91() {incremental=0;} //Incremental value programing
 void G92(int X, int Z) {set_xz_coordinates(X, Z);} //Set register (zero point offset)
-void G94() {} //Feed in mm/min
-void G95() {} //Feed in mm/rev.
-void G96() {} //new: set cutting speed in m/min (increasing revolutions)
+void G94() {feed_modus=FEED_IN_MM_PER_MIN;} //Feed in mm/min
+void G95() {feed_modus=FEED_IN_MM_PER_REVOLUTION;} //Feed in mm/rev.
+void G96() {feed_modus=FEED_IN_M_PER_MIN_AT_INCR_REVOLUTIONS;} //new: set cutting speed in m/min (increasing revolutions)
 void G97(int S) {set_revolutions(S);} //new: set const. revolutions in 1/min
-void G196(int S) {} //new: set max. rev. in 1/min for G96
+
+//new: set max. rev. in 1/min for G96
+void G196(int S) {
+  if (S>=0 && S<=REVOLUTIONS_MAX) max_revolutions=S;
+  else set_cnc_code_error(HIGH);
+}
 
 //Programmed stop
 void M00() {programm_pause();};
