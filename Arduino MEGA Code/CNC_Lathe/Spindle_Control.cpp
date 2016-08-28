@@ -3,8 +3,8 @@
 //global ISR vars
 volatile unsigned long rpm_time=0, last_rpm_time=0;
 volatile long y=0, y_last=0;
-volatile int target_revolutions=0, delta_revolution_last=0;
-volatile bool spindle_new=LOW;
+volatile int target_revolutions=0, delta_revolution_last=0, max_revolutions=REVOLUTIONS_MAX;
+volatile boolean spindle_new=LOW;
 
 //Create new Servo Objekt
 //Servo potiservo;  //old Servo Lib
@@ -25,7 +25,7 @@ void spindle_off() {
   }
 }
 
-void spindle_direction(bool spindle_reverse) {
+void spindle_direction(boolean spindle_reverse) {
   if (get_control_active()) { //Hotfix for Board V1.25, should be changed in V2.1
       spindle_off();
     if (spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) {
@@ -49,6 +49,14 @@ void spindle_direction(bool spindle_reverse) {
 }
 
 void set_revolutions(int target_revolutions_local) {
+
+  //for G196, maybe only at G96
+  if (feed_modus==FEED_IN_M_PER_MIN_AT_INCR_REVOLUTIONS) {
+    if (target_revolutions_local>max_revolutions) {
+      target_revolutions_local = max_revolutions;
+    }
+  }
+  
 	//Poti-Servo
 	int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
 	set_poti_servo(poti_angle);
@@ -95,7 +103,7 @@ void get_revolutions_ISR() { //read revolution-sensor
   last_rpm_time = rpm_time;
 }
 
-void set_spindle_new(bool spindle_new_local){
+void set_spindle_new(boolean spindle_new_local){
   spindle_new = spindle_new_local;
   spindle_off();
   if (spindle_new) {
@@ -135,13 +143,13 @@ void set_Timer5 () {
 }
 
 //spindle regulator
-ISR(TIMER4_OVF_vect){
+ISR(TIMER5_OVF_vect){
   if (spindle_new){
     //PI-Regulator
-    //get Regulator-Parameter for 20KHz with 20 to 80% PWM and Ziegler-Nicols formula
+    //get Regulator-Parameter for 15,625kHz with 20 to 80% PWM and Ziegler-Nicols formula
     //#define K_P 1; //0,001 - 100 ???
     //#define KI_TN 1; //1s
-    //T_Regler=20ms
+    //T_Regler=1ms
   /*
     int delta_revolution = STATE_RPM - target_revolutions;
     y = y_last + (((int32_t)K_P*(delta_revolution - delta_revolution_last))>>15) + (((int32_t)KI_TN * delta_revolution)>>15);

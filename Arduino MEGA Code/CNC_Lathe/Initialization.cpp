@@ -31,7 +31,8 @@ void reset_initialization() {
   stepper_off();
   STATE &= ~(_BV(STATE_INIT_BIT)); //delete STATE_bit1 = STATE_INIT
   initialized=0;
-  programm_pause();
+  programm_stop();
   STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
+  //Anymore vars needed to be resetted?
 }
 
