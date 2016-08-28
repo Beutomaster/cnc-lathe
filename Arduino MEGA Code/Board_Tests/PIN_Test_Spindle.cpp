@@ -57,7 +57,7 @@ void set_poti_servo(int poti_angle){
 */
 
 void set_poti_servo(int local_target_revolutions){
-  OCR5A = map(local_target_revolutions, OCR5A_min, OCR5A_max, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
+  OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
 }
 
 void set_spindle_new(bool spindle_new_local){
