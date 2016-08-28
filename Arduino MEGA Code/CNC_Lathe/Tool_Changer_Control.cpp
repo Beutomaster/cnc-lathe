@@ -21,7 +21,7 @@ void set_tool_position(byte tool) {
       digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
       digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
 
-      //Step2 and 3 set PINS with Timerinterrupt
+      //Step1 and 2 are setting PINS in Timerinterrupt
       //set and start Timer1 for 2,9s
       TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13, WGM12 =1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
       TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11, WGM10 =1 for Fast PWM
@@ -32,11 +32,6 @@ void set_tool_position(byte tool) {
       TIMSK1 |= _BV(OCIE1A); //set 1
       //Prescaler 1024 and Start Timer
       TCCR1B |= (_BV(CS12)|_BV(CS10)); //set 1
-
-      /* not needed anymore
-      //set command duration
-      command_running(TOOL_TIME * i);
-      */
     }
     else {
       //initialize
@@ -49,6 +44,14 @@ void set_tool_position(byte tool) {
 byte get_tool_position() { //maybe not needed
 	byte tool_position=0; //Stub
 	return tool_position;
+}
+
+void save_current_tool_position() { //instead of initialization, save in eeprom !!!
+  EEPROM.write(LAST_TOOL_ADDRESS, STATE_T);
+}
+
+void read_current_tool_position() {
+  STATE_T = EEPROM.read(LAST_TOOL_ADDRESS);
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -64,7 +67,8 @@ ISR(TIMER1_COMPA_vect) {
       }
 
       else if (tool_step==2) {
-        //Step3 TOOL_CHANGER_HOLD
+        //Step0 TOOL_CHANGER_HOLD
+        tool_step=0;
         digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
         digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
         i_tool--;
@@ -82,7 +86,6 @@ ISR(TIMER1_COMPA_vect) {
           OCR1A = 45313; //OCR1A = T_OCF1A*16MHz/Prescaler = 2,9s*16MHz/1024 = 45312,5 = 45313
           TCNT1 = 0; //set Start Value
         }
-        tool_step=0;
       }
 }
 

@@ -1,36 +1,11 @@
-#ifndef CNC_Lathe_h
-#define CNC_Lathe_h
+#ifndef Board_Tests_h
+#define Board_Tests_h
 
 //includes
 #include <Arduino.h>
-#include <EEPROM.h>
-#include "CNC_Control.h"
-#include "Control_Passiv.h"
-#include "Initialization.h"
-#include "Motion_Control.h"
-#include "Raspi_SPI.h"
-#include "Spindle_Control.h"
-#include "Step_Motor_Control.h"
-#include "Tool_Changer_Control.h"
+#include "PIN_Test_Stepper.h"
+#include "PIN_Test_Spindle.h"
 
-//many global vars could be replaced by defines (no short names, because compiler reports no errors)
-//many functions and vars should be private
-
-//defines
-//Bit Postions of STATE
-#define STATE_CONTROL_ACTIVE_BIT 0
-#define STATE_INIT_BIT 1
-#define STATE_MANUAL_BIT 2
-#define STATE_PAUSE_BIT 3
-#define STATE_INCH_BIT 4
-#define STATE_SPINDLE_BIT 5
-#define STATE_SPINDLE_DIRECTION_BIT 6
-#define STATE_STEPPER_BIT 7
-
-//Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
-#define ERROR_SPI_BIT 0
-#define ERROR_CNC_CODE_BIT 1
-#define ERROR_SPINDLE_BIT 2
 
 //PINs
 #define PIN_CONTROL_ACTIVE 2       //PE4: Switch between EMCO and alternative Control (Usable for extINTR !!!)
@@ -39,7 +14,7 @@
 #define PIN_TOOL_CHANGER_CHANGE 5     //PE3: Tool-Changer change (+12,9V)
 #define PIN_TOOL_CHANGER_FIXING 6     //PH3: Tool-Changer fixing (-4,35V)
 #define PIN_SPINDLE_ON 7          //PH4: Spindle on
-#define PIN_SPINDELPWM_NIKO 8           //PH5: Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
+#define PIN_SPINDELPWM_NIKO 8           //PH5: Timer5 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
 #define PIN_SPINDLE_DIRECTION 9         //PH6: HIGH=Inverse Direction
 #define PIN_STEPPER_X_A 10        //PB4: X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11        //PB5: X35, PIN6 (B), Stepper X
@@ -67,38 +42,6 @@
 
 //for use with analogRead(Analog-PIN-NR)
 #define APIN_SERVO_CONTROL_POTI 0    //PF0, A0, D54: CONTROL-POTI to manually set revolutions (Analog-IN)
-
-//EEPROM-Adresses
-#define LAST_X_STEP_ADDRESS 0
-#define LAST_Z_STEP_ADDRESS 1
-#define LAST_TOOL_ADDRESS 3
-
-//TIMER
-#define CLK_TIMER1 3750000 //in 1/min
-#define CLK_TIMER3 3750000 //in 1/min
-
-//global vars
-extern boolean debug;
-
-//Cosinus LookUp-Table for Quarter Circle in Q15
-extern volatile const int lookup_cosinus[91];
-
-//ERROR-Numbers
-extern volatile byte ERROR_NO;
-
-//Machine State
-extern volatile byte STATE; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
-extern volatile int STATE_RPM;
-extern volatile int STATE_X;
-extern volatile int STATE_Z;
-extern volatile int STATE_F;
-extern volatile int STATE_H;
-extern volatile byte STATE_T; //0 = uninitialized
-extern volatile int STATE_N;
-
-//functions
-void set_error(byte);
-void reset_error(byte);
 
 #endif
 

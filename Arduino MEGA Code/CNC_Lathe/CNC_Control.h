@@ -19,7 +19,7 @@ struct cnc_code_block { //not finished, Format von Siemens NX???
 };
 
 //global vars
-extern volatile boolean command_completed;
+extern volatile boolean command_completed, x_command_completed, z_command_completed;
 extern volatile boolean pause;
 extern struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
 
@@ -28,6 +28,7 @@ void programm_start(int);
 void programm_pause();
 void programm_stop();
 void programm_abort();
+void set_cnc_code_error(boolean);
 boolean process_cnc_listing();
 
 //G-/M-/S-/T-Codes:
@@ -67,6 +68,7 @@ void G97(int); //new: set const. revolutions in 1/min
 void G196(int); //new: set max. rev. in 1/min for G96
 void M00(); //Programmed stop
 void M03(); //Main spindle ON. right hand direction run
+void M04(); //Main spindle ON. left hand direction run
 void M05(); //Main Spindle OFF
 void M06(int, int, byte); //Tool length compensation (T = Tool address)
 void M17(); //return command to the main program

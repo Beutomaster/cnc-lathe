@@ -1,7 +1,7 @@
 #include "CNC_Control.h"
 
 //global vars
-volatile boolean command_completed=1; //0=command in progress, 1=command_completed
+volatile boolean command_completed=1, x_command_completed=1, z_command_completed=1; //0=command in progress, 1=command_completed
 volatile boolean pause=1; //0=programm running, 1=pause
 struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
 int jumpback_N = CNC_CODE_NMAX-1; //Return adress for CNC
@@ -25,12 +25,25 @@ void programm_pause() { //intermediate stop
 void programm_stop() { //stop and jump back to block 0
   programm_pause();
   STATE_N=0;
+  max_revolutions = REVOLUTIONS_MAX;
+  incremental=0;
+  feed_modus=0;
+  interpolationmode=0;
 }
 
 void programm_abort() {
   programm_stop();
   //immediate stop of all engines needed!!!
-  
+  //disable all Timer
+}
+
+void set_cnc_code_error(boolean cnc_code_error) {
+  if (cnc_code_error) {
+    ERROR_NO |= _BV(ERROR_CNC_CODE_BIT); //set ERROR_bit1
+  }
+  else {
+    ERROR_NO &= ~(_BV(ERROR_CNC_CODE_BIT)); //delete ERROR_bit1
+  }
 }
 
 
@@ -112,6 +125,8 @@ boolean process_cnc_listing() {
                 break;
         case 3: M03();
                 break;
+        case 4: M04();
+                break;
         case 5: M05();
                 break;
         case 6: M06(cnc_code[STATE_N].XI, cnc_code[STATE_N].ZK, cnc_code[STATE_N].FTLK);
@@ -137,7 +152,7 @@ boolean process_cnc_listing() {
 
 //Rapid traverse
 void G00(int X, int Z) {
-  
+  set_xz_move(X, Z, 499, RAPID_LINEAR_MOVEMENT);
 }
 
 //Linear interpolation
@@ -199,18 +214,41 @@ void G89(int Z, int F) {} //Reaming and drilling with dwell
 void G90() {incremental=1;} //Absolute value programing
 void G91() {incremental=0;} //Incremental value programing
 void G92(int X, int Z) {set_xz_coordinates(X, Z);} //Set register (zero point offset)
-void G94() {} //Feed in mm/min
-void G95() {} //Feed in mm/rev.
-void G96() {} //new: set cutting speed in m/min (increasing revolutions)
+void G94() {feed_modus=FEED_IN_MM_PER_MIN;} //Feed in mm/min
+void G95() {feed_modus=FEED_IN_MM_PER_REVOLUTION;} //Feed in mm/rev.
+void G96() {feed_modus=FEED_IN_M_PER_MIN_AT_INCR_REVOLUTIONS;} //new: set cutting speed in m/min (increasing revolutions)
 void G97(int S) {set_revolutions(S);} //new: set const. revolutions in 1/min
-void G196(int S) {} //new: set max. rev. in 1/min for G96
+
+//new: set max. rev. in 1/min for G96
+void G196(int S) {
+  if (S>=0 && S<=REVOLUTIONS_MAX) max_revolutions=S;
+  else set_cnc_code_error(HIGH);
+}
 
 //Programmed stop
 void M00() {programm_pause();};
 
-void M03() {spindle_on();} //Main spindle ON. right hand direction run
+//Main spindle ON. right hand direction run
+void M03() {
+  spindle_direction(LOW);
+  spindle_on();
+}
+
+//Main spindle ON. left hand direction run
+void M04() {
+  spindle_direction(HIGH);
+  spindle_on();
+}
+
 void M05() {spindle_off();} //Main Spindle OFF
-void M06(int X, int Z, byte T) {} //Tool length compensation (T = Tool address)
+
+//Tool length compensation (T = Tool address)
+void M06(int X, int Z, byte T) {
+  get_Tool_X(X);
+  get_Tool_Z(Z);
+  set_tool_position(T);
+}
+  
 void M17() {STATE_N = jumpback_N;} //return command to the main program
 
 //End of Program

@@ -4,7 +4,6 @@
 volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0;
 
 //TIMER ISR vars
-volatile unsigned int i_T3ISR=0, ix_next=0, iz_next=0;
 volatile int x_step=0;
 volatile int z_step=0;
 volatile int x_steps=0; //has to be global for ISR
@@ -12,6 +11,7 @@ volatile int z_steps=0; //has to be global for ISR
 volatile int x_feed=0; //has to be global for ISR
 volatile int z_feed=0; //has to be global for ISR
 volatile long clk_feed = 0; //clk_feed in 1/min (Overflow possible?)
+volatile long clk_xfeed=0, clk_zfeed=0;
 volatile int phi_x=0;
 volatile int phi_z=0;
 
@@ -21,7 +21,7 @@ Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
 
 void stepper_on() {
-  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT
+  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT
   //turn stepper on with last_x_step & last_z_step (at Init from eeprom)
   set_xstep(current_x_step);
   set_zstep(current_z_step);
@@ -37,7 +37,7 @@ void stepper_off() {
   digitalWrite(PIN_STEPPER_Z_B, LOW);
   digitalWrite(PIN_STEPPER_Z_C, LOW);
   digitalWrite(PIN_STEPPER_Z_D, LOW);
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT
+  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT
 }
 
 void set_xstep(byte nextstep) {
@@ -216,10 +216,10 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
 void get_stepper_on_off() { //to observe EMCO Control (ISR)
   //detect stepper off !!! (X-Stepper)
   if (digitalRead(PIN_OLD_CONTROL_STEPPER_X_OFF)){
-    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
   }
   else {
-    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit6 = STATE_STEPPER_BIT (Stepper off)
+    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
   }
 }
 
@@ -253,171 +253,241 @@ void stepper_timeout_ISR() {
   stepper_off();
 }
 
-ISR(TIMER3_OVF_vect) {
+ISR(TIMER1_OVF_vect) {
+  if (command_time) { //Dwell
+    if (i_command_time==1) {
+      OCR1A = (15625L*command_time/100)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*command_time/100)-1
+    }
+    else if (!i_command_time) {
+        //If time is over
+        TCCR1B = 0; //Disable Timer
+        command_completed=1;
+        command_time=0;
+    }
+    i_command_time--;
+  }
+
+  else {  //X-Stepper
+    //next step in direction
+    //Movement in -X-Direction
+    if (x_steps < 0) {
+      if (current_x_step==0) {
+        current_x_step=3;
+      }
+      else current_x_step--;
+      x_step--;
+      STATE_X--; //not finished, correction needed
+    }
+    //Movement in +X-Direction
+    else {
+      if (current_x_step==3) {
+        current_x_step=0;
+      }
+      else current_x_step++;
+      x_step++;
+      STATE_X++; //not finished, correction needed
+    }
+    
+    //set next step
+    set_xstep(current_x_step);
+
+    if (x_step==x_steps) { //last step reached?
+      phi_x=0;
+      x_step=0;
+      x_steps=0;
+      x_command_completed=1;
+      TCCR1B = 0; //Disable Timer
+    }
+    else { //next Timer-Compare-Value
+      if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE || interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
+        //Circular Interpolation with different speed settings for x- and z-stepper
+        //Steps have to be seperated in max. 90 sections of same moving average feed.
+        //For each of x_steps and z_steps an average phi of the section has to be calculated.
+        //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
+        
+        //next X-Step moving average feed
+        phi_x = (((long)(x_step))*90+45)/x_steps;
+        
+        if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
+          //calculation of next x-clk (Direction)
+          if (z_steps < 0) {
+            if (x_steps < 0) {
+            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+            }
+            else {
+            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+            }
+          }
+          else {
+            if (x_steps < 0) {
+            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+            }
+            else {
+            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+            }
+          }
+        }
+        else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
+          //calculation of next x-clk (Direction)
+          if (z_steps < 0) {
+            if (x_steps < 0) {
+            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+            }
+            else {
+            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+            }
+          }
+          else {
+            if (x_steps < 0) {
+            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+            }
+            else {
+            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+            }
+          }
+        }
+        
+        //next Timer-Compare-Value
+        //every step hast to be executed, feed can't be zero
+        if (clk_xfeed) { //clock not zero
+          OCR1A = (62500L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz/clk_xfeed)-1
+        } else OCR1A = 62499L;
+      }
+      
+      else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
+      //set Timer-Compare-Values
+        if (x_steps) {
+          if (x_step < x_steps/2) {
+            if (OCR1A<7352) {
+              OCR1A = 7510-x_step*10; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz*60/499s)-1
+              if (OCR1A<7352) {
+                OCR1A=7352;
+              }
+            }
+          } else if ((x_steps-x_step) < 17) {
+            OCR1A = 7510-(x_steps-x_step)*10; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz*60/499s)-1
+              if (OCR1A>=7510) {
+                OCR1A=7514;
+              }
+          }
+        }
+      }
+    }
+  }
+}
+
+ISR(TIMER3_OVF_vect) {   //Z-Stepper
   //many things to do
   //a different timer operation mode or interrupt is needed for suitable frequency
   //many calculations could be done before starting the timer
   //changing timer settings inside the ISR could replace some calculations and optimize CPU-time
   //Start-/Stop-Frequency
-  
-  if (interpolationmode==INTERPOLATION_LINEAR) {
-    //not finished
-  }
-  else {
-    //Circular Interpolation with different speed settings for x- and z-stepper
-    
-    //Steps have to be seperated in max. 90 sections of same moving average feed.
-    //For each of x_steps and z_steps an average phi of the section has to be calculated.
-    //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
-    
-    //next X-Step
-    if (i_T3ISR == ix_next) {
-      phi_x = (long)x_step*90/x_steps;
-      
-      if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
-        //calculation of next x-clk (Direction)
-        if (z_step < 0) {
-          if (x_step < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          }
-          else {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          }
-        }
-        else {
-          if (x_step < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          }
-          else {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          }
-        }
-      }
-      else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
-        //calculation of next x-clk (Direction)
-        if (z_step < 0) {
-          if (x_step < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          }
-          else {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          }
-        }
-        else {
-          if (x_step < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          }
-          else {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          }
-        }
-      }
-      
-      //next i for switching
-      ix_next += CLK_TIMER3 / clk_xfeed;
-      
-      //next step in direction
-      //every step hast to be executed, feed can't be zero
-      if (x_step<=x_steps) {
-        if (clk_xfeed) { //clock not zero
-          if (x_steps<0) {
-            if (current_x_step==0){
-              current_x_step=3;
-            } else current_x_step--;
-          }
-          else {
-            if (current_x_step==3){
-              current_x_step=0;
-            } else current_x_step++;
-          }
-          set_xstep(current_x_step);
-        }
-      }
-    }
-    
-    //next Z-Step
-    if (i_T3ISR == iz_next) {
-      phi_z = (long)z_step*90/z_steps;
-      
-      if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
-        //calculation of next z-clk (Direction)
-        if (z_step < 0) {
-          if (x_step < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-        }
-        else {
-          if (x_step < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-        }
-      }
-      else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
-        //calculation of next z-clk (Direction)
-        if (z_step < 0) {
-          if (x_step < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-        }
-        else {
-          if (x_step < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-        }
-      
-        //next i for switching
-        iz_next += CLK_TIMER3 / clk_zfeed;
-        
-        //next step in direction
-        if (z_step<=z_steps) {
-          if (clk_zfeed) { //clock not zero
-            if (z_steps<0) {
-              if (current_z_step==0){
-                current_z_step=3;
-              } else current_z_step--;
-            }
-            else {
-              if (current_z_step==3){
-                current_z_step=0;
-              } else current_z_step++;
-            }
-            set_zstep(current_z_step);
-            }
-          }
-        }
-    }
-    
 
+  //next step in direction
+  //Movement in -Z-Direction
+  if (z_steps < 0) {
+    if (current_z_step==0) {
+      current_z_step=3;
+    }
+    else current_z_step--;
+    z_step--;
+    STATE_Z--; //not finished, correction needed
+  }
+  //Movement in +Z-Direction
+  else {
+    if (current_z_step==3) {
+      current_z_step=0;
+    }
+    else current_z_step++;
+    z_step++;
+    STATE_Z++; //not finished, correction needed
   }
   
-  if ((x_step>=x_steps) && (z_step>=z_steps)) {
-    int i_T3ISR=0;
-    int ix_next=0;
-    int iz_next=0;
-    phi_x=0;
+  //set next step
+  set_zstep(current_z_step);
+
+  if (z_step==z_steps) { //last step reached?
     phi_z=0;
-    x_step=0;
     z_step=0;
-    x_steps=0;
     z_steps=0;
-    STATE_F = 0;
-    command_completed=1;
+    z_command_completed=1;
+    TCCR3B = 0; //Disable Timer
   }
-  
-  //counter
-  i_T3ISR++;
-  
+  else { //next Timer-Compare-Value
+    if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE || interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
+      //Circular Interpolation with different speed settings for x- and z-stepper
+      //Steps have to be seperated in max. 90 sections of same moving average feed.
+      //For each of x_steps and z_steps an average phi of the section has to be calculated.
+      //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
+      
+      //next Z-Step moving average feed
+      phi_z = (((long)(z_step))*90+45)/z_steps;
+      
+      if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
+        //calculation of next z-clk (Direction)
+        if (z_steps < 0) {
+          if (x_steps < 0) {
+          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
+          }
+          else {
+          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
+          }
+        }
+        else {
+          if (x_steps < 0) {
+          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
+          }
+          else {
+          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
+          }
+        }
+      }
+      else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
+        //calculation of next z-clk (Direction)
+        if (z_steps < 0) {
+          if (x_steps < 0) {
+          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
+          }
+          else {
+          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
+          }
+        }
+        else {
+          if (x_steps < 0) {
+          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
+          }
+          else {
+          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
+          }
+        }
+      }
+      
+      //next Timer-Compare-Value
+      //every step hast to be executed, feed can't be zero
+      if (clk_zfeed) { //clock not zero
+        OCR3A = (62500L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz/clk_zfeed)-1
+      } else OCR3A = 62499L;
+    }
+
+    else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
+        //set Timer-Compare-Values
+          if (z_steps) {
+            if (z_step < z_steps/2) {
+              if (OCR1A<7352) {
+                OCR3A = 7510-z_step*10; //OCR1A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz*60/499s)-1
+                if (OCR3A<7352) {
+                  OCR3A=7352;
+                }
+              }
+            } else if ((z_steps-z_step) < 17) {
+              OCR3A = 7510-(z_steps-z_step)*10; //OCR1A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz*60/499s)-1
+                if (OCR3A>=7510) {
+                  OCR3A=7514;
+                }
+            }
+          }
+        }
+  }
   //reset INTR-flag? OVF resets automatically
 }
+

@@ -11,13 +11,13 @@ To Arduino:
 001 5 NN CRC-8 #Programm Start at Block
 002 3 CRC-8 #Programm Stop
 003 3 CRC-8 #Programm Pause
-004 5 RPM_H&L CRC-8 #Spindle on with RPM
+004 5 RPM_H&L Direction CRC-8 #Spindle on with RPM
 005 3 CRC-8 #Spindle off
 006 5 CRC-8 #Stepper on
 007 3 CRC-8 #Stepper off
 008 5 FF negativ_direction CRC-8 #X-Stepper move with feed
 009 5 FF negativ_direction CRC-8 #Z-Stepper move with feed
-010 4 T CRC-8 #Set Tool-Position (and INIT)
+010 4 XX ZZ T CRC-8 #Set Tool-Position (and INIT)
 011 7 XX ZZ CRC-8 #Origin-Offset
 012 4 metric CRC-8 #metric or inch (maybe not needed)
 013 6 NN metric CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
@@ -45,12 +45,17 @@ void spi_buffer_handling() {
   if (process_it){
     //rx_buf [pos] = 0; //set end of string
 
-    /*
-    //for debugging
-    Serial.println (rx_buf);
-    set_revolutions(get_SERVO_CONTROL_POTI());
-    set_xz_move(50, 50, 15, 0); //feed noch in rpm
-    */
+    //Debug
+    String debug_string;
+    if (debug) { //for debugging
+      Serial.print("SPI-Buffer:");
+      for (int i=0; i<=pos; i++) {
+        Serial.print(" ");
+        debug_string =  String(rx_buf[i], DEC);
+        Serial.print(debug_string);
+      }
+      Serial.println();
+    }
 
     if (process_incomming_msg()) create_spi_error_msg();
     else create_machine_state_msg();
@@ -83,9 +88,10 @@ boolean process_incomming_msg() {
     case 3:   //Programm Pause
               programm_pause();
               break;
-    case 4:   //Spindle on with RPM
+    case 4:   //Spindle on with RPM and Direction
               if ((STATE>>STATE_MANUAL_BIT)&1) {
                 set_revolutions((((int)rx_buf[1])<<8) + rx_buf[2]);
+                spindle_direction(rx_buf[3]);
                 spindle_on();
               }
               break;
@@ -115,7 +121,9 @@ boolean process_incomming_msg() {
               }
     case 10:   //Set Tool-Position (and INIT)
               if ((STATE>>STATE_MANUAL_BIT)&1) {
-                set_tool_position(rx_buf[1]);
+                get_Tool_X((((int)rx_buf[1])<<8) + rx_buf[2]);
+                get_Tool_Z((((int)rx_buf[3])<<8) + rx_buf[4]);
+                set_tool_position(rx_buf[5]);
               }
               break;
     case 11:   //Origin-Offset
@@ -147,6 +155,14 @@ boolean process_incomming_msg() {
                 cnc_code[N].FTLK = (((int)rx_buf[9])<<8) + rx_buf[10];
                 cnc_code[N].HS = (((int)rx_buf[11])<<8) + rx_buf[12];
               }
+              break;
+    case 15:  //Shutdown
+              programm_stop();
+              stepper_off();
+              spindle_off();
+              save_current_x_step();
+              save_current_z_step();
+              save_current_tool_position();
               break;
     default:  //SPI-Error "PID unkown"
               success=1;

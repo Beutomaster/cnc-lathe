@@ -10,7 +10,7 @@ volatile const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 3264
 volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-volatile byte STATE=0; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile byte STATE=0; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
 volatile int STATE_RPM=0;
 volatile int STATE_X=0;
 volatile int STATE_Z=0;
@@ -22,16 +22,17 @@ volatile int STATE_N=0;
 void setup() {
   // put your setup code here, to run once:
   //PINs
-  pinMode(PIN_CONTROL_INACTIVE, INPUT_PULLUP); //LOW-Active (GND = Control activ)
-  pinMode(PIN_REVOLUTIONS_SYNC, INPUT);
-  pinMode(PIN_REVOLUTIONS_COUNT, INPUT);
+  pinMode(PIN_CONTROL_ACTIVE, INPUT);
+  pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
+  pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
-  pinMode(PIN_SPINDELBOARD_NIKO, OUTPUT);
+  pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
+  pinMode(PIN_SPINDLE_NEW, OUTPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
   pinMode(PIN_STEPPER_X_C, OUTPUT);
@@ -84,51 +85,35 @@ void setup() {
 
   //Timer1
   //Toolchanger + set command_completed
-  //+X-Stepper?
+  //+X-Stepper
   //command_complete isr
   
   //Timer2 
   //tone() function uses Timer2
     
   //Timer3
-  //(X-/)Y-Stepper output + set command_completed while in active mode and maybe observing Stepper in passsive mode
-  /*
-  //set and start Timer3 for 200Hz
-  TCCR3B = 0b00011000; //connect no Input-Compare-PINs, WGM33=1, WGM32=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR3A = 0b00000011; //connect no Output-Compare-PINs and WGM31=1, WGM30=1 for Fast PWM
-  TCCR3C = 0; //no Force of Output Compare
-  OCR3A = 10000; //OCR3A = 16MHz/(Prescaler*F_OCF3A) = 16MHz/(8*200Hz) = 10000
-  TCNT3 = 0; //set Start Value
-  //Output Compare A Match Interrupt Enable
-  TIMSK3 |= _BV(OCIE3A); //set 1
-  //Prescaler 8 and Start Timer
-  TCCR3B |= _BV(CS31)); //set 1
-  */
+  //Z-Stepper output + set command_completed while in active mode and maybe observing Stepper in passive mode
 
   //Timer4
-  //Niko's spindle regulator and FAST PWM
-  //set and start Timer4 with 20 kHz
-  TCCR4B = 0b00011000; //connect no Input-Compare-PINs, WGM43=1, WGM42=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=0, WGM40=1 for Fast PWM with ICR4=TOP
+  //spindle PWM
+  //set and start Timer4 (Clk = 16MHz/(Prescaler*(TOP+1)) = 16MHz/(1023+1) = 15,625 kHz)
+  TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
+  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM with ICR4=TOP
   TCCR4C = 0; //no Force of Output Compare
-  ICR4 = 800; //ICR4 = 16MHz/(Prescaler*f_ICR4) = 16MHz/(8*20kHz) = 800
-  OCR4C = 0; //OCR4C max. = ICR4 *0,55338792 = 442 !!! Engine is only for 180V DC
+  OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
   TCNT4 = 0; //set Start Value
-  //Prescaler 8 and Start Timer
-  TCCR4B |= _BV(CS51); //set 1
+  //Prescaler 1 and Start Timer
+  TCCR4B |= _BV(CS40); //set 1
   
-  //Timer5 Servo
-  //set and start Timer5 with 20ms TOP and 544µs to 2400µs OCR5A
-  TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR5A = 0b10000011; //connect OC5A-PIN (PIN 46) to Output Compare and WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
-  TCCR5C = 0; //no Force of Output Compare
-  ICR5 = 40000; //ICR5 = T_ICR5*16MHz/Prescaler = 20ms*16MHz/8 = 40000
-  OCR5A = 1088; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088
-  TCNT5 = 0; //set Start Value
-  //Prescaler 8 and Start Timer
-  TCCR5B |= _BV(CS51); //set 1
+  //Timer5 Servo and spindle regulator
+  set_Timer5();
 
-  //cli() //global INTR enable
+  //set interrupt enable
+  sei();
+
+  //read Last Steps
+  //read_last_x_step();
+  //read_last_z_step();
 }
 
 void set_error(byte error_number) {
@@ -150,6 +135,10 @@ void loop() {
   if (get_control_active()) {
     if (initialized) {
       if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
+        if (x_command_completed && z_command_completed) {
+          command_completed=1;
+          STATE_F = 0;
+        }
         if (command_completed && !pause) {
           process_cnc_listing();
         }
@@ -163,5 +152,6 @@ void loop() {
     reset_initialization();
     observe_machine();
     set_revolutions(get_SERVO_CONTROL_POTI());
+    //set spindle-direction
   }
 }
