@@ -45,12 +45,17 @@ void spi_buffer_handling() {
   if (process_it){
     //rx_buf [pos] = 0; //set end of string
 
-    /*
-    //for debugging
-    Serial.println (rx_buf);
-    set_revolutions(get_SERVO_CONTROL_POTI());
-    set_xz_move(50, 50, 15, 0); //feed noch in rpm
-    */
+    //Debug
+    String debug_string;
+    if (debug) { //for debugging
+      Serial.print("SPI-Buffer:");
+      for (int i=0; i<=pos; i++) {
+        Serial.print(" ");
+        debug_string =  String(rx_buf[i], DEC);
+        Serial.print(debug_string);
+      }
+      Serial.println();
+    }
 
     if (process_incomming_msg()) create_spi_error_msg();
     else create_machine_state_msg();
