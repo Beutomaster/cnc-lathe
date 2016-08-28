@@ -57,7 +57,12 @@ void set_poti_servo(int poti_angle){
 */
 
 void set_poti_servo(int local_target_revolutions){
-  OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
+  OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+  //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+
+  //Debug
+    Serial.print("OCR5A:");
+    Serial.println(OCR5A);
 }
 
 void set_spindle_new(bool spindle_new_local){
