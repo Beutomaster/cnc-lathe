@@ -21,8 +21,9 @@ void spindle_off() {
 
 void set_revolutions(int target_revolutions_local) {
   //Poti-Servo
-  int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
-  set_poti_servo(poti_angle);
+  //int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
+  //set_poti_servo(poti_angle);
+  set_poti_servo(target_revolutions_local);
  
   //Debug
   Serial.print("RPM-set-Value: ");
@@ -47,10 +48,16 @@ int get_SERVO_CONTROL_POTI() {
   return manual_target_revolutions;
 }
 
+/*
 void set_poti_servo(int poti_angle){
   //write angle in degree to Servo-Objekt
   //potiservo.write(poti_angle); //old Servo Lib
   OCR5A = (OCR5A_max-OCR5A_min)*poti_angle/180 + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+}
+*/
+
+void set_poti_servo(int local_target_revolutions){
+  OCR5A = map(local_target_revolutions, OCR5A_min, OCR5A_max, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
 }
 
 void set_spindle_new(bool spindle_new_local){
@@ -87,6 +94,8 @@ void set_Timer5 () {
     ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
     OCR5A = OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1091
     TCNT5 = 0; //set Start Value
+    //Overflow Interrupt Enable
+    TIMSK5 &= ~(_BV(TOIE5)); //delete bit0
     //Prescaler 8 and Start Timer
     TCCR5B |= _BV(CS51); //set 1
   }
