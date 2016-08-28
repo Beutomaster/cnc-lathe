@@ -76,7 +76,7 @@ void setup() {
   set_Timer5();
 
   //Spindle-Test
-  set_spindle_new(HIGH);
+  set_spindle_new(LOW);
 
   //set interrupt enable
   sei();
