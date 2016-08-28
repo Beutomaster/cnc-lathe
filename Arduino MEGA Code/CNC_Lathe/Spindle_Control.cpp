@@ -88,6 +88,8 @@ int get_SERVO_CONTROL_POTI() {
 	//Convert 10-bit Value from Analog-Input (0-1023) to 460-3220 rpm
 	manual_target_revolutions = map(manual_target_revolutions, 0, 1023, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
 
+  //needs waiting average calculation
+
 	return manual_target_revolutions;
 }
 
@@ -100,7 +102,10 @@ void set_poti_servo(int poti_angle){
 */
 
 void set_poti_servo(int local_target_revolutions){
-  OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
+  //OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
+  OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+  //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+
 }
 
 void get_revolutions_ISR() { //read revolution-sensor
