@@ -21,8 +21,9 @@ void spindle_off() {
 
 void set_revolutions(int target_revolutions_local) {
   //Poti-Servo
-  int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
-  set_poti_servo(poti_angle);
+  //int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
+  //set_poti_servo(poti_angle);
+  set_poti_servo(target_revolutions_local);
  
   //Debug
   Serial.print("RPM-set-Value: ");
@@ -47,10 +48,16 @@ int get_SERVO_CONTROL_POTI() {
   return manual_target_revolutions;
 }
 
+/*
 void set_poti_servo(int poti_angle){
   //write angle in degree to Servo-Objekt
   //potiservo.write(poti_angle); //old Servo Lib
   OCR5A = (OCR5A_max-OCR5A_min)*poti_angle/180 + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+}
+*/
+
+void set_poti_servo(int local_target_revolutions){
+  OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
 }
 
 void set_spindle_new(bool spindle_new_local){
@@ -82,11 +89,13 @@ void set_Timer5 () {
   else { //Servo
     //set and start Timer5 with 20ms TOP and 544µs to 2400µs OCR5A
     TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-    TCCR5A = 0b10000011; //connect OC5A-PIN (PIN 46) to Output Compare and WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+    TCCR5A = 0b10000010; //clear OC5A-PIN (PIN 46) with COM5A1=1 and COM5A=0 at Output Compare and WGM51=1, WGM50=0 for Fast PWM with ICR5=TOP
     TCCR5C = 0; //no Force of Output Compare
     ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
-    OCR5A = 1087; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1087
+    OCR5A = OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1091
     TCNT5 = 0; //set Start Value
+    //Overflow Interrupt Enable
+    TIMSK5 &= ~(_BV(TOIE5)); //delete bit0
     //Prescaler 8 and Start Timer
     TCCR5B |= _BV(CS51); //set 1
   }
