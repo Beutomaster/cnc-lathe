@@ -9,28 +9,26 @@
 //#include <wiringPiSPI.h>
 
 //SPI
-static const unsigned char *device = "/dev/spidev0.0";
-static uint8_t mode = 0;
+static const char *device = "/dev/spidev0.0";
+static uint8_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 500000;
-static uint16_t delay = 0;
+static uint16_t delay;
 int ret=0, fd, length;
 unsigned char *data_string;
-unsigned char n[]="\n";
-unsigned char hallo[] = { "Hallo Welt\n" };
 
 //CGI
-unsigned char *getdata();
-unsigned char *Strdup(const unsigned char *);
-unsigned char *appendnewline(const unsigned char *);
-void hex2ascii(unsigned char *);
-unsigned char convert(unsigned char *);
-struct CGI_DATEN *erstellen(unsigned char *);
-void printf_error(unsigned char *);
+char *getdata();
+char *Strdup(const char *);
+char *appendnewline(const char *);
+void hex2ascii(char *);
+char convert(char *);
+struct CGI_DATEN *erstellen(char *);
+void printf_error(char *);
 
 struct CGI_DATEN {
-   unsigned char *variable;
-   unsigned char *wert;
+   char *variable;
+   char *wert;
    struct CGI_DATEN *next;
 };
 
@@ -45,109 +43,109 @@ int SpiWriteRead (int fd, unsigned char *data, int length)
  * length    Länge des Puffers
 */
 
-{
+  {
 	struct spi_ioc_transfer spi[length]; /* Bibliotheksstruktur fuer Schreiben/Lesen */
 	int i, ret;                          /* Zaehler, Returnwert */
 
 	
-	/* Device oeffen */
+/* Device oeffen */
 	if ((fd = open(device, O_RDWR)) < 0)
-	{
+	  {
 	  perror("Fehler Open Device");
 	  exit(1);
-	}
+	  }
 	
 	/* Mode setzen */
-	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
-	if (ret < 0)
-	{
-		perror("Fehler Set SPI-Modus");
-		exit(1);
-	}
+ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+if (ret < 0)
+  {
+  perror("Fehler Set SPI-Modus");
+  exit(1);
+  }
   
-	/* Mode abfragen */
-	ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
-	if (ret < 0)
-	{
-		perror("Fehler Get SPI-Modus");
-		exit(1);
-	}
+  /* Mode abfragen */
+ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
+if (ret < 0)
+  {
+  perror("Fehler Get SPI-Modus");
+  exit(1);
+  }
   
-	/* Wortlaenge setzen */
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret < 0)
-	  {
-		  perror("Fehler Set Wortlaenge");
-		  exit(1);
-	  }
+  /* Wortlaenge setzen */
+ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+if (ret < 0)
+  {
+  perror("Fehler Set Wortlaenge");
+  exit(1);
+  }
    
-	/* Wortlaenge abfragen */
-	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
-	if (ret < 0)
+  /* Wortlaenge abfragen */
+  ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
+  if (ret < 0)
     {
-		perror("Fehler Get Wortlaenge");
-		exit(1);
+    perror("Fehler Get Wortlaenge");
+    exit(1);
     }
 
 	/* Datenrate setzen */
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret < 0)
-	{
-	  perror("Fehler Set Speed");
-	  exit(1);
-	}
+ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+if (ret < 0)
+  {
+  perror("Fehler Set Speed");
+  exit(1);
+  }
    
-	/* Datenrate abfragen */
-	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
-	if (ret < 0)
+  /* Datenrate abfragen */
+  ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+  if (ret < 0)
     {
-		perror("Fehler Get Speed");
-		exit(1);
+    perror("Fehler Get Speed");
+    exit(1);
     }
 	
-	/* Daten uebergeben */
+  /* Daten uebergeben */
 	for (i = 0; i < length; i++)
-	{
+	  {
 		spi[i].tx_buf        = (unsigned long)(data + i); // transmit from "data"
 		spi[i].rx_buf        = (unsigned long)(data + i); // receive into "data"
 		spi[i].len           = sizeof(*(data + i));
-		spi[i].delay_usecs   = delay;
+		spi[i].delay_usecs   = 0;
 		spi[i].speed_hz      = speed;
 		spi[i].bits_per_word = bits;
 		spi[i].cs_change     = 0;
-	}
+	  }
 
-	printf("<p>Test1 vorm Senden/Empfangen - ioctl</p>"); //Debugging
-	/* Daten senden und empfangen */
-	ret = ioctl(fd, SPI_IOC_MESSAGE(length), &spi); //funzt net
-	//ret = ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
+	printf("<p>Test1 Senden/Empfangen - ioctl</p>"); //Debugging
+	  
+	//ret = ioctl(fd, SPI_IOC_MESSAGE(length), &spi); //funzt net
+	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
 	
 	//echo -ne "\x0A" > /dev/spidev0.0
 	if(ret < 0)
     {
-		printf("<p>Test2 Fehler beim Senden/Empfangen - ioctl</p>"); //Debugging
+		printf("<p>Test2 Senden/Empfangen - ioctl</p>"); //Debugging
 		perror("Fehler beim Senden/Empfangen - ioctl");
 		exit(1);
     }
 	
-	printf("<p>Test3 Senden/Empfangen erfolgreich - ioctl</p>"); //Debugging
+	printf("<p>Test3 Senden/Empfangen - ioctl</p>"); //Debugging
 	
 	close(fd);
 	
 	return ret;
-}
+  }
   
- /*
+  /*
  *  Funktion liest Daten in der POST- oder GET-Methode ein.
  *  Rückgabewert: String puffer mit den Daten
  *  bei Fehler  : NULL
  */
-unsigned char *getdata(void) {
+char *getdata(void) {
    unsigned long size;
-   unsigned char *puffer = NULL;
-   unsigned char *request = getenv("REQUEST_METHOD");
-   unsigned char *cont_len;
-   unsigned char *cgi_string;
+   char *puffer = NULL;
+   char *request = getenv("REQUEST_METHOD");
+   char *cont_len;
+   char *cgi_string;
 
    /* zuerst die Request-Methode überprüfen */
    if(  NULL == request )
@@ -158,7 +156,7 @@ unsigned char *getdata(void) {
       if( NULL == cgi_string )
          return NULL;
       else {
-         puffer = (unsigned char *) Strdup(cgi_string);
+         puffer = (char *) Strdup(cgi_string);
          return puffer; /* Rückgabewert an den Aufrufer */
       }
    }
@@ -175,7 +173,7 @@ unsigned char *getdata(void) {
             return NULL; /* Keine Eingabe!?!? */
       }
       /* jetzt lesen wir die Daten von stdin ein */
-      puffer =(unsigned char *) malloc(size+1);
+      puffer =(char *) malloc(size+1);
       if( NULL == puffer )
          return NULL;
       else {
@@ -196,12 +194,12 @@ unsigned char *getdata(void) {
 /*  Da die Funktion strdup() in der Headerdatei <string.h> keine
  *  ANSI-C-Funktion ist, schreiben wir eine eigene.
  */
-unsigned char *Strdup(const unsigned char *str) {
-   unsigned char *p;
+char *Strdup(const char *str) {
+   char *p;
    if(NULL == str)
       return NULL;
    else {
-      p = (unsigned char *)malloc(strlen(str)+1);
+      p = (char *)malloc(strlen(str)+1);
       if(NULL == p)
          return NULL;
       else
@@ -210,25 +208,24 @@ unsigned char *Strdup(const unsigned char *str) {
    return p;
 }
 
-unsigned char *appendnewline(const unsigned char *str) {
-   unsigned char *p;
+char *appendnewline(const char *str) {
+   char *p;
+   char n[1]="\n";
    if(NULL == str)
       return NULL;
    else {
-      p = (unsigned char *)malloc(strlen(str)+2);
+      p = (char *)malloc(strlen(str)+2);
       if(NULL == p)
          return NULL;
-      else {
-		 strcpy(p, str);
+      else
          strcat(p, n);
-	  }
    }
    return p;
 }
 
 /* Wandelt einzelne Hexzeichen (%xx) in ASCII-Zeichen
  * und kodierte Leerzeichen (+) in echte Leerzeichen um. */
-void hex2ascii(unsigned char *str) {
+void hex2ascii(char *str) {
    int x,y;
 
    for(x=0,y=0; str[y] != '\0'; ++x,++y) {
@@ -252,8 +249,8 @@ void hex2ascii(unsigned char *str) {
 /* Funktion konvertiert einen String von zwei hexadezimalen
  * Zeichen und gibt das einzelne dafür stehende Zeichen zurück.
  */
-unsigned char convert(unsigned char *hex) {
-   unsigned char ascii;
+char convert(char *hex) {
+   char ascii;
 
    /* erster Hexawert */
    ascii =
@@ -269,12 +266,12 @@ unsigned char convert(unsigned char *hex) {
  * Rückgabewert: Anfangsadresse der Liste
  * Bei Fehler: NULL
  */
-struct CGI_DATEN *erstellen(unsigned char *str) {
-   unsigned char* s;
-   unsigned char* res;
+struct CGI_DATEN *erstellen(char *str) {
+   char* s;
+   char* res;
    /* Irgendwo gibt es auch eine Grenze, hier sind
       MAX_PAARE erlaubt. */
-   unsigned char *paare[MAX_PAARE];
+   char *paare[MAX_PAARE];
    struct CGI_DATEN *ptr_daten = NULL;
    struct CGI_DATEN *ptr_anfang = NULL;
    int i=0, j=0;
@@ -284,8 +281,8 @@ struct CGI_DATEN *erstellen(unsigned char *str) {
     s=str;
     res=strtok(s,"&");
     while( res != NULL && i < MAX_PAARE) {
-       /* Wert von res dynamisch in unsigned char **pair speichern */
-       paare[i] = (unsigned char *)malloc(strlen(res)+1);
+       /* Wert von res dynamisch in char **pair speichern */
+       paare[i] = (char *)malloc(strlen(res)+1);
        if(paare[i] == NULL)
           return NULL;
        paare[i] = res;
@@ -305,7 +302,7 @@ struct CGI_DATEN *erstellen(unsigned char *str) {
          res = strtok( paare[j], "=");
          if(res == NULL)
             return NULL;
-         ptr_anfang->variable = (unsigned char *)
+         ptr_anfang->variable = (char *)
            malloc(strlen(res)+1);
          if( ptr_anfang->variable == NULL )
             return NULL;
@@ -313,7 +310,7 @@ struct CGI_DATEN *erstellen(unsigned char *str) {
          res = strtok(NULL, "\0");
          if(res == NULL)
             return NULL;
-         ptr_anfang->wert = (unsigned char *) malloc(strlen(res)+1);
+         ptr_anfang->wert = (char *) malloc(strlen(res)+1);
          if( ptr_anfang->wert == NULL )
             return NULL;
          ptr_anfang->wert = res;
@@ -330,7 +327,7 @@ struct CGI_DATEN *erstellen(unsigned char *str) {
          res = strtok( paare[j], "=");
          if(res == NULL)
             return NULL;
-         ptr_daten->variable =(unsigned char *)
+         ptr_daten->variable =(char *)
            malloc(strlen(res)+1);
          if(ptr_daten->variable == NULL)
             return NULL;
@@ -338,7 +335,7 @@ struct CGI_DATEN *erstellen(unsigned char *str) {
          res = strtok(NULL, "\0");
          if(res == NULL)
             return NULL;
-         ptr_daten->wert =(unsigned char *) malloc(strlen(res)+1);
+         ptr_daten->wert =(char *) malloc(strlen(res)+1);
          if(ptr_daten->wert == NULL)
             return NULL;
          ptr_daten->wert = res;
@@ -368,7 +365,7 @@ void loeschen(struct CGI_DATEN *daten) {
    }
 }
 
-void printf_error(unsigned char *str) {
+void printf_error(char *str) {
    printf("Content-Type: text/html\n\n");
    printf("<html><head>\n");
    printf("<title>CGI-Fehlermeldung</title>\n");
@@ -377,10 +374,10 @@ void printf_error(unsigned char *str) {
    printf("</body></html>\n");
 }
   
-int main(int argc, unsigned char *argv[])
+int main(int argc, char *argv[])
 {
-	unsigned char *str;
-	unsigned char *str2;
+	char *str;
+	char *str2;
 	struct CGI_DATEN *cgi;
 	struct CGI_DATEN *free_cgi;
 	
@@ -396,9 +393,6 @@ int main(int argc, unsigned char *argv[])
     /* Hexzeichen in ASCII-Zeichen konvertieren und aus '+'
     * Leerzeichen machen */
 	hex2ascii(str);
-	
-	//Leerzeichen anhaengen
-	str2 = appendnewline(str);
    
    	/* Kontrollausgabe */
 	printf("Content-type: text/html\n\n"); 
@@ -408,21 +402,17 @@ int main(int argc, unsigned char *argv[])
 	printf("SPI-Mode.......: %d<br />", mode);
 	printf("Wortlaenge.....: %d<br />", bits);
 	printf("Geschwindigkeit: %d Hz (%d kHz)<br />", speed, speed/1000);
-	printf("%s<br />",str2);
-	printf("Stringlaenge1...: %d<br />",strlen(str));
-	printf("Stringlaenge2...: %d<br />",strlen(str2));
+	printf("%s",str);
 	printf("</p>\n"); /* <P> is an HTML paragraph tag */
    
    //String senden
-   SpiWriteRead (fd, str2, strlen(str2)); //Fehler
-   //SpiWriteRead (fd, hallo, strlen(hallo)); //Fehler
-   //SpiWriteRead (fd, n, strlen(n)); //Fehler
-   //SpiWriteRead (fd, str2, 100); //Fehler
+   str2 = appendnewline(str);
+   SpiWriteRead (fd, (unsigned char *) str2, strlen(str2)); //es kommt kein zeichen an
    //SpiWriteRead (fd, (unsigned char *) appendnewline(str), (strlen(str)+1)); //funzt net, length muss const sein
    //mit WiringPi
    //int wiringPiSPISetup (int channel, int speed);
    //int wiringPiSPIDataRW (0, (unsigned char *) appendnewline(str), (strlen(str)+1));
-   printf("<p>Test4 Sende-/Empfangsfunktion verlassen</p>"); //Debugging
+   printf("<p>Test Senden/Empfangen - ioctl</p>"); //Debugging
    
    /* Liste der Formualardaten erstellen */
    cgi = erstellen(str);
