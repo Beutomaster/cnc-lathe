@@ -2,6 +2,9 @@
 
 int i=0;
 
+volatile byte STATE_T=0;
+volatile boolean command_completed=1;
+
 void setup() {
   // put your setup code here, to run once:
   //PINs
@@ -16,6 +19,8 @@ void setup() {
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
+  pinMode(PIN_DEBUG_INPUT_1, OUTPUT);
+  pinMode(PIN_DEBUG_INPUT_2, OUTPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
   pinMode(PIN_STEPPER_X_C, OUTPUT);
@@ -26,7 +31,7 @@ void setup() {
   pinMode(PIN_STEPPER_Z_D, OUTPUT);
   pinMode(PIN_TOOL_CHANGER_HOLD, OUTPUT);
   pinMode(PIN_TOOL_CHANGER_CHANGE, OUTPUT);
-  pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
+  //pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
   pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
   //pinMode(PIN_USART1_RX, INPUT);
@@ -86,26 +91,41 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   
-  //Spindle-Test
   if (digitalRead(PIN_CONTROL_ACTIVE)) {
-    spindle_on();
     //Debug
     Serial.println("Ardino active");
+    
+    //Spindle-Test
+    spindle_on();
+
+    if (digitalRead(PIN_DEBUG_INPUT_1)) {
+      //Stepper-Test
+      //stepper_off();
+      //delay(10);
+      for (i=0; i<4; i++) {
+        set_xstep(i);
+        set_zstep(i);
+        delay(100);
+      }
+      for (i=3; i>0; i--) {
+        set_xstep(i);
+        set_zstep(i);
+        delay(100);
+      }
+    }
+
+    if (digitalRead(PIN_DEBUG_INPUT_2)) {
+      if (!command_completed) {
+        //Tool-Changer-Test
+        set_tool_position(3);
+      }
+    }
+    
   } else {
-    spindle_off();
     //Debug
     Serial.println("Ardino inactive");
+    spindle_off();
   }
+  
   set_revolutions(get_SERVO_CONTROL_POTI());
-
-  /*
-  //Stepper-Test
-  //stepper_off();
-  //delay(20);
-  for (i=0; i<4; i++) {
-    set_xstep(i);
-    set_zstep(i);
-    delay(100);
-  }
-  */
 }
