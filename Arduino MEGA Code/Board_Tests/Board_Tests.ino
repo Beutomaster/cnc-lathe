@@ -1,6 +1,6 @@
 #include "Board_Tests.h"
 
-int i=0;
+int i=0, j=0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
@@ -102,15 +102,19 @@ void loop() {
       //Stepper-Test
       //stepper_off();
       //delay(10);
-      for (i=0; i<4; i++) {
-        set_xstep(i);
-        set_zstep(i);
-        delay(100);
+      for (j=0; j<8; j++) {
+        for (i=0; i<4; i++) {
+          set_xstep(i);
+          set_zstep(i);
+          delay(100);
+        }
       }
-      for (i=3; i>0; i--) {
-        set_xstep(i);
-        set_zstep(i);
-        delay(100);
+      for (j=0; j<8; j++) {
+        for (i=3; i>0; i--) {
+          set_xstep(i);
+          set_zstep(i);
+          delay(100);
+        }
       }
     }
 
