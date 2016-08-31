@@ -33,6 +33,8 @@ void setup() {
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
+  pinMode(PIN_DEBUG_INPUT_1, OUTPUT);
+  pinMode(PIN_DEBUG_INPUT_2, OUTPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
   pinMode(PIN_STEPPER_X_C, OUTPUT);
@@ -43,7 +45,7 @@ void setup() {
   pinMode(PIN_STEPPER_Z_D, OUTPUT);
   pinMode(PIN_TOOL_CHANGER_HOLD, OUTPUT);
   pinMode(PIN_TOOL_CHANGER_CHANGE, OUTPUT);
-  pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
+  //pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
   pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
   pinMode(PIN_USART1_RX, INPUT);

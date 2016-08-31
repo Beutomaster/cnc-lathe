@@ -13,7 +13,6 @@
 //Positionssensor oder Eingabe benoetigt
 
 void set_tool_position(byte);
-byte get_tool_position();
 void save_current_tool_position();
 void read_current_tool_position();
 
