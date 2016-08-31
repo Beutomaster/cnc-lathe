@@ -79,7 +79,7 @@ boolean process_incomming_msg() {
               break;
     case 1:   //Programm Start at Block
               if ((STATE>>STATE_PAUSE_BIT)&1) {
-                programm_start((((int)rx_buf[1])<<8) + rx_buf[2]);
+                programm_start((((int)rx_buf[1])<<8) | rx_buf[2]);
               }
               break;
     case 2:   //Programm Stop
@@ -90,7 +90,7 @@ boolean process_incomming_msg() {
               break;
     case 4:   //Spindle on with RPM and Direction
               if ((STATE>>STATE_MANUAL_BIT)&1) {
-                set_revolutions((((int)rx_buf[1])<<8) + rx_buf[2]);
+                set_revolutions((((int)rx_buf[1])<<8) | rx_buf[2]);
                 spindle_direction(rx_buf[3]);
                 spindle_on();
               }
@@ -112,23 +112,23 @@ boolean process_incomming_msg() {
               break;
     case 8:   //X-Stepper move with feed
               if ((STATE>>STATE_MANUAL_BIT)&1) {
-                set_xstepper((((int)rx_buf[1])<<8) + rx_buf[2], rx_buf[3]);
+                set_xstepper((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3]);
               }
               break;
     case 9:   //Z-Stepper move with feed
               if ((STATE>>STATE_PAUSE_BIT)&1) {
-                set_zstepper((((int)rx_buf[1])<<8) + rx_buf[2], rx_buf[3]);
+                set_zstepper((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3]);
               }
     case 10:   //Set Tool-Position (and INIT)
               if ((STATE>>STATE_MANUAL_BIT)&1) {
-                get_Tool_X((((int)rx_buf[1])<<8) + rx_buf[2]);
-                get_Tool_Z((((int)rx_buf[3])<<8) + rx_buf[4]);
+                get_Tool_X((((int)rx_buf[1])<<8) | rx_buf[2]);
+                get_Tool_Z((((int)rx_buf[3])<<8) | rx_buf[4]);
                 set_tool_position(rx_buf[5]);
               }
               break;
     case 11:   //Origin-Offset
               if ((STATE>>STATE_PAUSE_BIT)&1) {
-                set_xz_coordinates(((((int)rx_buf[1])<<8) + rx_buf[2]), ((((int)rx_buf[3])<<8) + rx_buf[4]));
+                set_xz_coordinates(((((int)rx_buf[1])<<8) | rx_buf[2]), ((((int)rx_buf[3])<<8) | rx_buf[4]));
               }
               break;
     case 12:  //metric or inch (maybe not needed)
@@ -147,13 +147,13 @@ boolean process_incomming_msg() {
               break;
     case 14:  //CNC-Code-Block
               if ((STATE>>STATE_PAUSE_BIT)&1) {
-                N = (((int)rx_buf[1])<<8) + rx_buf[2];
+                N = (((int)rx_buf[1])<<8) | rx_buf[2];
                 cnc_code[N].GM = rx_buf[3];
                 cnc_code[N].GM_NO = rx_buf[4];
-                cnc_code[N].XI = (((int)rx_buf[5])<<8) + rx_buf[6];
-                cnc_code[N].ZK = (((int)rx_buf[7])<<8) + rx_buf[8];
-                cnc_code[N].FTLK = (((int)rx_buf[9])<<8) + rx_buf[10];
-                cnc_code[N].HS = (((int)rx_buf[11])<<8) + rx_buf[12];
+                cnc_code[N].XI = (((int)rx_buf[5])<<8) | rx_buf[6];
+                cnc_code[N].ZK = (((int)rx_buf[7])<<8) | rx_buf[8];
+                cnc_code[N].FTLK = (((int)rx_buf[9])<<8) | rx_buf[10];
+                cnc_code[N].HS = (((int)rx_buf[11])<<8) | rx_buf[12];
               }
               break;
     case 15:  //Shutdown
