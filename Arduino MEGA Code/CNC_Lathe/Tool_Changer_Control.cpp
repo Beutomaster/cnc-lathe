@@ -41,11 +41,6 @@ void set_tool_position(byte tool) {
   }
 }
 
-byte get_tool_position() { //maybe not needed
-	byte tool_position=0; //Stub
-	return tool_position;
-}
-
 void save_current_tool_position() { //instead of initialization, save in eeprom !!!
   EEPROM.write(LAST_TOOL_ADDRESS, STATE_T);
 }
@@ -60,7 +55,7 @@ ISR(TIMER1_COMPA_vect) {
         //Step2 TOOL_CHANGER_FIXING 3,5s
         tool_step=2;
         digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
-        digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
+        //digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
         //set and start Timer1 for 3,5s
         OCR1A = 54688; //OCR1A = T_OCF1A*16MHz/Prescaler = 3,5s*16MHz/1024 = 54687,5 = 54688
         TCNT1 = 0; //set Start Value
@@ -69,7 +64,7 @@ ISR(TIMER1_COMPA_vect) {
       else if (tool_step==2) {
         //Step0 TOOL_CHANGER_HOLD
         tool_step=0;
-        digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
+        //digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
         digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
         i_tool--;
         if (i_tool==0) {
