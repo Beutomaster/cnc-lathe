@@ -84,6 +84,7 @@ void setup() {
   //Quick and Dirty: Servo- and Spindle-PWM
   spindle_new = HIGH;
   digitalWrite(PIN_SPINDLE_NEW, HIGH);
+  digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
   //set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
 
   //set interrupt enable
