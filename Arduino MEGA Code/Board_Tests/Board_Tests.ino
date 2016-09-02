@@ -76,12 +76,15 @@ void setup() {
   TCNT4 = 0; //set Start Value
   //Prescaler 1 and Start Timer
   TCCR4B |= _BV(CS40); //set 1
-  
+
   //Timer5 Servo and spindle regulator
   set_Timer5();
 
   //Spindle-Test
-  set_spindle_new(LOW);
+  //Quick and Dirty: Servo- and Spindle-PWM
+  spindle_new = HIGH;
+  digitalWrite(PIN_SPINDLE_NEW, HIGH);
+  //set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
 
   //set interrupt enable
   sei();
@@ -94,6 +97,7 @@ void loop() {
   if (digitalRead(PIN_CONTROL_ACTIVE)) {
     //Debug
     Serial.println("Ardino active");
+    
     
     //Spindle-Test
     spindle_on();
