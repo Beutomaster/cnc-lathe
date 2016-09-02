@@ -77,12 +77,14 @@ void setup() {
   //Prescaler 1 and Start Timer
   TCCR4B |= _BV(CS40); //set 1
 
-  set_spindle_new(LOW);
   //Timer5 Servo and spindle regulator
   set_Timer5();
 
   //Spindle-Test
-  set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
+  //Quick and Dirty: Servo- and Spindle-PWM
+  spindle_new = HIGH;
+  digitalWrite(PIN_SPINDLE_NEW, HIGH);
+  //set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
 
   //set interrupt enable
   sei();
