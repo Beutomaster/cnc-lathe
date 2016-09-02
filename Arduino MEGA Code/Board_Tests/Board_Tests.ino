@@ -105,6 +105,8 @@ void loop() {
 
     if (digitalRead(PIN_DEBUG_INPUT_1)) {
       //Stepper-Test
+      //Debug
+      Serial.println("Stepper-Test");
       //stepper_off();
       //delay(10);
       for (j=0; j<8; j++) {
@@ -126,6 +128,8 @@ void loop() {
     if (digitalRead(PIN_DEBUG_INPUT_2)) {
       if (!command_completed) {
         //Tool-Changer-Test
+        //Debug
+        Serial.println("Tool-Changer-Test");
         set_tool_position(3);
       }
     }
