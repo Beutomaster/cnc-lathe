@@ -7,14 +7,15 @@ volatile char i_tool=0;
 
 void set_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
-    //set new Tool Postion
-    STATE_T=tool;
-  
+      
     if (initialized){
       //calc how many changes to make
       char i_tool = tool - STATE_T;
       if (i_tool<0) i_tool = 6 + i_tool;
-      
+
+      //set new Tool Postion
+      STATE_T=tool;
+    
       //Step1 TOOL_CHANGER_CHANGE 2,9s
       tool_step=1;
       command_completed=0;
