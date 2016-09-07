@@ -24,10 +24,12 @@ void set_revolutions(int target_revolutions_local) {
   //int poti_angle = map(target_revolutions_local, REVOLUTIONS_MIN, REVOLUTIONS_MAX, 0, 180);
   //set_poti_servo(poti_angle);
   set_poti_servo(target_revolutions_local);
- 
-  //Debug
-  Serial.print("RPM-set-Value: ");
-  Serial.println (target_revolutions_local);
+
+  if (debug_rpm) {
+    //Debug
+    Serial.print("RPM-set-Value: ");
+    Serial.println (target_revolutions_local);
+  }
   
   //Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
   //min. 16KHz?
@@ -60,9 +62,11 @@ void set_poti_servo(int local_target_revolutions){
   OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
   //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
 
+  if (debug_rpm) {
   //Debug
     Serial.print("OCR5A:");
     Serial.println(OCR5A);
+  }
 }
 
 void set_spindle_new(bool spindle_new_local){
