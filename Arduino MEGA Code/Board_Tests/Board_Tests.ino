@@ -4,7 +4,7 @@ int i=0, j=0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
-volatile boolean debug_active=0, debug_rpm=0;
+volatile boolean debug_active=1, debug_rpm=1;
 
 void setup() {
   // put your setup code here, to run once:
@@ -112,18 +112,18 @@ void loop() {
       Serial.println("Stepper-Test");
       //stepper_off();
       //delay(10);
-      for (j=0; j<8; j++) {
+      for (j=0; j<50; j++) {
         for (i=0; i<4; i++) {
           set_xstep(i);
           set_zstep(i);
-          delay(100);
+          delay(50);
         }
       }
-      for (j=0; j<8; j++) {
+      for (j=0; j<50; j++) {
         for (i=3; i>0; i--) {
           set_xstep(i);
           set_zstep(i);
-          delay(100);
+          delay(50);
         }
       }
     }
