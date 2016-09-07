@@ -129,7 +129,7 @@ void loop() {
     }
 
     if (digitalRead(PIN_DEBUG_INPUT_2)) {
-      if (!command_completed) {
+      if (command_completed) {
         //Tool-Changer-Test
         //Debug
         Serial.println("Tool-Changer-Test");
