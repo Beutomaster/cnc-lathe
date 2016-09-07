@@ -4,6 +4,7 @@ int i=0, j=0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
+volatile boolean debug_active=0, debug_rpm=0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -96,8 +97,10 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   if (digitalRead(PIN_CONTROL_ACTIVE)) {
-    //Debug
-    Serial.println("Ardino active");
+    if (debug_active) {
+      //Debug
+      Serial.println("Ardino active");
+    }
     
     
     //Spindle-Test
@@ -126,7 +129,7 @@ void loop() {
     }
 
     if (digitalRead(PIN_DEBUG_INPUT_2)) {
-      if (!command_completed) {
+      if (command_completed) {
         //Tool-Changer-Test
         //Debug
         Serial.println("Tool-Changer-Test");
@@ -135,9 +138,11 @@ void loop() {
     }
     
   } else {
-    //Debug
-    Serial.println("Ardino inactive");
-    spindle_off();
+    if (debug_active) {
+      //Debug
+      Serial.println("Ardino inactive");
+      spindle_off();
+    }
   }
   
   set_revolutions(get_SERVO_CONTROL_POTI());
