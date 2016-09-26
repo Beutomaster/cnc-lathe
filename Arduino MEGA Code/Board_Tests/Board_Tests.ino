@@ -113,18 +113,14 @@ void loop() {
       //stepper_off();
       //delay(10);
       for (j=0; j<50; j++) {
-        for (i=0; i<4; i++) {
-          set_xstep(i);
-          set_zstep(i);
+          set_xstep(j%4);
+          set_zstep(j%4);
           delay(50);
-        }
       }
-      for (j=0; j<50; j++) {
-        for (i=3; i>0; i--) {
-          set_xstep(i);
-          set_zstep(i);
+      for (j=j-1; j>=0; j--) {
+          set_xstep(j%4);
+          set_zstep(j%4);
           delay(50);
-        }
       }
     }
 
