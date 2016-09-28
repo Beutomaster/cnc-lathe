@@ -16,6 +16,10 @@ void set_tool_position(byte tool) {
     STATE_T=tool;
     
     //Step1 TOOL_CHANGER_CHANGE 2,9s
+    if (debug_tool) {
+      //Debug
+      Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
+    }
     tool_step=1;
     command_completed=0;
     digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
@@ -40,6 +44,10 @@ ISR(TIMER1_COMPA_vect) {
 //Toolchanger-ISR
       if (tool_step==1) {
         //Step2 TOOL_CHANGER_FIXING 3,5s
+        if (debug_tool) {
+          //Debug
+          Serial.println("Step2 TOOL_CHANGER_FIXING 3,5s");
+        }
         tool_step=2;
         digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
         //digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
@@ -50,6 +58,10 @@ ISR(TIMER1_COMPA_vect) {
 
       else if (tool_step==2) {
         //Step0 TOOL_CHANGER_HOLD
+        if (debug_tool) {
+          //Debug
+          Serial.println("Step0 TOOL_CHANGER_HOLD");
+        }
         tool_step=0;
         //digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
         digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
@@ -62,6 +74,10 @@ ISR(TIMER1_COMPA_vect) {
         }
         else {
           //Step1 TOOL_CHANGER_CHANGE 2,9s
+          if (debug_tool) {
+          //Debug
+            Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
+          }
           tool_step=1;
           digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
           digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
