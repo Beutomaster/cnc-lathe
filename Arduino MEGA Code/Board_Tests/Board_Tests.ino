@@ -4,7 +4,7 @@ int i=0, j=0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
-volatile boolean debug_active=1, debug_rpm=1;
+volatile boolean debug_active=0, debug_rpm=0, debug_tool=1;
 
 void setup() {
   // put your setup code here, to run once:
