@@ -48,7 +48,7 @@
 
 extern volatile byte STATE_T;
 extern volatile boolean command_completed;
-extern volatile boolean debug_active, debug_rpm;
+extern volatile boolean debug_active, debug_rpm, debug_tool;
 
 #endif
 
