@@ -112,15 +112,15 @@ void loop() {
       Serial.println("Stepper-Test");
       //stepper_off();
       //delay(10);
-      for (j=0; j<50; j++) {
+      for (j=0; j<500; j++) {
           set_xstep(j%4);
           set_zstep(j%4);
-          delay(50);
+          delay(5);
       }
       for (j=j-1; j>=0; j--) {
           set_xstep(j%4);
           set_zstep(j%4);
-          delay(50);
+          delay(5);
       }
     }
 
