@@ -115,12 +115,12 @@ void loop() {
       for (j=0; j<500; j++) {
           set_xstep(j%4);
           set_zstep(j%4);
-          delay(25);
+          delay(5);
       }
       for (j=j-1; j>=0; j--) {
           set_xstep(j%4);
           set_zstep(j%4);
-          delay(25);
+          delay(5);
       }
     }
 
