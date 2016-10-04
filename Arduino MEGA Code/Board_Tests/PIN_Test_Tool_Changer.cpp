@@ -18,6 +18,8 @@ void set_tool_position(byte tool) {
     //Step1 TOOL_CHANGER_CHANGE 2,9s
     if (debug_tool) {
       //Debug
+      Serial.print("i_tool = ");
+      Serial.println(i_tool, DEC);
       Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
     }
     tool_step=1;
@@ -32,6 +34,7 @@ void set_tool_position(byte tool) {
     TCCR1C = 0; //no Force of Output Compare
     OCR1A = 45312; //OCR1A = T_OCF1A*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
     TCNT1 = 0; //set Start Value
+    TIFR1 &= ~(_BV(OCF1A)); //clear Interrupt flag
     //Output Compare A Match Interrupt Enable
     TIMSK1 |= _BV(OCIE1A); //set 1
     //Prescaler 1024 and Start Timer
@@ -76,6 +79,8 @@ ISR(TIMER1_COMPA_vect) {
           //Step1 TOOL_CHANGER_CHANGE 2,9s
           if (debug_tool) {
           //Debug
+            Serial.print("i_tool = ");
+            Serial.println(i_tool, DEC);
             Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
           }
           tool_step=1;
