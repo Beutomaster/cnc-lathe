@@ -18,6 +18,8 @@ void set_tool_position(byte tool) {
     //Step1 TOOL_CHANGER_CHANGE 2,9s
     if (debug_tool) {
       //Debug
+      Serial.print("i_tool = ");
+      Serial.println(i_tool, DEC);
       Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
     }
     tool_step=1;
@@ -77,6 +79,8 @@ ISR(TIMER1_COMPA_vect) {
           //Step1 TOOL_CHANGER_CHANGE 2,9s
           if (debug_tool) {
           //Debug
+            Serial.print("i_tool = ");
+            Serial.println(i_tool, DEC);
             Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
           }
           tool_step=1;
