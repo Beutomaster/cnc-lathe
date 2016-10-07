@@ -2,6 +2,8 @@
 
 int i=0, j=0;
 
+char toolposition = 0;
+
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
 volatile boolean debug_active=0, debug_rpm=0, debug_tool=1;
@@ -128,8 +130,11 @@ void loop() {
       if (command_completed) {
         //Tool-Changer-Test
         //Debug
+        toolposition = random(1, 6);
         Serial.println("Tool-Changer-Test");
-        set_tool_position(3);
+        Serial.print("Target Toolposition : ");
+        Serial.println(toolposition, DEC);
+        set_tool_position(toolposition);
       }
     }
     
