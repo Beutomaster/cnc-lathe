@@ -7,9 +7,6 @@
 #include "CNC_Control.h"
 #include "Motion_Control.h"
 
-//defines
-#define TOOL_TIME 7 //needs to be set for 6,4s !!!
-
 //Positionssensor oder Eingabe benoetigt
 
 void set_tool_position(byte);
