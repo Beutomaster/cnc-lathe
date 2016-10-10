@@ -18,7 +18,7 @@
 #define FEED_IN_MM_PER_REVOLUTION 1
 #define FEED_IN_M_PER_MIN_AT_INCR_REVOLUTIONS 2
 
-extern boolean incremental, feed_modus;
+extern boolean absolute, feed_modus;
 extern volatile byte interpolationmode, i_command_time;
 extern volatile long clk_feed, clk_xfeed, clk_zfeed;
 extern volatile int command_time;
