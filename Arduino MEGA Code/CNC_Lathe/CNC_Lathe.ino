@@ -110,6 +110,9 @@ void setup() {
   //Timer5 Servo and spindle regulator
   set_Timer5();
 
+  //Toolchanger
+  digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+
   //set interrupt enable
   sei();
 
