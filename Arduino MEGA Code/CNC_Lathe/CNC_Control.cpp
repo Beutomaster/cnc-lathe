@@ -26,7 +26,7 @@ void programm_stop() { //stop and jump back to block 0
   programm_pause();
   STATE_N=0;
   max_revolutions = REVOLUTIONS_MAX;
-  incremental=0;
+  absolute=0;
   feed_modus=0;
   interpolationmode=0;
 }
@@ -211,8 +211,8 @@ void G85(int Z, int F) {} //Reaming cycle
 void G86(int X, int Z, int F, int H) {} //Grooving with division of cut
 void G88(int X, int Z, int F, int H) {} //Facing with division of cut
 void G89(int Z, int F) {} //Reaming and drilling with dwell
-void G90() {incremental=1;} //Absolute value programing
-void G91() {incremental=0;} //Incremental value programing
+void G90() {absolute=1;} //Absolute value programing
+void G91() {absolute=0;} //Incremental value programing
 void G92(int X, int Z) {set_xz_coordinates(X, Z);} //Set register (zero point offset)
 void G94() {feed_modus=FEED_IN_MM_PER_MIN;} //Feed in mm/min
 void G95() {feed_modus=FEED_IN_MM_PER_REVOLUTION;} //Feed in mm/rev.
