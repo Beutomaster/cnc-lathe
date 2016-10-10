@@ -33,8 +33,9 @@
 //#define PIN_SPI_SCK 52          //D52 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SS 53           //D53 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 #define PIN_SPINDLE_NEW 59    //PF5: Switch between Niko's Board and Hannes Servo
-#define PIN_DEBUG_INPUT_1 60    //Debug Input 1
-#define PIN_DEBUG_INPUT_2 61    //Debug Input 2
+#define PIN_DEBUG_INPUT_STEPPER 60    //Debug Input 1
+#define PIN_DEBUG_INPUT_WZW 61    //Debug Input 2
+#define PIN_DEBUG_INPUT_SPINDLE 58 //Debug Input Spindle
 #define PIN_REVOLUTIONS_COUNT 62    //PK0, A08: Revolution-Sensor COUNT
 #define PIN_OLD_CONTROL_STEPPER_X_OFF 65 //PK3, A09: X42, PIN3,4,5,6 !(A|B|C|D), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
 #define PIN_OLD_CONTROL_STEPPER_X_A 66  //PK4, A10: X42, PIN5 (A), Stepper X (Watching old Control) (NOT Usable for extINTR !!!)
