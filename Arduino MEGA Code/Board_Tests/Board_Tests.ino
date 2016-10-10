@@ -90,6 +90,9 @@ void setup() {
   digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
   //set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
 
+  //Toolchanger
+  digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+
   //set interrupt enable
   sei();
 
