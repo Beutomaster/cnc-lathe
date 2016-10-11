@@ -22,8 +22,8 @@ void setup() {
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
-  pinMode(PIN_DEBUG_INPUT_1, INPUT);
-  pinMode(PIN_DEBUG_INPUT_2, INPUT);
+  pinMode(PIN_DEBUG_INPUT_STEPPER, INPUT);
+  pinMode(PIN_DEBUG_INPUT_WZW, INPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
   pinMode(PIN_STEPPER_X_C, OUTPUT);
@@ -85,10 +85,16 @@ void setup() {
 
   //Spindle-Test
   //Quick and Dirty: Servo- and Spindle-PWM
-  spindle_new = HIGH;
-  digitalWrite(PIN_SPINDLE_NEW, HIGH);
-  digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
-  //set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
+  //spindle_new = HIGH;
+  spindle_new = LOW;
+  if (spindle_new) {
+    digitalWrite(PIN_SPINDLE_NEW, HIGH);
+    digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
+    //set_spindle_new(HIGH); //Timer 5 for servo PWM, spindle just switched without regulator
+  }
+
+  //Toolchanger
+  digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
 
   //set interrupt enable
   sei();
@@ -106,9 +112,11 @@ void loop() {
     
     
     //Spindle-Test
-    spindle_on();
+    if (digitalRead(PIN_DEBUG_INPUT_SPINDLE)) {
+      spindle_on();
+    }
 
-    if (digitalRead(PIN_DEBUG_INPUT_1)) {
+    if (digitalRead(PIN_DEBUG_INPUT_STEPPER)) {
       //Stepper-Test
       //Debug
       Serial.println("Stepper-Test");
@@ -126,7 +134,7 @@ void loop() {
       }
     }
 
-    if (digitalRead(PIN_DEBUG_INPUT_2)) {
+    if (digitalRead(PIN_DEBUG_INPUT_WZW)) {
       if (command_completed) {
         //Tool-Changer-Test
         //Debug
