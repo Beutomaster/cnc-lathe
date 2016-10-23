@@ -1,6 +1,6 @@
 #include "Motion_Control.h"
 
-boolean incremental=0, feed_modus=0;
+boolean absolute=0, feed_modus=0;
 volatile byte interpolationmode=0, i_command_time=0;
 volatile int command_time=0;
 
@@ -44,7 +44,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
   
   //get incremental coordinates
-  if (incremental){
+  if (absolute){
     X=get_inc_X(X);
     Z=get_inc_Z(Z);
   }
