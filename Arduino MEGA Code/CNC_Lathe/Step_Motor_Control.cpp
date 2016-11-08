@@ -358,7 +358,7 @@ ISR(TIMER1_OVF_vect) {
       //set Timer-Compare-Values
         if (x_steps) {
           if (x_step < x_steps/2) {
-            if (OCR1A<7352) {
+            if (OCR1A>7352) {
               OCR1A = 7510-x_step*10; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz*60/499s)-1
               if (OCR1A<7352) {
                 OCR1A=7352;
@@ -473,7 +473,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
         //set Timer-Compare-Values
           if (z_steps) {
             if (z_step < z_steps/2) {
-              if (OCR1A<7352) {
+              if (OCR1A>7352) {
                 OCR3A = 7510-z_step*10; //OCR1A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz*60/499s)-1
                 if (OCR3A<7352) {
                   OCR3A=7352;
