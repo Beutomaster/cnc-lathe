@@ -1,6 +1,6 @@
 #include "Motion_Control.h"
 
-boolean incremental=0, feed_modus=0;
+boolean absolute=0, feed_modus=0;
 volatile byte interpolationmode=0, i_command_time=0;
 volatile int command_time=0;
 
@@ -44,7 +44,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
   
   //get incremental coordinates
-  if (incremental){
+  if (absolute){
     X=get_inc_X(X);
     Z=get_inc_Z(Z);
   }
@@ -53,7 +53,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   x_steps = X*STEPS_PER_MM; //not finished, maybe overflow
   z_steps = Z*STEPS_PER_MM; //not finished, maybe overflow
 
-  clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in 1/min (Overflow possible?)
+  clk_feed = (long)STATE_F * 60 * STEPS_PER_MM /1024; //clk_feed in 1/1024s (Overflow possible?)
 
   //Prepare Timer 1 for X-Stepper 
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
@@ -70,36 +70,36 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
       x_feed=STATE_F;
       z_feed=0;
     } else {
-      x_feed=(long)X*STATE_F/Z;
+      x_feed=(long)X*STATE_F/((long)Z+(long)X);
       if (x_feed==0) x_feed=1; //Minimum needed
     }
     if (X==0) {
       x_feed=0;
       z_feed=STATE_F;
     } else {
-      z_feed=(long)Z*STATE_F/X;
+      z_feed=(long)Z*STATE_F/((long)Z+(long)X);
       if (z_feed==0) z_feed=1; //Minimum needed
     }
 
-    clk_xfeed = (long)x_feed * STEPS_PER_MM; //clk_xfeed in 1/min (Overflow possible?)
-    clk_zfeed = (long)z_feed * STEPS_PER_MM; //clk_xfeed in 1/min (Overflow possible?)
+    clk_xfeed = (long)x_feed * 60 * STEPS_PER_MM / 1024; //clk_xfeed in 1/1024s (Overflow possible?)
+    clk_zfeed = (long)z_feed * 60 * STEPS_PER_MM / 1024; //clk_xfeed in 1/1024s (Overflow possible?)
 
     //set Timer-Compare-Values
     if (X) {
-      OCR1A = (62500L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz/clk_xfeed)-1
+      OCR1A = (15625L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
     }
     if (Z) { 
-      OCR3A = (62500L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz/clk_zfeed)-1
+      OCR3A = (15625L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
     }
   }
 
   else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
     //set Timer-Compare-Values
     if (X) {
-      OCR1A = 7514; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz*60/499s)-1
+      OCR1A = 7514; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
     }
     if (Z) { 
-      OCR3A = 7514; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz*60/499s)-1
+      OCR3A = 7514; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
     }
   }
   
@@ -162,11 +162,11 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //set Timer-Compare-Values
     //every step has to be executed, feed can't be zero
     if (clk_xfeed) { //clock not zero
-      OCR1A = (62500L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(256*clk_xfeed))-1 = (62500Hz/clk_xfeed)-1
-    } else OCR1A = 62499L;
+      OCR1A = (15625L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
+    } else OCR1A = 15624L;
     if (clk_zfeed) { //clock not zero
-      OCR3A = (62500L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(256*clk_zfeed))-1 = (62500Hz/clk_zfeed)-1
-    } else OCR3A = 62499L;   
+      OCR3A = (15625L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
+    } else OCR3A = 15624L;   
   }
 
   //start Timer
@@ -175,16 +175,16 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     TCNT1 = 0; //set Start Value
     //Output Compare A Match Interrupt Enable
     TIMSK1 |= _BV(OCIE1A); //set 1
-    //Prescaler 256 and Start Timer
-    TCCR1B |= _BV(CS12); //set 1
+    //Prescaler 1024 and Start Timer
+    TCCR1B |= _BV(CS12) | _BV(CS10); //set 1
   }
   if (Z) {
     z_command_completed=0;
     TCNT3 = 0; //set Start Value
     //Output Compare A Match Interrupt Enable
     TIMSK3 |= _BV(OCIE3A); //set 1
-    //Prescaler 256 and Start Timer
-    TCCR3B |= _BV(CS32); //set 1
+    //Prescaler 1024 and Start Timer
+    TCCR3B |= _BV(CS32) | _BV(CS30); //set 1
   }
 }
 
@@ -228,7 +228,6 @@ void command_running(int local_command_time) { //command_time in 1/100s
     //Output Compare A Match Interrupt Enable
     TIMSK1 |= _BV(OCIE1A); //set 1
     //Prescaler 1024 and Start Timer
-    TCCR1B |= _BV(CS10); //set 1
-    TCCR1B |= _BV(CS12); //set 1
+    TCCR1B |= _BV(CS10) | _BV(CS12); //set 1
 }
 
