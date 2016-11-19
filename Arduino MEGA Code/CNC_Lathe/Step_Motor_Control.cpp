@@ -256,7 +256,11 @@ void stepper_timeout_ISR() {
 ISR(TIMER1_OVF_vect) {
   if (command_time) { //Dwell
     if (i_command_time==1) {
-      OCR1A = (15625L*command_time/100)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*command_time/100)-1
+      ICR1 = (15625L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*command_time/100)-1
+      if (ICR1>TCNT1) {
+        TCNT1=0; //Checks if Timer already overrun the compare value
+        //set Interrupt flag???
+      }
     }
     else if (!i_command_time) {
         //If time is over
@@ -350,24 +354,24 @@ ISR(TIMER1_OVF_vect) {
         //next Timer-Compare-Value
         //every step hast to be executed, feed can't be zero
         if (clk_xfeed) { //clock not zero
-          OCR1A = (15625L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
-        } else OCR1A = 15624L;
+          ICR1 = (15625L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
+        } else ICR1 = 15624L;
       }
       
       else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
       //set Timer-Compare-Values
         if (x_steps) {
           if (x_step < x_steps/2) {
-            if (OCR1A>RAPID_MAX) {
-              OCR1A = RAPID_MIN-x_step*10; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
-              if (OCR1A<RAPID_MAX) {
-                OCR1A=RAPID_MAX;
+            if (ICR1>RAPID_MAX) {
+              ICR1 = RAPID_MIN-x_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
+              if (ICR1<RAPID_MAX) {
+                ICR1=RAPID_MAX;
               }
             }
           } else if ((x_steps-x_step) < 17) {
-            OCR1A = RAPID_MIN-(x_steps-x_step)*10; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
-              if (OCR1A>RAPID_MIN) {
-                OCR1A=RAPID_MIN;
+            ICR1 = RAPID_MIN-(x_steps-x_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
+              if (ICR1>RAPID_MIN) {
+                ICR1=RAPID_MIN;
               }
           }
         }
@@ -465,24 +469,24 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       //next Timer-Compare-Value
       //every step hast to be executed, feed can't be zero
       if (clk_zfeed) { //clock not zero
-        OCR3A = (15625L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
-      } else OCR3A = 15624L;
+        ICR3 = (15625L/clk_zfeed)-1; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
+      } else ICR3 = 15624L;
     }
 
     else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
         //set Timer-Compare-Values
           if (z_steps) {
             if (z_step < z_steps/2) {
-              if (OCR1A>RAPID_MAX) {
-                OCR3A = RAPID_MIN-z_step*10; //OCR1A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
-                if (OCR3A<RAPID_MAX) {
-                  OCR3A=RAPID_MAX;
+              if (ICR1>RAPID_MAX) {
+                ICR3 = RAPID_MIN-z_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
+                if (ICR3<RAPID_MAX) {
+                  ICR3=RAPID_MAX;
                 }
               }
             } else if ((z_steps-z_step) < 17) {
-              OCR3A = RAPID_MIN-(z_steps-z_step)*10; //OCR1A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
-                if (OCR3A>RAPID_MIN) {
-                  OCR3A=RAPID_MIN;
+              ICR3 = RAPID_MIN-(z_steps-z_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
+                if (ICR3>RAPID_MIN) {
+                  ICR3=RAPID_MIN;
                 }
             }
           }

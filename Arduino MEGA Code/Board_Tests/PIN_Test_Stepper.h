@@ -1,6 +1,7 @@
 #ifndef PIN_Test_Stepper_h
 #define PIN_Test_Stepper_h
 
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "Board_Tests.h"
 
