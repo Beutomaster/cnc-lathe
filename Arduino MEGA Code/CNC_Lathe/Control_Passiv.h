@@ -2,6 +2,7 @@
 #define Control_Passiv_h
 
 //includes
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "CNC_Lathe.h"
 

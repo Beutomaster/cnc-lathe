@@ -57,12 +57,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
   //Prepare Timer 1 for X-Stepper 
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11=1, WGM10=1 for Fast PWM
+  TCCR1A = 0b00000010; //connect no Output-Compare-PINs and WGM11=1, WGM10=0 for Fast PWM with ICR1=TOP
   TCCR1C = 0; //no Force of Output Compare
   
   //Prepare Timer 3 for Z-Stepper
   TCCR3B = 0b00011000; //connect no Input-Compare-PINs, WGM33=1, WGM32=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR3A = 0b00000011; //connect no Output-Compare-PINs and WGM31=1, WGM30=1 for Fast PWM
+  TCCR3A = 0b00000010; //connect no Output-Compare-PINs and WGM31=1, WGM30=0 for Fast PWM with ICR3=TOP
   TCCR3C = 0; //no Force of Output Compare
 
   if (interpolationmode==INTERPOLATION_LINEAR) {
@@ -86,20 +86,28 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
     //set Timer-Compare-Values
     if (X) {
-      OCR1A = (15625L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR1 = (15625L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
+      }
     }
-    if (Z) { 
-      OCR3A = (15625L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
+    if (Z) {
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR3 = (15625L/clk_zfeed)-1; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
+      }
     }
   }
 
   else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
     //set Timer-Compare-Values
     if (X) {
-      OCR1A = 7514; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR1 = 7514; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz*60/499s)-1
+      }
     }
-    if (Z) { 
-      OCR3A = 7514; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
+    if (Z) {
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR3 = 7514; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
+      }
     }
   }
   
@@ -162,17 +170,31 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //set Timer-Compare-Values
     //every step has to be executed, feed can't be zero
     if (clk_xfeed) { //clock not zero
-      OCR1A = (15625L/clk_xfeed)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
-    } else OCR1A = 15624L;
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR1 = (15625L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz/(1024*clk_xfeed))-1 = (15625Hz/clk_xfeed)-1
+      }
+    } else {
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR1 = 15624L;
+      }
+    }
     if (clk_zfeed) { //clock not zero
-      OCR3A = (15625L/clk_zfeed)-1; //OCR3A = (16MHz/(Prescaler*F_OCF3A))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
-    } else OCR3A = 15624L;   
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR3 = (15625L/clk_zfeed)-1; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz/clk_zfeed)-1
+      }
+    } else {
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        ICR3 = 15624L;   
+      }
+    }
   }
 
   //start Timer
   if (X) {
-    x_command_completed=0;      
-    TCNT1 = 0; //set Start Value
+    x_command_completed=0;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      TCNT1 = 0; //set Start Value
+    }
     //Output Compare A Match Interrupt Enable
     TIMSK1 |= _BV(OCIE1A); //set 1
     //Prescaler 1024 and Start Timer
@@ -180,7 +202,9 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
   if (Z) {
     z_command_completed=0;
-    TCNT3 = 0; //set Start Value
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      TCNT3 = 0; //set Start Value
+    }
     //Output Compare A Match Interrupt Enable
     TIMSK3 |= _BV(OCIE3A); //set 1
     //Prescaler 1024 and Start Timer
@@ -219,12 +243,18 @@ void command_running(int local_command_time) { //command_time in 1/100s
   TCCR1C = 0; //no Force of Output Compare
     
   if (i_command_time) {
-    OCR1A = 62499; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*400s/100)-1
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      ICR1 = 62499; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*400s/100)-1
+    }
   }
   else {
-    OCR1A = (15625L*command_time/100)-1; //OCR1A = (16MHz/(Prescaler*F_OCF1A))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*command_time/100)-1
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      ICR1 = (15625L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(1024*100))-1 = (15625Hz*command_time/100)-1
+    }
   }
-    TCNT1 = 0; //set Start Value
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      TCNT1 = 0; //set Start Value
+    }
     //Output Compare A Match Interrupt Enable
     TIMSK1 |= _BV(OCIE1A); //set 1
     //Prescaler 1024 and Start Timer

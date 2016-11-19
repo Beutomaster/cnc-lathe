@@ -2,6 +2,7 @@
 #define CNC_Control_h
 
 //includes
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "CNC_Lathe.h"
 #include "Motion_Control.h"

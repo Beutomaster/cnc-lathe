@@ -2,6 +2,7 @@
 #define Step_Motor_Control_h
 
 //includes
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "CNC_Lathe.h"
 #include <Stepper.h> //we can't use it, because it uses a while loop instead of a timer!!!

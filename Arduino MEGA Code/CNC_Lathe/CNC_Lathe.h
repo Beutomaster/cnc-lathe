@@ -2,6 +2,7 @@
 #define CNC_Lathe_h
 
 //includes
+#include <util/atomic.h>
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "CNC_Control.h"
@@ -34,7 +35,7 @@
 
 //PINs
 #define PIN_CONTROL_ACTIVE 2       //PE4: Switch between EMCO and alternative Control (Usable for extINTR !!!)
-#define PIN_REVOLUTIONS_SYNC 3     //PE5: Revolution-Sensor SYNC (Usable for extINTR !!!)
+#define PIN_REVOLUTIONS_SYNC 3     //PE5: Revolution-Sensor SYNC (Usable for extINTR !!!) We should change the PIN with PIN_REVOLUTIONS_COUNT in V2!!!
 #define PIN_TOOL_CHANGER_HOLD 4     //PG5: Tool-Changer hold (-3,3V)
 #define PIN_TOOL_CHANGER_CHANGE 5     //PE3: Tool-Changer change (+12,9V)
 //#define PIN_TOOL_CHANGER_FIXING 6     //PH3: Tool-Changer fixing (-4,35V)
