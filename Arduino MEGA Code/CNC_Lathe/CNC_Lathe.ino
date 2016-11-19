@@ -102,8 +102,10 @@ void setup() {
   TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
   TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM with ICR4=TOP
   TCCR4C = 0; //no Force of Output Compare
-  OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
-  TCNT4 = 0; //set Start Value
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
+    TCNT4 = 0; //set Start Value
+  }
   //Prescaler 1 and Start Timer
   TCCR4B |= _BV(CS40); //set 1
   
