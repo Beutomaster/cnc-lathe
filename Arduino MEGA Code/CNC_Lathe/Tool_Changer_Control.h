@@ -3,6 +3,7 @@
 
 //includes
 #include <Arduino.h>
+#include <util/atomic.h>
 #include "CNC_Lathe.h"
 #include "CNC_Control.h"
 #include "Motion_Control.h"
