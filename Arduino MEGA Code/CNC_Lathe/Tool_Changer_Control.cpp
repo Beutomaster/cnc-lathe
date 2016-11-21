@@ -29,9 +29,11 @@ void set_tool_position(byte tool) {
         TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13, WGM12 =1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
         TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11, WGM10 =1 for Fast PWM
         TCCR1C = 0; //no Force of Output Compare
-        ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
-        TCNT1 = 0; //set Start Value
-        TIFR1 &= ~(_BV(ICF1)); //clear Interrupt flag
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+          ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
+          TCNT1 = 0; //set Start Value
+        }
+        TIFR1 = _BV(ICF1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
         //Output Compare A Match Interrupt Enable
         TIMSK1 |= _BV(ICIE1); //set 1
         //Prescaler 1024 and Start Timer

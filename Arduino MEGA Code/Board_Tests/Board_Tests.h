@@ -2,6 +2,7 @@
 #define Board_Tests_h
 
 //includes
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "PIN_Test_Stepper.h"
 #include "PIN_Test_Spindle.h"
