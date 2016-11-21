@@ -477,7 +477,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
         //set Timer-Compare-Values
           if (z_steps) {
             if (z_step < z_steps/2) {
-              if (ICR1>RAPID_MAX) {
+              if (ICR3>RAPID_MAX) {
                 ICR3 = RAPID_MIN-z_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz/(1024*clk_zfeed))-1 = (15625Hz*60/499s)-1
                 if (ICR3<RAPID_MAX) {
                   ICR3=RAPID_MAX;
