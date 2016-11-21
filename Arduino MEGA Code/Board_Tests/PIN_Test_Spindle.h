@@ -8,8 +8,8 @@
 //defines
 #define REVOLUTIONS_MAX 3220 //rpm
 #define REVOLUTIONS_MIN 460  //rpm
-#define OCR5A_min 800
-#define OCR5A_max 6000
+#define OCR5A_min 800 //1091
+#define OCR5A_max 6000 //4799
 #define OCR4C_min 0 //value for 460 rpm ???
 #define OCR4C_max 566
 
