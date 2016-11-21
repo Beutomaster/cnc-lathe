@@ -22,6 +22,7 @@ void setup() {
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
+  pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
   pinMode(PIN_DEBUG_INPUT_STEPPER, INPUT);
   pinMode(PIN_DEBUG_INPUT_WZW, INPUT);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
@@ -156,5 +157,6 @@ void loop() {
     }
   }
   
-  set_revolutions(get_SERVO_CONTROL_POTI());
+  //set_revolutions(get_SERVO_CONTROL_POTI());
+  test_poti_servo();
 }
