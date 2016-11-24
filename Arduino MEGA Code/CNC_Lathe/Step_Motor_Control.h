@@ -13,8 +13,8 @@
 #define XSTEPS_PER_TURN 72 //Steps per x-turn
 #define ZSTEPS_PER_TURN 72 //Steps per z-turn
 #define MANUAL_IMPULSE 100 //time stepper is active, if key is pressed
-#define RAPID_MAX 3 //Timer-Value for Feed=799 ???
-#define RAPID_MIN 6 //Timer-Value for Feed=499 ???
+#define RAPID_MAX 4692 //Timer-Value for Feed=799
+#define RAPID_MIN 7514 //Timer-Value for Feed=499
 
 extern Stepper xstepper; //X-Motor-Object
 extern Stepper zstepper; //Z-Motor-Object
