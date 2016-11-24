@@ -363,6 +363,7 @@ ISR(TIMER1_OVF_vect) {
         if (x_steps) {
           if (x_step < x_steps/2) {
             if (ICR1>RAPID_MAX) {
+              ICR1 = RAPID_MIN-x_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/499s)-1
               if (ICR1<RAPID_MAX) {
                 ICR1=RAPID_MAX;
               }
