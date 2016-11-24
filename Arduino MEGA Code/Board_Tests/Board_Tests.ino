@@ -77,6 +77,7 @@ void setup() {
   TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM with ICR4=TOP
   TCCR4C = 0; //no Force of Output Compare
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    ICR4 = 1023;
     OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
     TCNT4 = 0; //set Start Value
   }
