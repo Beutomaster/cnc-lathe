@@ -158,6 +158,6 @@ void loop() {
     }
   }
   
-  //set_revolutions(get_SERVO_CONTROL_POTI());
-  test_poti_servo();
+  set_revolutions(get_SERVO_CONTROL_POTI());
+  //test_poti_servo();
 }
