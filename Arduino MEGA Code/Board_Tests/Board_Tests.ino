@@ -6,7 +6,7 @@ char toolposition = 0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
-volatile boolean debug_active=0, debug_rpm=0, debug_tool=1;
+volatile boolean debug_active=0, debug_rpm=0, debug_tool=0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -23,8 +23,9 @@ void setup() {
   pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
   pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
-  pinMode(PIN_DEBUG_INPUT_STEPPER, INPUT);
-  pinMode(PIN_DEBUG_INPUT_WZW, INPUT);
+  pinMode(PIN_DEBUG_INPUT_STEPPER, INPUT_PULLUP);
+  pinMode(PIN_DEBUG_INPUT_WZW, INPUT_PULLUP);
+  pinMode(PIN_DEBUG_INPUT_SPINDLE, INPUT_PULLUP);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
   pinMode(PIN_STEPPER_X_C, OUTPUT);
@@ -115,11 +116,11 @@ void loop() {
     
     
     //Spindle-Test
-    if (digitalRead(PIN_DEBUG_INPUT_SPINDLE)) {
+    if (!digitalRead(PIN_DEBUG_INPUT_SPINDLE)) {
       spindle_on();
     }
 
-    if (digitalRead(PIN_DEBUG_INPUT_STEPPER)) {
+    if (!digitalRead(PIN_DEBUG_INPUT_STEPPER)) {
       //Stepper-Test
       //Debug
       Serial.println("Stepper-Test");
@@ -137,7 +138,7 @@ void loop() {
       }
     }
 
-    if (digitalRead(PIN_DEBUG_INPUT_WZW)) {
+    if (!digitalRead(PIN_DEBUG_INPUT_WZW)) {
       if (command_completed) {
         //Tool-Changer-Test
         //Debug
@@ -157,6 +158,6 @@ void loop() {
     }
   }
   
-  //set_revolutions(get_SERVO_CONTROL_POTI());
-  test_poti_servo();
+  set_revolutions(get_SERVO_CONTROL_POTI());
+  //test_poti_servo();
 }
