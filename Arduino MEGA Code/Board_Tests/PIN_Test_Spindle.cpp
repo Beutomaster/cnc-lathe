@@ -6,7 +6,7 @@ volatile unsigned long rpm_time=0, last_rpm_time=0;
 volatile long y=0, y_last=0;
 volatile int target_revolutions=0, delta_revolution_last=0;
 volatile bool spindle_new=LOW;
-int OCR = 800;
+int OCR = 870;
 
 //Create new Servo Objekt
 //Servo potiservo;  //old Servo Lib
@@ -80,11 +80,11 @@ void test_poti_servo(){
     OCR5A = OCR;
   }
   
-  OCR++;
-  if (OCR>1000) OCR=800;
-  
   Serial.print("OCR5A:");
-  Serial.println(OCR5A);
+  Serial.println(OCR);
+  
+  OCR += 5;
+  if (OCR>5100) OCR=870;
   }
 }
 
