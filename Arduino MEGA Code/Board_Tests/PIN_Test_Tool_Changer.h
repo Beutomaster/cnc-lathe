@@ -2,11 +2,9 @@
 #define PIN_Test_Tool_Changer_h
 
 //includes
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "Board_Tests.h"
-
-//defines
-#define TOOL_TIME 7 //needs to be set for 6,4s !!!
 
 //Positionssensor oder Eingabe benoetigt
 

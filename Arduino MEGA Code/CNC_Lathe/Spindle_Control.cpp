@@ -77,8 +77,10 @@ void set_revolutions(int target_revolutions_local) {
   //230V AC * sqrt(2) => ca. 325 V DC - deltaU/2 (Glättung)
   //Motor max. 180 V DC * 100 /325 V DC = 55,384615384615384615384615384615 %
   target_revolutions = target_revolutions_local;
-  OCR4C = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
-  TCNT4 = 0; //set Start Value
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    OCR4C = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
+    TCNT4 = 0; //set Start Value
+  }
 }
 
 int get_SERVO_CONTROL_POTI() {
@@ -102,16 +104,19 @@ void set_poti_servo(int poti_angle){
 */
 
 void set_poti_servo(int local_target_revolutions){
-  //OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
-  OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
-  //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
-
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    //OCR5A = map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_min, OCR5A_max);
+    OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+    //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+  }
 }
 
 void get_revolutions_ISR() { //read revolution-sensor
   //first value may be wrong at passive modus, overflow of timer0 may cause errors
+  //We should change the PIN with PIN_REVOLUTIONS_COUNT in V2!!! Better resolution!!!
   rpm_time = micros();
-  STATE_RPM = 600000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(100sync/U) = 600000
+  STATE_RPM = 60000000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U) = 60000000
+  //STATE_RPM = 600000L/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms)/(100Count/U) = 600000
   last_rpm_time = rpm_time;
 }
 
@@ -134,10 +139,12 @@ void set_Timer5 () {
   if (spindle_new) { //spindle regulator
     //set and start Timer5 with 1ms TOP
     TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-    TCCR5A = 0b00000011; //WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+    TCCR5A = 0b00000010; //WGM51=1, WGM50=1 for Fast PWM with ICR5=TOP
     TCCR5C = 0; //no Force of Output Compare
-    OCR5A = 1999; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 1000µs*16MHz/8 -1 = 1999
-    TCNT5 = 0; //set Start Value
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      ICR5 = 1999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 1000µs*16MHz/8 -1 = 1999
+      TCNT5 = 0; //set Start Value
+    }
     //Overflow Interrupt Enable
     TIMSK5 |= _BV(TOIE5); //set 1
     //Prescaler 8 and Start Timer
@@ -148,10 +155,12 @@ void set_Timer5 () {
     TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
     TCCR5A = 0b10000010; //clear OC5A-PIN (PIN 46) with COM5A1=1 and COM5A=0 at Output Compare and WGM51=1, WGM50=0 for Fast PWM with ICR5=TOP
     TCCR5C = 0; //no Force of Output Compare
-    ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
-    OCR5A = OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1091
-    TCNT5 = 0; //set Start Value
-    //Overflow Interrupt Enable
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { //maybe better seperated
+      ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
+      OCR5A = OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1091
+      TCNT5 = 0; //set Start Value
+    }
+    //Overflow Interrupt Disable
     TIMSK5 &= ~(_BV(TOIE5)); //delete bit0
     //Prescaler 8 and Start Timer
     TCCR5B |= _BV(CS51); //set 1

@@ -1,14 +1,15 @@
 #ifndef PIN_Test_Spindle_h
 #define PIN_Test_Spindle_h
 
+#include <util/atomic.h>
 #include <Arduino.h>
 #include "Board_Tests.h"
 
 //defines
 #define REVOLUTIONS_MAX 3220 //rpm
 #define REVOLUTIONS_MIN 460  //rpm
-#define OCR5A_min 1091
-#define OCR5A_max 4799
+#define OCR5A_min 870 //1091
+#define OCR5A_max 5060 //4799
 #define OCR4C_min 0 //value for 460 rpm ???
 #define OCR4C_max 566
 
@@ -27,6 +28,7 @@ int get_SERVO_CONTROL_POTI();
 void set_poti_servo(int);
 void set_Timer5();
 void set_spindle_new(boolean);
+void test_poti_servo();
 
 #endif
 

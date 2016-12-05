@@ -6,6 +6,7 @@ volatile unsigned long rpm_time=0, last_rpm_time=0;
 volatile long y=0, y_last=0;
 volatile int target_revolutions=0, delta_revolution_last=0;
 volatile bool spindle_new=LOW;
+int OCR = 870;
 
 //Create new Servo Objekt
 //Servo potiservo;  //old Servo Lib
@@ -36,8 +37,10 @@ void set_revolutions(int target_revolutions_local) {
   //230V AC * sqrt(2) => ca. 325 V DC - deltaU/2 (Glättung)
   //Motor max. 180 V DC * 100 /325 V DC = 55,384615384615384615384615384615 %
   target_revolutions = target_revolutions_local;
-  OCR4C = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
-  TCNT4 = 0; //set Start Value
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    OCR4C = map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR4C_min, OCR4C_max);
+    TCNT4 = 0; //set Start Value
+  }
 }
 
 int get_SERVO_CONTROL_POTI() {
@@ -59,13 +62,29 @@ void set_poti_servo(int poti_angle){
 */
 
 void set_poti_servo(int local_target_revolutions){
-  OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
-  //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    OCR5A = OCR5A_max + OCR5A_min - map(local_target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+    //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
+  }
 
   if (debug_rpm) {
   //Debug
     Serial.print("OCR5A:");
     Serial.println(OCR5A);
+  }
+}
+
+void test_poti_servo(){
+  if(!(millis()%3000)) {
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    OCR5A = OCR;
+  }
+  
+  Serial.print("OCR5A:");
+  Serial.println(OCR);
+  
+  OCR += 5;
+  if (OCR>5100) OCR=870;
   }
 }
 
@@ -88,10 +107,12 @@ void set_Timer5 () {
   if (spindle_new) { //spindle regulator
     //set and start Timer5 with 1ms TOP
     TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-    TCCR5A = 0b00000011; //WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
+    TCCR5A = 0b00000010; //WGM51=0, WGM50=1 for Fast PWM with ICR5=TOP
     TCCR5C = 0; //no Force of Output Compare
-    OCR5A = 1999; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 1000µs*16MHz/8 -1 = 1999
-    TCNT5 = 0; //set Start Value
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      ICR5 = 1999; //ICR5 = T_ICF5*16MHz/Prescaler -1 = 1000µs*16MHz/8 -1 = 1999
+      TCNT5 = 0; //set Start Value
+    }
     //Prescaler 8 and Start Timer
     TCCR5B |= _BV(CS51); //set 1
   }
@@ -100,10 +121,12 @@ void set_Timer5 () {
     TCCR5B = 0b00011000; //connect no Input-Compare-PINs, WGM53=1, WGM52=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
     TCCR5A = 0b10000010; //clear OC5A-PIN (PIN 46) with COM5A1=1 and COM5A=0 at Output Compare and WGM51=1, WGM50=0 for Fast PWM with ICR5=TOP
     TCCR5C = 0; //no Force of Output Compare
-    ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
-    OCR5A = OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1091
-    TCNT5 = 0; //set Start Value
-    //Overflow Interrupt Enable
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { //maybe better seperated
+      ICR5 = 39999; //ICR5 = T_ICR5*16MHz/Prescaler -1 = 20ms*16MHz/8 -1 = 39999
+      OCR5A = OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler -1 = 544µs*16MHz/8 -1 = 1091
+      TCNT5 = 0; //set Start Value
+    }
+    //Overflow Interrupt Disable
     TIMSK5 &= ~(_BV(TOIE5)); //delete bit0
     //Prescaler 8 and Start Timer
     TCCR5B |= _BV(CS51); //set 1
@@ -111,7 +134,7 @@ void set_Timer5 () {
 }
 
 //spindle regulator
-ISR(TIMER4_OVF_vect){
+ISR(TIMER5_OVF_vect){
   //PI-Regulator
   //get Regulator-Parameter for 20KHz with 20 to 80% PWM and Ziegler-Nicols formula
   //#define K_P 1; //0,001 - 100 ???
