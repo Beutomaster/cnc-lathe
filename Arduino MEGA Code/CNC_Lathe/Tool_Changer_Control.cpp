@@ -34,7 +34,7 @@ void set_tool_position(byte tool) {
           TCNT1 = 0; //set Start Value
         }
         TIFR1 = _BV(ICF1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
-        //Output Compare A Match Interrupt Enable
+        //Input Compare Match Interrupt Enable
         TIMSK1 |= _BV(ICIE1); //set 1
         //Prescaler 1024 and Start Timer
         TCCR1B |= (_BV(CS12)|_BV(CS10)); //set 1
@@ -76,7 +76,7 @@ ISR(TIMER1_CAPT_vect) {
         i_tool--;
         if (i_tool==0) {
         //stop Timer1
-        //Output Compare A Match Interrupt Disable
+        //Input Compare Match Interrupt Disable
         TIMSK1 &= ~(_BV(ICIE1)); //set 0
         command_completed=1;
         }

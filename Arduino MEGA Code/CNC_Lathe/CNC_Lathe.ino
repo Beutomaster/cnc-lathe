@@ -34,8 +34,9 @@ void setup() {
   pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
   pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
-  pinMode(PIN_DEBUG_INPUT_1, INPUT);
-  pinMode(PIN_DEBUG_INPUT_2, INPUT);
+  pinMode(PIN_DEBUG_INPUT_1, INPUT_PULLUP);
+  pinMode(PIN_DEBUG_INPUT_2, INPUT_PULLUP);
+  pinMode(PIN_DEBUG_INPUT_3, INPUT_PULLUP);
   pinMode(PIN_STEPPER_X_A, OUTPUT);
   pinMode(PIN_STEPPER_X_B, OUTPUT);
   pinMode(PIN_STEPPER_X_C, OUTPUT);
@@ -101,7 +102,7 @@ void setup() {
   //spindle PWM
   //set and start Timer4 (Clk = 16MHz/(Prescaler*(TOP+1)) = 16MHz/(1023+1) = 15,625 kHz)
   TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
-  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM with ICR4=TOP
+  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM
   TCCR4C = 0; //no Force of Output Compare
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC

@@ -80,11 +80,11 @@ void test_poti_servo(){
     OCR5A = OCR;
   }
   
+  Serial.print("OCR5A:");
+  Serial.println(OCR);
+  
   OCR++;
   if (OCR>1000) OCR=800;
-  
-  Serial.print("OCR5A:");
-  Serial.println(OCR5A);
   }
 }
 
