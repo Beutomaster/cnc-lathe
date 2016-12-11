@@ -53,13 +53,14 @@ void spi_buffer_handling() {
     //rx_buf [pos] = 0; //set end of string
     
     //Debug
-    String debug_string;
+    //String debug_string;
     if (debug && debug_spi) { //for debugging
       Serial.print("SPI-Buffer:");
       for (int i=0; i<pos; i++) {
         Serial.print(" ");
-        debug_string =  String(rx_buf[i], DEC);
-        Serial.print(debug_string);
+        //debug_string =  String(rx_buf[i], DEC);
+        //Serial.print(debug_string);
+        Serial.print(rx_buf[i], HEX);
       }
       Serial.println();
     }
@@ -232,7 +233,9 @@ void create_machine_state_msg() {
   tx_buf [14] = STATE_N;
   tx_buf [15] = ERROR_NO; //bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI
   tx_buf [16] = CRC8(tx_buf, SPI_MSG_LENGTH);
-  SPDR = tx_buf [0]; //first byte for sending at next interrupt
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { //needed? 8bit?
+    SPDR = tx_buf [0]; //first byte for sending at next interrupt
+  }
 }
 
 void create_spi_error_msg() { //maybee not needed anymore, using error_bit
@@ -268,16 +271,23 @@ ISR (SPI_STC_vect) {
       process_it = true;
     }
     */
-  /*
   }  // end of room available
 
-  if (pos < sizeof tx_buf) {
-  */ 
-    SPDR = tx_buf [++pos]; //byte for sending at next interrupt
+  /*
+  if (debug && debug_spi) { //for debugging
+      Serial.print("pos: ");
+      Serial.println(pos);
+  }
+  */
+
+  pos++;
+  
+  if (pos < sizeof(tx_buf)) {
+    SPDR = tx_buf [pos]; //byte for sending at next interrupt
   }
   
   //process buffer at fixed SPI_MSG_LENGTH
-  if (pos == (SPI_MSG_LENGTH) ) {
+  if (pos == SPI_MSG_LENGTH) {
     process_it = true;
   }
   
