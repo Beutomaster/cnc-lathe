@@ -232,7 +232,9 @@ void create_machine_state_msg() {
   tx_buf [14] = STATE_N;
   tx_buf [15] = ERROR_NO; //bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI
   tx_buf [16] = CRC8(tx_buf, SPI_MSG_LENGTH);
-  SPDR = tx_buf [0]; //first byte for sending at next interrupt
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { //needed? 8bit?
+    SPDR = tx_buf [0]; //first byte for sending at next interrupt
+  }
 }
 
 void create_spi_error_msg() { //maybee not needed anymore, using error_bit
