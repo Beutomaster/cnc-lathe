@@ -1,6 +1,9 @@
-/*
+/* SPI Communication Tool for an modified Emco Compact 5 CNC-Lathe
+ * written by Hannes Beuter
+ * 
+ * influenced by following Code Examples:
+ * --------------------------------------
  * SPI testing utility (using spidev driver)
- *
  * Copyright (c) 2007  MontaVista Software, Inc.
  * Copyright (c) 2007  Anton Vorontsov <avorontsov@ru.mvista.com>
  *
@@ -20,10 +23,37 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
+#include <signal.h>
 
  //defines
 #define SPI_MSG_LENGTH 17
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+//Input Parameter Ranges
+#define CNC_CODE_NMIN 0
+#define CNC_CODE_NMAX 500
+#define GM_CODE_MIN 0
+#define G_CODE_MAX 196
+#define M_CODE_MAX 99
+#define X_MIN_MAX_CNC 5999
+#define Z_MIN_MAX_CNC 32760
+#define XZ_MIN_MAX_HAND 89999L
+#define X_DWELL_MIN_MAX_CNC 5999
+#define F_MIN 2
+#define F_MAX 499
+#define IK_MIN 0
+#define I_MAX 5999
+#define K_MAX 5999
+#define K_THREAD_PITCH_MAX 499
+#define L_MIN 0
+#define L_MAX 499
+#define T_MIN 1
+#define T_MAX 6
+#define H_MIN 0
+#define H_G86_MIN 10
+#define H_MAX 999
+#define REVOLUTIONS_MIN 460  //rpm
+#define REVOLUTIONS_MAX 3220 //rpm
 
 //Bit Postions of STATE
 #define STATE_CONTROL_ACTIVE_BIT 0
@@ -40,10 +70,25 @@
 #define ERROR_CNC_CODE_BIT 1
 #define ERROR_SPINDLE_BIT 2
 
+int fd;
+
 static void pabort(const char *s)
 {
 	perror(s);
 	abort();
+}
+
+// Define the function to be called when ctrl-c (SIGINT) signal is sent to process
+void
+signal_callback_handler(int signum)
+{
+	printf("\nCaught signal %d\n",signum);
+	// Cleanup and close up stuff here
+	printf("close(fd)\n");
+	close(fd);
+	
+	// Terminate program
+	exit(signum);
 }
 
 static const char *device = "/dev/spidev0.0";
@@ -59,7 +104,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t len) {
 
 static void transfer(int fd)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=0, ZZ=0, feed=-1, tool=0, inch=-1, gcode=-1, hh=-1, code_type=0;
+	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32760, ZZ=32760, feed=-1, tool=0, inch=-1, gmcode=-1, hh=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
 	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0};
 	
@@ -84,21 +129,23 @@ static void transfer(int fd)
 	printf("015 shutdown\n");
 	printf("016 Reset Errors\n\n");
 	
-	while ((msg_type<0) || (msg_type>16)) {
-		printf("Message-Type: ");
+	printf("Message-Type: ");
+	if ((msg_type>=0) && (msg_type<=16)) printf("%i\n",msg_type);
+	else do {
 		scanf("%d",&msg_type);
-	}
+	} while ((msg_type<0) || (msg_type>16));
 	tx[pos++] = msg_type;
 	
 	switch (msg_type) {
 		case 0:   	//Update Machine State
 					break;
 		case 1:   	//Programm Start at Block
-					while ((block<0) || (block>500)) {
-						printf("Block-No (0 to 500): ");
+					printf("Block-No (0 to 500): ");
+					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
+					else do {
 						scanf("%d",&block);
-					}
-					tx[pos++] = block<<8;
+					} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					break;
 		case 2: 	//Programm Stop
@@ -106,17 +153,19 @@ static void transfer(int fd)
 		case 3:   	//Programm Pause
 					break;
 		case 4:   	//Spindle on with RPM and Direction
-					while ((rpm<0) || (rpm>3220)) {
-						printf("RPM (0 to 3220): ");
+					printf("RPM (460 to 3220): ");
+					if ((rpm>=REVOLUTIONS_MIN) && (rpm<=REVOLUTIONS_MAX)) printf("%i\n",rpm);
+					else do {
 						scanf("%d",&rpm);
-					}
-					tx[pos++] = rpm<<8;
+					} while ((rpm<REVOLUTIONS_MIN) || (rpm>REVOLUTIONS_MAX));
+					tx[pos++] = rpm>>8;
 					tx[pos++] = rpm;
 					
-					while ((spindle_direction<0) || (spindle_direction>1)) {
-						printf("Spindel direction invers (0 or 1): ");
+					printf("Spindel direction invers (0 or 1): ");
+					if ((spindle_direction>=0) && (spindle_direction<=1)) printf("%i\n",spindle_direction);
+					else do {
 						scanf("%d",&spindle_direction);
-					}
+					} while ((spindle_direction<0) || (spindle_direction>1));
 					tx[pos++] = spindle_direction;
 					break;
 		case 5:  	//Spindle off
@@ -126,124 +175,150 @@ static void transfer(int fd)
 		case 7:   	//Stepper off
 					break;
 		case 8:   	//X-Stepper move with feed
-					while ((feed<0) || (feed>499)) {
-						printf("Feed (0 to 499): ");
-						scanf("%d",&feed);
-					}
-					tx[pos++] = feed<<8;
-					tx[pos++] = feed;
-					
-					while ((negativ_direction<0) || (negativ_direction>1)) {
-						printf("negativ direction (0 or 1): ");
-						scanf("%d",&negativ_direction);
-					}
-					tx[pos++] = negativ_direction;
-					break;
 		case 9:   	//Z-Stepper move with feed
-					while ((feed<0) || (feed>499)) {
-						printf("Feed (0 to 499): ");
+					printf("Feed (2 to 499): ");
+					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
+					else do {
 						scanf("%d",&feed);
-					}
-					tx[pos++] = feed<<8;
+					} while ((feed<F_MIN) || (feed>F_MAX));
+					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
 					
-					while ((negativ_direction<0) || (negativ_direction>1)) {
-						printf("negativ direction (0 or 1): ");
+					printf("negativ direction (0 or 1): ");
+					if ((negativ_direction>=0) && (negativ_direction<=1)) printf("%i\n",negativ_direction);
+					else do {
 						scanf("%d",&negativ_direction);
-					}
+					} while ((negativ_direction<0) || (negativ_direction>1));
 					tx[pos++] = negativ_direction;
 					break;
 		case 10:   	//Set Tool-Position (and INIT)
-					printf("X-Offset: ");
-					scanf("%d",&XX);
-					tx[pos++] = XX<<8;
+					printf("X-Offset (+-5999): ");
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
+					else do {
+						scanf("%d",&XX);
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
-					printf("Z-Offset: ");
-					scanf("%d",&ZZ);
-					tx[pos++] = ZZ<<8;
+					printf("Z-Offset (+-32700): ");
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
+					else do {
+						scanf("%d",&ZZ);
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
-					while ((tool<1) || (tool>6)) {
-						printf("Tool (1 to 6): ");
+					printf("Tool (1 to 6): ");
+					if ((tool>=T_MIN) && (tool<=T_MAX)) printf("%i\n",tool);
+					else do {
 						scanf("%d",&tool);
-					}
+					} while ((tool<T_MIN) || (tool>T_MAX));
 					tx[pos++] = tool;
 					break;
 		case 11:   	//Origin-Offset
-					printf("X-Offset: ");
-					scanf("%d",&XX);
-					tx[pos++] = XX<<8;
+					printf("X-Offset (+-5999): ");
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
+					else do {
+						scanf("%d",&XX);
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
-					printf("Z-Offset: ");
-					scanf("%d",&ZZ);
-					tx[pos++] = ZZ<<8;
+					printf("Z-Offset (+-32700): ");
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
+					else do {
+						scanf("%d",&ZZ);
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					break;
 		case 12:  	//metric or inch (maybe not needed)
-					while ((inch<0) || (inch>1)) {
-						printf("metric or inch (0 or 1): ");
+					printf("metric or inch (0 or 1): ");
+					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
+					else do {
 						scanf("%d",&inch);
-					}
+					} while ((inch<0) || (inch>1));
 					tx[pos++] = inch;
 					break;
 		case 13:  	//New CNC-Programm wit N Blocks in metric or inch
-					while ((block<0) || (block>500)) {
-						printf("Blocks (0 to 500): ");
+					printf("Blocks (0 to 500): ");
+					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
+					else do {
 						scanf("%d",&block);
-					}
-					tx[pos++] = block<<8;
+					} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					
-					while ((inch<0) || (inch>1)) {
-						printf("metric or inch (0 or 1): ");
+					printf("metric or inch (0 or 1): ");
+					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
+					else do {
 						scanf("%d",&inch);
-					}
+					} while ((inch<0) || (inch>1));
 					tx[pos++] = inch;
 					break;
 		case 14:  	//CNC-Code-Block
-					while ((block<0) || (block>500)) {
-						printf("Block-No (0 to 500): ");
+					printf("Block-No (0 to 500): ");
+					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
+					else do {
 						scanf("%d",&block);
-					}
-					tx[pos++] = block<<8;
+					} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					
-					while ((code_type != 'G') && (code_type != 'M')) {
-						printf("G- or M-Code (G or M): ");
+					printf("G- or M-Code (G or M): ");
+					if ((code_type == 'G') || (code_type == 'M')) printf("%c\n",code_type);
+					{
 						scanf("%c",&code_type);
-					}
+					} while ((code_type != 'G') && (code_type != 'M'));
 					tx[pos++] = code_type;
 					
-					while ((gcode<0) || (gcode>200)) {
-						printf("G/M-Code (0 to 200): ");
-						scanf("%d",&gcode);
+					if (code_type == 'G') {
+						printf("G-Code (0 to 196): ");
+						if ((gmcode>=GM_CODE_MIN) && (gmcode<=G_CODE_MAX)) printf("%i\n",gmcode);
+						else do {
+							scanf("%d",&gmcode);
+						} while ((gmcode<GM_CODE_MIN) || (gmcode>G_CODE_MAX));
 					}
-					tx[pos++] = gcode;
+					else {
+						printf("M-Code (0 to 99): ");
+						if ((gmcode>=GM_CODE_MIN) && (gmcode<=M_CODE_MAX)) printf("%i\n",gmcode);
+						else do {
+							scanf("%d",&gmcode);
+						} while ((gmcode<GM_CODE_MIN) || (gmcode>M_CODE_MAX));
+					}
+					tx[pos++] = gmcode;
 					
-					printf("X: ");
+					printf("X (+-5999): ");
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
+					else do {
+						scanf("%d",&XX);
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					scanf("%d",&XX);
-					tx[pos++] = XX<<8;
+					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
-					printf("Z: ");
-					scanf("%d",&ZZ);
-					tx[pos++] = ZZ<<8;
+					printf("Z (+-32700): ");
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
+					else do {
+						scanf("%d",&ZZ);
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
-					while ((feed<0) || (feed>499)) {
-						printf("Feed (0 to 499): ");
+					printf("Feed (2 to 499): ");
+					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
+					else do {
 						scanf("%d",&feed);
-					}
-					tx[pos++] = feed<<8;
+					} while ((feed<F_MIN) || (feed>F_MAX));
+					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
 					
-					while ((hh<0) || (hh>32000)) {
-						printf("H (0 to 32000): ");
+					printf("H (0 to 999): ");
+					if ((hh>=H_MIN) && (hh<=H_MAX)) printf("%i\n",hh);
+					else do {
 						scanf("%d",&hh);
-					}
-					tx[pos++] = hh<<8;
+					} while ((hh<H_MIN) || (hh>H_MAX));
+					tx[pos++] = hh>>8;
 					tx[pos++] = hh;
 					
 					break;
@@ -353,6 +428,7 @@ static void transfer(int fd)
 	}
 	
 	puts("");
+	printf("\n");
 }
 
 static void print_usage(const char *prog)
@@ -443,13 +519,15 @@ static void parse_opts(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	int ret = 0;
-	int fd;
-
+	
 	parse_opts(argc, argv);
 
 	fd = open(device, O_RDWR);
 	if (fd < 0)
 		pabort("can't open device");
+	
+	// Register signal and signal handler
+	signal(SIGINT, signal_callback_handler);
 
 	/*
 	 * spi mode
@@ -488,9 +566,12 @@ int main(int argc, char *argv[])
 	printf("bits per word: %d\n", bits);
 	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
 
-	transfer(fd);
-
-	close(fd);
+	while(1) {
+		transfer(fd);
+	}
+	
+	//printf("close(fd)\n");
+	//close(fd);
 
 	return ret;
 }
