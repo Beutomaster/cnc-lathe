@@ -6,7 +6,7 @@ char toolposition = 0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
-volatile boolean debug_active=0, debug_rpm=0, debug_tool=0;
+volatile boolean debug=true, debug_spi=false, debug_stepper=false, debug_active=false, debug_rpm=false, debug_tool=false;
 
 void setup() {
   // put your setup code here, to run once:
@@ -109,7 +109,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   if (digitalRead(PIN_CONTROL_ACTIVE)) {
-    if (debug_active) {
+    if (debug && debug_active) {
       //Debug
       Serial.println("Ardino active");
     }
@@ -123,7 +123,9 @@ void loop() {
     if (!digitalRead(PIN_DEBUG_INPUT_STEPPER)) {
       //Stepper-Test
       //Debug
-      Serial.println("Stepper-Test");
+      if (debug && debug_stepper) {
+        Serial.println("Stepper-Test");
+      }
       //stepper_off();
       //delay(10);
       for (j=0; j<500; j++) {
@@ -143,19 +145,22 @@ void loop() {
         //Tool-Changer-Test
         //Debug
         toolposition = random(1, 6);
-        Serial.println("Tool-Changer-Test");
-        Serial.print("Target Toolposition : ");
-        Serial.println(toolposition, DEC);
+        if (debug && debug_tool) {
+          Serial.println("Tool-Changer-Test");
+          Serial.print("Target Toolposition : ");
+          Serial.println(toolposition, DEC);
+        }
         set_tool_position(toolposition);
       }
     }
     
-  } else {
-    if (debug_active) {
+  } 
+  else {
+    if (debug && debug_active) {
       //Debug
       Serial.println("Ardino inactive");
-      spindle_off();
     }
+    spindle_off();
   }
   
   set_revolutions(get_SERVO_CONTROL_POTI());

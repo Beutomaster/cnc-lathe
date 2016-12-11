@@ -18,7 +18,7 @@ void set_tool_position(byte tool) {
       STATE_T=tool;
       
       //Step1 TOOL_CHANGER_CHANGE 2,9s
-      if (debug_tool) {
+      if (debug && debug_tool) {
         //Debug
         Serial.print("i_tool = ");
         Serial.println(i_tool, DEC);
@@ -52,7 +52,7 @@ ISR(TIMER1_CAPT_vect) {
 //Toolchanger-ISR
       if (tool_step==1) {
         //Step2 TOOL_CHANGER_FIXING 3,5s
-        if (debug_tool) {
+        if (debug && debug_tool) {
           //Debug
           Serial.println("Step2 TOOL_CHANGER_FIXING 3,5s");
         }
@@ -66,7 +66,7 @@ ISR(TIMER1_CAPT_vect) {
 
       else if (tool_step==2) {
         //Step0 TOOL_CHANGER_HOLD
-        if (debug_tool) {
+        if (debug && debug_tool) {
           //Debug
           Serial.println("Step0 TOOL_CHANGER_HOLD");
         }
@@ -82,8 +82,8 @@ ISR(TIMER1_CAPT_vect) {
         }
         else {
           //Step1 TOOL_CHANGER_CHANGE 2,9s
-          if (debug_tool) {
-          //Debug
+          if (debug && debug_tool) {
+            //Debug
             Serial.print("i_tool = ");
             Serial.println(i_tool, DEC);
             Serial.println("Step1 TOOL_CHANGER_CHANGE 2,9s");
