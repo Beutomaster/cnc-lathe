@@ -7,10 +7,8 @@
 #include "CNC_Lathe.h"
 #include "Motion_Control.h"
 
-//defines
-#define CNC_CODE_NMAX 500
 
-struct cnc_code_block { //not finished, Format von Siemens NX???
+struct cnc_code_block { //not finished, Format of Siemens NX Postprocessor???
    char GM; //G or M-Code
    byte GM_NO; //G/M-Code-Number
    int XI; //X/I-Parameter

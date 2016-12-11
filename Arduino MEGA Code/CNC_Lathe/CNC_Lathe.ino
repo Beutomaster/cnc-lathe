@@ -60,7 +60,8 @@ void setup() {
   
   //Serial Communication
   Serial.begin(115200); //for Debugging with Serial Monitor
-  Serial1.begin(9600); //Nikos Platine
+  //Serial.begin(74880); //for Debugging with Serial Monitor
+  //Serial1.begin(9600); //Nikos Platine
   
   //SPI
   SPCR |= _BV(SPE);  // turn on SPI in slave mode

@@ -7,8 +7,6 @@
 #include "CNC_Lathe.h"
 
 //defines
-#define REVOLUTIONS_MAX 3220 //rpm
-#define REVOLUTIONS_MIN 460  //rpm
 #define OCR5A_min 870 //First Value which moves
 #define OCR5A_max 5060 //280°
 #define OCR4C_min 0 //value for 460 rpm ???
