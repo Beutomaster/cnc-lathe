@@ -26,7 +26,7 @@ void set_revolutions(int target_revolutions_local) {
   //set_poti_servo(poti_angle);
   set_poti_servo(target_revolutions_local);
 
-  if (debug_rpm) {
+  if (debug && debug_rpm) {
     //Debug
     Serial.print("RPM-set-Value: ");
     Serial.println (target_revolutions_local);
@@ -67,7 +67,7 @@ void set_poti_servo(int local_target_revolutions){
     //OCR5A = (OCR5A_max-OCR5A_min)*(local_target_revolutions-REVOLUTIONS_MIN)/(REVOLUTIONS_MAX-REVOLUTIONS_MIN) + OCR5A_min; //OCR5A = T_OCF5A*16MHz/Prescaler = 544µs*16MHz/8 = 1088 ... OCR5A = 2400µs*16MHz/8 = 4800
   }
 
-  if (debug_rpm) {
+  if (debug && debug_rpm) {
   //Debug
     Serial.print("OCR5A:");
     Serial.println(OCR5A);

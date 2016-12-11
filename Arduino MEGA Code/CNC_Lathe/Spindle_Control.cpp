@@ -67,7 +67,7 @@ void set_revolutions(int target_revolutions_local) {
   //Serial1.write (rev_niko);
   
   //Debug
-  if (debug) { //for debugging
+  if (debug && debug_rpm) { //for debugging
     Serial.print("RPM-set-Value: ");
     Serial.println (target_revolutions_local);
   }

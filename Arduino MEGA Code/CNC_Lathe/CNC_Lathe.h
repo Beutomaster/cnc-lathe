@@ -83,7 +83,7 @@
 #define CLK_TIMER3 3750000 //in 1/min
 
 //global vars
-extern boolean debug;
+extern volatile boolean debug, debug_spi, debug_stepper, debug_active, debug_rpm, debug_tool;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
 extern volatile const int lookup_cosinus[91];
