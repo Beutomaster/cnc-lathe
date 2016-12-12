@@ -3,6 +3,7 @@
 boolean absolute=0, feed_modus=0;
 volatile byte interpolationmode=0, i_command_time=0;
 volatile int command_time=0;
+volatile int X0=0, Z0=0;
 
 
 void set_xz_coordinates(int x_origin, int z_origin) {
@@ -42,6 +43,9 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
   //turn stepper on with last step
   if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+
+  X0 = STATE_X;
+  Z0 = STATE_Z;
   
   //get incremental coordinates
   if (absolute){
@@ -236,8 +240,17 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
 }
 
-void get_xz_coordinates() { //calculate Coordinates
-  
+int get_xz_coordinates(int XZ0, int xz_step) { //calculate Coordinates
+  int XZ_delta;
+  long XZ_delta_fixpoint = ((xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((XZ_delta_fixpoint%512) < 256) {
+        XZ_delta = XZ_delta_fixpoint>>9;
+      }
+      else {
+        XZ_delta = (XZ_delta_fixpoint>>9)+1;
+      }
+  return XZ0 + XZ_delta;
 }
 
 int get_xz_feed() {
