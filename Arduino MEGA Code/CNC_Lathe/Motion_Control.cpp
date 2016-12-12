@@ -117,8 +117,32 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
     
     //next X- and Z-Step moving average feed
-    phi_x = (((long)(x_step))*90+45)/x_steps;
-    phi_z = (((long)(z_step))*90+45)/z_steps;
+    if (x_steps) {
+      long phi_x_fixp = ((((long)x_step)*90+45)<<9)/x_steps; //max 22 bit used with X=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((phi_x_fixp%512) < 256) {
+        phi_x = phi_x_fixp>>9;
+      }
+      else {
+        phi_x = (phi_x_fixp>>9)+1;
+      }
+      if (phi_x == 0) { //phi_x has to be greater zero
+        phi_x = 1;
+      }
+    }
+    if (z_steps) { 
+      long phi_z_fixp = ((((long)z_step)*90+45)<<9)/z_steps; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((phi_z_fixp%512) < 256) {
+        phi_z = phi_z_fixp>>9;
+      }
+      else {
+        phi_z = (phi_z_fixp>>9)+1;
+      }
+      if (phi_z == 0) { //phi_z has to be greater zero
+        phi_z = 1;
+      }
+    }
     
     if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
       //calculation of next x- and z-clk (Direction)
