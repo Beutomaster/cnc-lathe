@@ -10,7 +10,7 @@ volatile int x_steps=0; //has to be global for ISR
 volatile int z_steps=0; //has to be global for ISR
 volatile int x_feed=0; //has to be global for ISR
 volatile int z_feed=0; //has to be global for ISR
-volatile long clk_feed = 0; //clk_feed in 1/min (Overflow possible?)
+volatile long clk_feed = 0; //clk_feed in 1/min
 volatile long clk_xfeed=0, clk_zfeed=0;
 volatile int phi_x=0;
 volatile int phi_z=0;
