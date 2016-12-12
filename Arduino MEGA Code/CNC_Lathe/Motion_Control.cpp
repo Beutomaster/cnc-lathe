@@ -54,10 +54,10 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
 
   //calculate needed steps
-  x_steps = X*STEPS_PER_MM/100; //not finished, maybe overflow
-  z_steps = Z*STEPS_PER_MM/100; //not finished, maybe overflow
+  x_steps = (long)X*STEPS_PER_MM/100;
+  z_steps = (long)Z*STEPS_PER_MM/100;
 
-  clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min (Overflow possible?)
+  clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min
 
   //Prepare Timer 1 for X-Stepper 
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
@@ -85,8 +85,8 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
       if (z_feed==0) z_feed=1; //Minimum needed
     }
 
-    clk_xfeed = (long)x_feed * STEPS_PER_MM; //clk_xfeed in Steps/min (Overflow possible?)
-    clk_zfeed = (long)z_feed * STEPS_PER_MM; //clk_xfeed in Steps/min (Overflow possible?)
+    clk_xfeed = (long)x_feed * STEPS_PER_MM; //clk_xfeed in Steps/min
+    clk_zfeed = (long)z_feed * STEPS_PER_MM; //clk_xfeed in Steps/min
 
     //set Timer-Compare-Values
     if (X) {
