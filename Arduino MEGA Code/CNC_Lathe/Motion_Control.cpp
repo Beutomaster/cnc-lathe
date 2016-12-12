@@ -50,8 +50,8 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
 
   //calculate needed steps
-  x_steps = X*STEPS_PER_MM; //not finished, maybe overflow
-  z_steps = Z*STEPS_PER_MM; //not finished, maybe overflow
+  x_steps = X*STEPS_PER_MM/100; //not finished, maybe overflow
+  z_steps = Z*STEPS_PER_MM/100; //not finished, maybe overflow
 
   clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min (Overflow possible?)
 
