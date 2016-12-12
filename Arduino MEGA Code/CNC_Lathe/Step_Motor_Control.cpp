@@ -280,7 +280,6 @@ ISR(TIMER1_OVF_vect) {
       }
       else current_x_step--;
       x_step--;
-      STATE_X--; //not finished, correction needed
     }
     //Movement in +X-Direction
     else {
@@ -289,11 +288,13 @@ ISR(TIMER1_OVF_vect) {
       }
       else current_x_step++;
       x_step++;
-      STATE_X++; //not finished, correction needed
     }
     
     //set next step
     set_xstep(current_x_step);
+
+    //set coordinate
+    STATE_X = get_xz_coordinates(X0, x_step);
 
     if (x_step==x_steps) { //last step reached?
       phi_x=0;
@@ -405,7 +406,6 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     }
     else current_z_step--;
     z_step--;
-    STATE_Z--; //not finished, correction needed
   }
   //Movement in +Z-Direction
   else {
@@ -414,11 +414,13 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     }
     else current_z_step++;
     z_step++;
-    STATE_Z++; //not finished, correction needed
   }
-  
+
   //set next step
   set_zstep(current_z_step);
+
+  //set coordinate
+  STATE_Z = get_xz_coordinates(Z0, z_step);
 
   if (z_step==z_steps) { //last step reached?
     phi_z=0;

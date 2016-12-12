@@ -23,6 +23,7 @@ extern boolean absolute, feed_modus;
 extern volatile byte interpolationmode, i_command_time;
 extern volatile long clk_feed, clk_xfeed, clk_zfeed;
 extern volatile int command_time;
+extern volatile int X0, Z0;
 
 void set_xz_coordinates(int, int);
 int get_inc_X(int);
@@ -30,7 +31,7 @@ int get_inc_Z(int);
 int get_Tool_X(int);
 int get_Tool_Z(int);
 void set_xz_move(int, int, int, byte);
-void get_xz_coordinates();
+int get_xz_coordinates(int, int);
 int get_xz_feed();
 int get_xz_feed_related_to_revolutions(int);
 void command_running(int);
