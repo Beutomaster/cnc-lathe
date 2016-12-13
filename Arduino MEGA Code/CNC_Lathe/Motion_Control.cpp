@@ -199,7 +199,8 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //every step has to be executed, feed can't be zero
     if (clk_xfeed) { //clock not zero
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/clk_xfeed)-1
+        ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/clk_xfeed)-1 
+        //Overflow possible!!!
       }
     } else {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
@@ -209,6 +210,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     if (clk_zfeed) { //clock not zero
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
         ICR3 = (3750000L/clk_zfeed)-1; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(s/min)/(256*clk_zfeed))-1 = (62500Hz*60(s/min)/clk_zfeed)-1
+        //Overflow possible!!!
       }
     } else {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
