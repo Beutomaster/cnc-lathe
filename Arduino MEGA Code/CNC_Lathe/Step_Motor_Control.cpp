@@ -366,6 +366,7 @@ ISR(TIMER1_OVF_vect) {
         //every step hast to be executed, feed can't be zero
         if (clk_xfeed) { //clock not zero
           ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/clk_xfeed)-1
+          //Overflow possible!!!
         } else ICR1 = 62499L;
       }
       
@@ -492,6 +493,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       //every step hast to be executed, feed can't be zero
       if (clk_zfeed) { //clock not zero
         ICR3 = (3750000L/clk_zfeed)-1; //ICR3 = (16MHz*60(min/s)/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/clk_zfeed)-1
+        //Overflow possible!!!
       } else ICR3 = 62499L;
     }
 
