@@ -114,27 +114,66 @@ void stepper_timeout() {
   //set timeout for stepper engines active after last move
 }
 
-//continuous movement for manual control (maybe not needed)
-void set_xstepper(int feed, char negativ_direction) {
+//continuous movement for manual control
+void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
   //manual control
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  //if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  int X=0, Z=0;
+  
+  //calculate needed Coordinates for s/2
+  if (xz_stepper) {
+    Z = feed * 100 / 120; //100 for mm * min/60s * 1/2
+    if (negativ_direction) Z *= -1;
+    if (absolute) Z += STATE_Z;
+  }
+  else {
+    X = feed * 100 / 120; //100 for mm * min/60s * 1/2
+    if (negativ_direction) X *= -1;
+    if (absolute) X += STATE_X;
+  }
+  
   //set signal with feed and direction
-  //???
-  STATE_F = feed;
+  set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
+  
   //set timeout for movement and reset STATE_F
-  command_running(MANUAL_IMPULSE);
+  //command_running(MANUAL_IMPULSE);
 }
 
-//continuous movement for manual control (maybe not needed)
-void set_zstepper(int feed, char negativ_direction) {
-  int command_time = MANUAL_IMPULSE;
-  //manual control
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
-  //set signal with feed and direction
-  //???
+//continuous movement for manual control second try ... not finished !!!
+void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
+  command_completed=0;
+  
   STATE_F = feed;
+  
+  interpolationmode=INTERPOLATION_LINEAR;
+
+  //turn stepper on with last step
+  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+
+  X0 = STATE_X;
+  Z0 = STATE_Z;
+  x_step=0;
+  z_step=0;
+
+  //calculate needed steps for s/2
+  if (xz_stepper) { //z_stepper
+    x_steps = 0;
+    z_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
+    if (negativ_direction) z_steps *= -1;
+    x_command_completed = 0;
+  }
+  else { //x_stepper
+    z_steps = 0;
+    x_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
+    if (negativ_direction) x_steps *= -1;
+    z_command_completed = 0;
+  }
+  //set signal with feed and direction
+  //configure and start Timer
+  //... not finished
+  
   //set timeout for movement and reset STATE_F
-  command_running(MANUAL_IMPULSE);
+  //command_running(MANUAL_IMPULSE);
 }
 
 void set_x_steps(int x_steps_local, int x_feed_local) { //maybe not needed anymore
@@ -257,7 +296,7 @@ ISR(TIMER1_OVF_vect) {
   if (command_time) { //Dwell
     if (i_command_time==1) {
       ICR1 = (62500L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*command_time/100)-1
-      if (ICR1>TCNT1) {
+      if (ICR1<TCNT1) {
         TCNT1=0; //Checks if Timer already overrun the compare value
         //set Interrupt flag???
       }
@@ -366,6 +405,7 @@ ISR(TIMER1_OVF_vect) {
         //every step hast to be executed, feed can't be zero
         if (clk_xfeed) { //clock not zero
           ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/clk_xfeed)-1
+          //Overflow possible!!!
         } else ICR1 = 62499L;
       }
       
@@ -492,6 +532,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       //every step hast to be executed, feed can't be zero
       if (clk_zfeed) { //clock not zero
         ICR3 = (3750000L/clk_zfeed)-1; //ICR3 = (16MHz*60(min/s)/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/clk_zfeed)-1
+        //Overflow possible!!!
       } else ICR3 = 62499L;
     }
 

@@ -133,14 +133,14 @@ boolean process_incomming_msg() {
               msg_length=4;
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
-                set_xstepper((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3]);
+                set_xz_stepper_manual((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3], 0);
               }
               break;
     case 9:   //Z-Stepper move with feed
               msg_length=4;
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
-                set_zstepper((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3]);
+                set_xz_stepper_manual((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3], 1);
               }
               break;
     case 10:   //Set Tool-Position (and INIT)
