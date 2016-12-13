@@ -133,7 +133,13 @@ void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { 
   }
   
   //set signal with feed and direction
-  set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
+  if (command_completed) {
+    set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
+  }
+  else {
+    //increase steps
+    // ... not finished
+  }
   
   //set timeout for movement and reset STATE_F
   //command_running(MANUAL_IMPULSE);

@@ -120,13 +120,17 @@ boolean process_incomming_msg() {
     case 6:   //Stepper on
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
-                stepper_on();
+                if (command_completed) { //Error Handling needed
+                  stepper_on();
+                }
               }
               break;
     case 7:   //Stepper off
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
-                stepper_off();
+                if (command_completed) { //Error Handling needed
+                  stepper_off();
+                }
               }
               break;
     case 8:   //X-Stepper move with feed
@@ -147,26 +151,32 @@ boolean process_incomming_msg() {
               msg_length=6;
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
-                get_Tool_X((((int)rx_buf[1])<<8) | rx_buf[2]);
-                get_Tool_Z((((int)rx_buf[3])<<8) | rx_buf[4]);
-                set_tool_position(rx_buf[5]);
+                if (command_completed) {
+                  get_Tool_X((((int)rx_buf[1])<<8) | rx_buf[2]);
+                  get_Tool_Z((((int)rx_buf[3])<<8) | rx_buf[4]);
+                  set_tool_position(rx_buf[5]);
+                }
               }
               break;
     case 11:   //Origin-Offset
               msg_length=5;
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
-                set_xz_coordinates(((((int)rx_buf[1])<<8) | rx_buf[2]), ((((int)rx_buf[3])<<8) | rx_buf[4]));
+                if (command_completed) { //Error Handling needed
+                  set_xz_coordinates(((((int)rx_buf[1])<<8) | rx_buf[2]), ((((int)rx_buf[3])<<8) | rx_buf[4]));
+                }
               }
               break;
     case 12:  //metric or inch (maybe not needed)
               msg_length=2;
               if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
-                if (rx_buf[1]){
-                  STATE |= _BV(STATE_INCH_BIT); //set STATE_bit4 = 1
+                if (command_completed) { //Error Handling needed
+                  if (rx_buf[1]){
+                    STATE |= _BV(STATE_INCH_BIT); //set STATE_bit4 = 1
+                  }
+                  else STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
                 }
-                else STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
               }
               break;
     case 13:  //New CNC-Programm wit N Blocks in metric or inch
