@@ -140,14 +140,10 @@ void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { 
     //increase steps
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       if (!x_command_completed) {
-        int x_steps_local = -feed * STEPS_PER_MM / 120; //min/60s * 1/2
-        if (negativ_direction) x_steps = -x_steps_local;
-        else x_steps = x_steps_local;
+        x_steps += x_step;
       }
       if (!z_command_completed) {
-        int z_steps_local = -feed * STEPS_PER_MM / 120; //min/60s * 1/2
-        if (negativ_direction) z_steps = -z_steps_local;
-        else z_steps = z_steps_local;
+        z_steps += z_step;
       } 
     }
   }
