@@ -18,12 +18,20 @@ $(document).ready(function(){
 	//Toggle Visibility of Manual and CNC Control
     $("#manbutton").click(function(){
 	   $(".cnc").hide();
+	   $(".emco").hide();
 	   $(".manual").show();
 	});
 	
 	$("#cncbutton").click(function(){
 	   $(".manual").hide();
+	   $(".emco").hide();
 	   $(".cnc").show();
+	});
+	
+	$("#emcobutton").click(function(){
+	   $(".manual").hide();
+	   $(".cnc").hide();
+	   $(".emco").show();
 	});
 
 }); 

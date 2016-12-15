@@ -1,0 +1,11 @@
+CACHE MANIFEST
+# 2016-12-15 v1.0.1
+#/css/styles.css
+#/images/*
+
+NETWORK:
+*
+#/xml/machine_state.xml
+
+#FALLBACK:
+#/index.html /offline.html
