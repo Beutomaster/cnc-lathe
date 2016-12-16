@@ -75,8 +75,5 @@ void M30(); //End of Program
 void M98(int, int); //Automatic compensation of play
 void M99(int, char); //Circle parameter (I, K = Center point coordinates)
 
-//Timer-Interrupt-isr:
-void command_complete();
-
 #endif
 
