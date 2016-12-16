@@ -257,9 +257,3 @@ void M30() {programm_stop();}
 void M98(int X, int Z) {} //Automatic compensation of play
 void M99(int I, char K) {} //Circle parameter (I, K = Center point coordinates)
 
-//Timer-Interrupt-isr:
-void command_complete() {
-  command_completed=1;
-  STATE_N++; // maybe there is a better position for that
-}
-

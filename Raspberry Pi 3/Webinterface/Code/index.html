@@ -45,8 +45,8 @@
 
 <nav>
 	<ul>
-    <li id="manbutton" class="cnc emco clearfix">Manual Control</li>
-    <li id="cncbutton" class="manual emco clearfix">CNC Control</li>
+    <li id="manbutton" class="cnc clearfix">Manual Control</li>
+    <li id="cncbutton" class="manual clearfix">CNC Control</li>
 	<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
     <li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
 	</ul>
@@ -117,9 +117,9 @@
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Spindle ON" />
+				<input type="submit" id="SpindleOn" class="button" value="Spindle ON" />
 				<br />
-				<input type="button" id="spindle_off" class="button" onclick="alert('Spindle OFF')" value="Spindle OFF" />
+				<input type="button" id="SpindleOff" class="button" onclick="alert('Spindle OFF')" value="Spindle OFF" />
 			</fieldset>
 		</form>
 		</span>
@@ -133,9 +133,9 @@
 				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Stepper ON" />
+				<input type="submit" id="StepperON" class="button" value="Stepper ON" />
 				<br />
-				<input type="button" id="stepper_off" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
+				<input type="button" id="StepperOff" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
 			</fieldset>
 		</form>
 		</span>
@@ -156,7 +156,7 @@
 				<input type="number" name="tool_z-correction" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Set Tool" />
+				<input type="submit" id="SetTool" class="button" value="Set Tool" />
 			</fieldset>
 		</form>
 		</span>

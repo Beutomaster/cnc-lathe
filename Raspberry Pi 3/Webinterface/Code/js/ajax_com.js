@@ -16,7 +16,7 @@ xhttp.send();
 
 //Show Machine State from machine_state.xml
 function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
-  var i;
+  var i, debug=0;
   var xmlDoc = xml.responseXML;
   var active=xmlDoc.getElementsByTagName("active")[0].textContent;
   var init=xmlDoc.getElementsByTagName("init")[0].textContent;
@@ -52,6 +52,42 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
   document.getElementById("spi_error").setAttribute("value", spi_error);
   document.getElementById("cnc_code_error").setAttribute("value", cnc_code_error);
   document.getElementById("spindel_error").setAttribute("value", spindel_error);
+  
+  if (active == 1) {
+	  if (!debug) HideClass("emco");
+	  if (manual == 1) {
+		  //if (!debug) HideClass("cnc"); //should be shown while pause
+		  ShowClass("manual");
+		  /*
+		  if (spindel_on) {
+			  document.getElementById("SpindleOff").display='';
+			  document.getElementById("SpindleON").value = "Set RPM";
+		  }
+		  else {
+			  document.getElementById("SpindleOff").display='none';
+			  document.getElementById("SpindleON").value = "Spindle ON";
+		  }
+		  if (stepper_on) {
+			  document.getElementById("StepperOff").display='';
+			  document.getElementById("StepperON").value = "Set Feed";
+		  }
+		  else {
+			  document.getElementById("StepperOff").display='none';
+			  document.getElementById("StepperON").value = "Stepper ON";
+		  }
+		  if (!init) document.getElementById("SetTool").value = "Init Tool";
+		  */
+	  }
+	  else {
+		  if (!pause && !debug) HideClass("manual"); //should be shown while pause
+		  ShowClass("cnc");
+	  }  
+  }
+  else {
+	  if (!debug) HideClass("manual");
+	  if (!debug) HideClass("cnc");
+	  ShowClass("emco");
+  }
 } 
 
 //Show CNC Code from cnc_code.xml
