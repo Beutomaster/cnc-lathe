@@ -21,6 +21,9 @@ volatile int STATE_N=0;
 
 void setup() {
   // put your setup code here, to run once:
+  //set initional State
+  STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT); //set = 1
+  
   //PINs
   pinMode(PIN_CONTROL_ACTIVE, INPUT);
   pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
@@ -145,17 +148,17 @@ void loop() {
   //CNC-Lathe State-Machine  
   if (get_control_active()) {
     if (initialized) {
-      if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-        if (x_command_completed && z_command_completed) {
+      if (!command_time && i_tool && x_command_completed && z_command_completed) {
           command_completed=1;
           STATE_F = 0;
-        }
-        if (command_completed && !pause) {
-          process_cnc_listing();
-        }
-        else stepper_timeout();
+          stepper_timeout();
       }
-      else stepper_timeout();
+      if (command_completed) {
+        if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
+          if (!pause) process_cnc_listing();
+        }
+      }
+      else reset_stepper_timeout=true;
 	  }
     //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
   }
