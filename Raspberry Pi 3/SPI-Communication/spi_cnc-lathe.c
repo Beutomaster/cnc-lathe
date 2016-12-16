@@ -70,9 +70,9 @@
 #define ERROR_CNC_CODE_BIT 1
 #define ERROR_SPINDLE_BIT 2
 
-//#define MACHINE_STATE_FILE "/var/www/html/xml/machine_state.xml" //does not work
+#define MACHINE_STATE_FILE "/var/www/html/xml/machine_state.xml"
 //#define MACHINE_STATE_FILE "~/machine_state.xml" //does not work
-#define MACHINE_STATE_FILE "machine_state.xml"
+//#define MACHINE_STATE_FILE "machine_state.xml"
 
 FILE *machinestatefile;
 int fd;
@@ -109,7 +109,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t len) {
 
 static void transfer(int fd)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32760, ZZ=32760, feed=-1, tool=0, inch=-1, gmcode=-1, hh=-1, code_type=0;
+	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32760, ZZ=32760, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
 	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0};
 	
@@ -341,13 +341,13 @@ static void transfer(int fd)
 					tx[pos++] = feed;
 					
 					printf("H (0 to 999): ");
-					if ((hh>=H_MIN) && (hh<=H_MAX)) printf("%i\n",hh);
+					if ((HH>=H_MIN) && (HH<=H_MAX)) printf("%i\n",HH);
 					else do {
-						scanf("%d",&hh);
+						scanf("%d",&HH);
 						getchar();
-					} while ((hh<H_MIN) || (hh>H_MAX));
-					tx[pos++] = hh>>8;
-					tx[pos++] = hh;
+					} while ((HH<H_MIN) || (HH>H_MAX));
+					tx[pos++] = HH>>8;
+					tx[pos++] = HH;
 					
 					break;
 		case 15:  	//Shutdown
@@ -444,8 +444,8 @@ static void transfer(int fd)
 		printf("Z: %i\n", ZZ);
 		feed = (((int)rx[8]<<8)|(rx[9]));
 		printf("F: %i\n", feed);
-		hh = (((int)rx[10]<<8)|(rx[11]));
-		printf("H: %i\n", hh);
+		HH = (((int)rx[10]<<8)|(rx[11]));
+		printf("H: %i\n", HH);
 		tool = rx[12];
 		printf("T: %i\n", tool);
 		block = (((int)rx[13]<<8)|(rx[14]));
@@ -474,12 +474,13 @@ static void transfer(int fd)
 			fprintf(machinestatefile, "\t\t<spindel_on>%i</spindel_on>\n", spindel_on);
 			fprintf(machinestatefile, "\t\t<spindel_direction>%i</spindel_direction>\n", spindel_direction);
 			fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", stepper_on);
-			fprintf(machinestatefile, "\t<state>\n");
+			fprintf(machinestatefile, "\t</state>\n");
 			fprintf(machinestatefile, "\t<measure>\n");
 			fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", rpm);
 			fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", XX);
 			fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", ZZ);
 			fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", feed);
+			fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", HH);
 			fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", tool);	
 			fprintf(machinestatefile, "\t</measure>\n");
 			fprintf(machinestatefile, "\t<error>\n");

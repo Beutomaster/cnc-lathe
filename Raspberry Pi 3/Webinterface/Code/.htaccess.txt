@@ -1,0 +1,23 @@
+AddType text/cache-manifest .appcache
+
+<IfModule mod_expires.c>
+    # turn on the module for this directory
+    ExpiresActive on
+    # set default
+    #ExpiresDefault "access plus 24 hours"
+ 
+    # cache common graphics
+    #ExpiresByType image/jpg "access plus 1 months"
+    #ExpiresByType image/gif "access plus 1 months"
+    #ExpiresByType image/jpeg "access plus 1 months"
+    #ExpiresByType image/png "access plus 1 months"
+ 
+    # cache CSS
+    #ExpiresByType text/css "access plus 1 months"
+ 
+    # cache other filetypes
+    #ExpiresByType text/javascript "access plus 1 months"
+    #ExpiresByType application/javascript "access plus 1 months"
+    #ExpiresByType application/x-shockwave-flash "access plus 1 months"
+	ExpiresByType text/cache-manifest "access plus 0 seconds"
+</IfModule>

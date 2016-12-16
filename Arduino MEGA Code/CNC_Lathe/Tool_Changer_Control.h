@@ -10,6 +10,8 @@
 
 //Positionssensor oder Eingabe benoetigt
 
+extern volatile char i_tool;
+
 void set_tool_position(byte);
 void save_current_tool_position();
 void read_current_tool_position();

@@ -1,7 +1,7 @@
 #include "Step_Motor_Control.h"
 
 //ISR vars get_current_step
-volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0;
+volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0, stepper_timeout_timestamp=0;
 
 //TIMER ISR vars
 volatile int x_step=0;
@@ -16,6 +16,7 @@ volatile int phi_x=0;
 volatile int phi_z=0;
 
 volatile byte current_x_step=0, current_z_step=0;
+volatile boolean reset_stepper_timeout=false;
 
 Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
@@ -28,6 +29,21 @@ void stepper_on() {
 }
 
 void stepper_off() {
+  if (!command_time) {
+    TCCR1B = 0; //Disable Timer 1
+    TIMSK1 |= ~(_BV(OCIE1A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+  }
+  TCCR3B = 0; //Disable Timer 3
+  TIMSK3 |= ~(_BV(OCIE3A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+  phi_z=0;
+  phi_x=0;
+  x_step=0;
+  z_step=0;
+  x_steps=0;
+  z_steps=0;
+  x_command_completed=1;
+  z_command_completed=1;
+  
   //A,B,C,D LOW (We have to change the logic, because Signals at the moment are always C=!A, D=!B !!!)
   digitalWrite(PIN_STEPPER_X_A, LOW);
   digitalWrite(PIN_STEPPER_X_B, LOW);
@@ -112,6 +128,9 @@ void set_zstep(byte nextstep) {
 
 void stepper_timeout() {
   //set timeout for stepper engines active after last move
+  if (reset_stepper_timeout) stepper_timeout_timestamp = millis();
+  reset_stepper_timeout=false;
+  if ((millis() - stepper_timeout_timestamp) > STEPPER_TIMEOUT_MS) stepper_off();
 }
 
 //continuous movement for manual control
@@ -300,11 +319,6 @@ void read_last_z_step() { //needed to switch on stepper without movement
   current_z_step = EEPROM.read(LAST_Z_STEP_ADDRESS);
 }
 
-//Stepper-Timeout-ISR:
-void stepper_timeout_ISR() {
-  stepper_off();
-}
-
 ISR(TIMER1_OVF_vect) {
   if (command_time) { //Dwell
     if (i_command_time==1) {
@@ -353,6 +367,8 @@ ISR(TIMER1_OVF_vect) {
       x_step=0;
       x_steps=0;
       x_command_completed=1;
+      //Disable Output Compare A Match Interrupt Enable
+      TIMSK1 |= ~(_BV(OCIE1A)); //set 0
       TCCR1B = 0; //Disable Timer
     }
     else { //next Timer-Compare-Value
@@ -480,6 +496,8 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     z_step=0;
     z_steps=0;
     z_command_completed=1;
+    //Disable Output Compare A Match Interrupt Enable
+    TIMSK3 |= ~(_BV(OCIE3A)); //set 0
     TCCR3B = 0; //Disable Timer
   }
   else { //next Timer-Compare-Value

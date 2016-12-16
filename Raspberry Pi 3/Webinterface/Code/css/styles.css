@@ -57,15 +57,15 @@ form {
     cursor: not-allowed;
 }
 
-#shutdown, #spindle_off, #stepper_off {
+#shutdown, #SpindleOff, #StepperOff {
 	background-color: #d3394c; /* red */
 }
 
-#shutdown:hover, #spindle_off:hover, #stepper_off:hover {
+#shutdown:hover, #SpindleOff:hover, #StepperOff:hover {
     background-color: #722040;
 }
 
-#shutdown:active, #spindle_off:active, #stepper_off:active {
+#shutdown:active, #SpindleOff:active, #StepperOff:active {
     background-color: #722040;
 }
 

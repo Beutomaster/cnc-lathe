@@ -2,7 +2,7 @@
 
 <!-- Development-Version 0.1 -->
 
-<html lang="en-US" class="no-js">
+<html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 <head>
     <title>CNC-Lathe-Control</title>
     <meta charset="UTF-8" />
@@ -47,6 +47,7 @@
 	<ul>
     <li id="manbutton" class="cnc clearfix">Manual Control</li>
     <li id="cncbutton" class="manual clearfix">CNC Control</li>
+	<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
     <li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
 	</ul>
 </nav>
@@ -69,8 +70,8 @@
 			<form action="./cgi-bin/spi_com.cgi" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
-					<label>X-Offset:<br />
-					<input type="number" name="xoffset" value="0" autocomplete="off" required />
+					<label>X-Offset (+-5999):<br />
+					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
 					<br />
 					<input type="submit" class="button" value="Set X-Offset" />
@@ -82,8 +83,8 @@
 			<form action="./cgi-bin/spi_com.cgi" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
-					<label>Z-Offset:<br />
-					<input type="number" name="zoffset" value="0" autocomplete="off" required />
+					<label>Z-Offset (+-32700):<br />
+					<input type="number" name="zoffset" min="-32700" max="32700" value="0" autocomplete="off" required />
 					</label>
 					<br />
 					<input type="submit" class="button" value="Set Z-Offset" />
@@ -116,9 +117,9 @@
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Spindle ON" />
+				<input type="submit" id="SpindleOn" class="button" value="Spindle ON" />
 				<br />
-				<input type="button" id="spindle_off" class="button" onclick="alert('Spindle OFF')" value="Spindle OFF" />
+				<input type="button" id="SpindleOff" class="button" onclick="alert('Spindle OFF')" value="Spindle OFF" />
 			</fieldset>
 		</form>
 		</span>
@@ -128,13 +129,13 @@
 		<form action="./cgi-bin/spidev_hello_world.cgi" method="post">
 			<fieldset>
 				<legend>Stepper:</legend>
-				<label>Feed (10 to 499):<br />
-				<input type="number" name="feed" min="10" max="499" value="50" autocomplete="off" />
+				<label>Feed (2 to 499):<br />
+				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Stepper ON" />
+				<input type="submit" id="StepperON" class="button" value="Stepper ON" />
 				<br />
-				<input type="button" id="stepper_off" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
+				<input type="button" id="StepperOff" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
 			</fieldset>
 		</form>
 		</span>
@@ -155,7 +156,7 @@
 				<input type="number" name="tool_z-correction" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Set Tool" />
+				<input type="submit" id="SetTool" class="button" value="Set Tool" />
 			</fieldset>
 		</form>
 		</span>
@@ -195,12 +196,35 @@
 		
         <table id="code"><tr><th>Block-Nr.</th><th>G/M-Code</th><th>X</th><th>Z</th><th>F</th><th>H</th></tr></table>
     </article>
+	
+	<article class="emco clearfix">
+        <h2>EMCO-Control</h2>
+		<!-- Stream Video of old Emco Control
+        <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
+		-->
+    </article>
 </section>
 
 <aside>
 	<h2>Machine state</h2>
 	
 	<form>
+			Control active: <input type="text" name="active" id="active" />
+			<br />
+			Init: <input type="text" name="init" id="init" />
+			<br />
+			Manual: <input type="text" name="manual" id="manual" />
+			<br />
+			Pause: <input type="text" name="pause" id="pause" />
+			<br />
+			inch: <input type="text" name="inch" id="inch" />
+			<br />
+			Spindel on: <input type="text" name="spindel_on" id="spindel_on" />
+			<br />
+			Spindel-Direction: <input type="text" name="init" id="spindel_direction" />
+			<br />
+			Stepper on: <input type="text" name="stepper_on" id="stepper_on" />
+			<br /><br />
 			RPM: <input type="text" name="rpm_measure" id="rpm_measure" />
 			<br />
 			X: <input type="text" name="x_actual" id="x_actual" />
@@ -209,9 +233,16 @@
 			<br />
 			Feed: <input type="text" name="f_actual" id="f_actual" />
 			<br />
-			Tool: <input type="text" name="t_actual" id="t_actual" />
+			H: <input type="text" name="h_actual" id="h_actual" />
 			<br />
-			ERROR: <input type="text" name="error_actual" id="error_actual" />
+			Tool: <input type="text" name="t_actual" id="t_actual" />
+			<br /><br />
+			SPI-Error: <input type="text" name="spi_error" id="spi_error" />
+			<br />
+			CNC-Code-Error: <input type="text" name="cnc_code_error" id="cnc_code_error" />
+			<br />
+			Spindel-Error: <input type="text" name="spindel_error" id="spindel_error" />
+			<br />
 	</form>
 	
 	<form>
