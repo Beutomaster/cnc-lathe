@@ -3,6 +3,7 @@
 
 //includes
 #include <util/atomic.h>
+#include <util/crc16.h>
 #include <Arduino.h>
 #include "CNC_Lathe.h"
 #include "Motion_Control.h"
@@ -19,7 +20,7 @@ extern char tx_buf [SPI_MSG_LENGTH]; //SPI send-buffer
 
 //Controlled by (Timer-) Interrupts:
 void spi_buffer_handling();
-char CRC8 (char *, char);
+unsigned char CRC8 (char *, unsigned char, unsigned char);
 boolean process_incomming_msg();
 void create_machine_state_msg();
 void create_spi_error_msg();

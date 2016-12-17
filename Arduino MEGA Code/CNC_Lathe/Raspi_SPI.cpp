@@ -65,6 +65,7 @@ void spi_buffer_handling() {
       Serial.println();
     }
 
+    //maybe an second buffer is needed !!!
     if (process_incomming_msg()) set_error(ERROR_SPI_BIT); //create_spi_error_msg();
     create_machine_state_msg();
 
@@ -74,8 +75,17 @@ void spi_buffer_handling() {
   }
 } //end of receive_spi
 
-char CRC8 (char * buf, char len) {
-  char crc_8 = 0; //stub
+unsigned char CRC8 (char * buf, unsigned char used_message_bytes, unsigned char crc_8) {
+  //set crc_8=0 to get the crc_8-value of the msg returned
+  //set crc_8=crc_8 of the message (byte 17) to verify it. if the message is correct, CRC8 returns 0.
+  //used_message_bytes is needed, because the crc_8 is only transmitted for used bytes
+  unsigned char bytecount, data;
+  
+  for (bytecount=0;bytecount<used_message_bytes;bytecount++) {
+    data = (unsigned char) buf[bytecount];
+    crc_8 = _crc8_ccitt_update (data,crc_8);
+  }
+  
   return crc_8;
 }
 
@@ -85,26 +95,31 @@ boolean process_incomming_msg() {
   char msg_length=1;
   switch(rx_buf[0]) {
     case 0:   //Update Machine State
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               break;
     case 1:   //Programm Start at Block
               msg_length=3;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) {
                 programm_start((((int)rx_buf[1])<<8) | rx_buf[2]);
               }
               break;
     case 2:   //Programm Stop
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else programm_stop();
               break;
     case 3:   //Programm Pause
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else programm_pause();
               break;
     case 4:   //Spindle on with RPM and Direction
               msg_length=4;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
                 set_revolutions((((int)rx_buf[1])<<8) | rx_buf[2]);
                 spindle_direction(rx_buf[3]);
@@ -112,13 +127,15 @@ boolean process_incomming_msg() {
               }
               break;
     case 5:   //Spindle off
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
                 spindle_off();
               }
               break;
     case 6:   //Stepper on
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
                 if (command_completed) { //Error Handling needed
                   stepper_on();
@@ -126,7 +143,8 @@ boolean process_incomming_msg() {
               }
               break;
     case 7:   //Stepper off
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if ((STATE>>STATE_MANUAL_BIT)&1) {
                 if (command_completed) { //Error Handling needed
                   stepper_off();
@@ -135,21 +153,24 @@ boolean process_incomming_msg() {
               break;
     case 8:   //X-Stepper move with feed
               msg_length=4;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if (command_completed && (STATE>>STATE_MANUAL_BIT)&1) {
                 set_xz_stepper_manual((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3], 0);
               }
               break;
     case 9:   //Z-Stepper move with feed
               msg_length=4;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) {
                 set_xz_stepper_manual((((int)rx_buf[1])<<8) | rx_buf[2], rx_buf[3], 1);
               }
               break;
     case 10:   //Set Tool-Position (and INIT)
               msg_length=6;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if (command_completed && (STATE>>STATE_MANUAL_BIT)&1) {
                 get_Tool_X((((int)rx_buf[1])<<8) | rx_buf[2]);
                 get_Tool_Z((((int)rx_buf[3])<<8) | rx_buf[4]);
@@ -158,14 +179,16 @@ boolean process_incomming_msg() {
               break;
     case 11:   //Origin-Offset
               msg_length=5;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
                 set_xz_coordinates(((((int)rx_buf[1])<<8) | rx_buf[2]), ((((int)rx_buf[3])<<8) | rx_buf[4]));
               }
               break;
     case 12:  //metric or inch (maybe not needed)
               msg_length=2;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
                 if (rx_buf[1]){
                   STATE |= _BV(STATE_INCH_BIT); //set STATE_bit4 = 1
@@ -175,7 +198,8 @@ boolean process_incomming_msg() {
               break;
     case 13:  //New CNC-Programm wit N Blocks in metric or inch
               msg_length=4;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
                 //some Error-Handling needed
                 programm_stop();
@@ -187,7 +211,8 @@ boolean process_incomming_msg() {
               break;
     case 14:  //CNC-Code-Block
               msg_length=13;
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
                 N = (((int)rx_buf[1])<<8) | rx_buf[2];
                 cnc_code[N].GM = rx_buf[3];
@@ -200,7 +225,8 @@ boolean process_incomming_msg() {
               else success=1;
               break;
     case 15:  //Shutdown
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else {
                 programm_stop();
                 stepper_off();
@@ -211,7 +237,8 @@ boolean process_incomming_msg() {
               }
               break;
     case 16:  //Reset Errors
-              if (CRC8(rx_buf, msg_length) != rx_buf[SPI_MSG_LENGTH-1]) success=1;
+              //if (CRC8(rx_buf, msg_length, rx_buf[SPI_MSG_LENGTH-1]) success=1; //msg-failure
+              if (rx_buf[SPI_MSG_LENGTH-1]) success=1; //needed until sender can create crc8
               else {
                 ERROR_NO = 0;
               }
@@ -239,7 +266,7 @@ void create_machine_state_msg() {
   tx_buf [13] = STATE_N>>8;
   tx_buf [14] = STATE_N;
   tx_buf [15] = ERROR_NO; //bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI
-  tx_buf [16] = CRC8(tx_buf, SPI_MSG_LENGTH);
+  tx_buf [16] = CRC8(tx_buf, SPI_MSG_LENGTH, 0);
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { //needed? 8bit?
     SPDR = tx_buf [0]; //first byte for sending at next interrupt
   }
@@ -250,7 +277,7 @@ void create_spi_error_msg() { //maybee not needed anymore, using error_bit
   for (int i=0; i<(SPI_MSG_LENGTH-2); i++) {
     tx_buf [i] = 0;
   }
-  tx_buf [SPI_MSG_LENGTH-1] = CRC8(tx_buf, 2);
+  tx_buf [SPI_MSG_LENGTH-1] = CRC8(tx_buf, 2, 0);
   SPDR = tx_buf [0]; //first byte for sending at next interrupt
 }  //end of send_spi_error
 
@@ -259,7 +286,7 @@ void send_error_number(byte error_number) {
   tx_buf [0] = 101; //PID
   tx_buf [1] = 3; //length
   tx_buf [2] = error_number;
-  tx_buf [3] = CRC8(tx_buf, 3);
+  tx_buf [3] = CRC8(tx_buf, 3, 0);
   SPDR = tx_buf [0]; //first byte for sending at next interrupt
 }  //end of send_error_number
 */
