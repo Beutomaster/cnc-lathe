@@ -96,10 +96,23 @@ signal_callback_handler(int signum)
 	exit(signum);
 }
 
+/*The Driver supports following speeds:
+
+  cdiv     speed          cdiv     speed
+    2    125.0 MHz          4     62.5 MHz
+    8     31.2 MHz         16     15.6 MHz
+   32      7.8 MHz         64      3.9 MHz
+  128     1953 kHz        256      976 kHz
+  512      488 kHz       1024      244 kHz
+ 2048      122 kHz       4096       61 kHz
+ 8192     30.5 kHz      16384     15.2 kHz
+32768     7629 Hz
+*/
+
 static const char *device = "/dev/spidev0.0";
 static uint8_t mode;
 static uint8_t bits = 8;
-static uint32_t speed = 500000;
+static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
 static uint16_t delay;
 
 uint8_t CRC8 (uint8_t * buf, uint8_t len) {
