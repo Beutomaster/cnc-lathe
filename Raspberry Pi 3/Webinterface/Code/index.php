@@ -141,7 +141,7 @@ if(!$_SESSION['logged_in'])
 				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" id="StepperON" class="button" value="Stepper ON" />
+				<input type="submit" id="StepperOn" class="button" value="Stepper ON" />
 				<br />
 				<input type="button" id="StepperOff" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
 			</fieldset>

@@ -58,25 +58,23 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	  if (manual == 1) {
 		  //if (!debug) HideClass("cnc"); //should be shown while pause
 		  ShowClass("manual");
-		  /*
-		  if (spindel_on) {
+		  if (spindel_on == 1) {
 			  document.getElementById("SpindleOff").display='';
-			  document.getElementById("SpindleON").value = "Set RPM";
+			  document.getElementById("SpindleOn").value = "Set RPM";
 		  }
 		  else {
 			  document.getElementById("SpindleOff").display='none';
-			  document.getElementById("SpindleON").value = "Spindle ON";
+			  document.getElementById("SpindleOn").value = "Spindle ON";
 		  }
-		  if (stepper_on) {
+		  if (stepper_on == 1) {
 			  document.getElementById("StepperOff").display='';
-			  document.getElementById("StepperON").value = "Set Feed";
+			  document.getElementById("StepperOn").value = "Set Feed";
 		  }
 		  else {
 			  document.getElementById("StepperOff").display='none';
-			  document.getElementById("StepperON").value = "Stepper ON";
+			  document.getElementById("StepperOn").value = "Stepper ON";
 		  }
 		  if (!init) document.getElementById("SetTool").value = "Init Tool";
-		  */
 	  }
 	  else {
 		  if (!pause && !debug) HideClass("manual"); //should be shown while pause
