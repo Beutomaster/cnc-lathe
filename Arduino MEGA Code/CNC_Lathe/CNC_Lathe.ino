@@ -1,7 +1,7 @@
 #include "CNC_Lathe.h"
 
 //global vars
-volatile boolean debug=true, debug_spi=true, debug_stepper=false, debug_active=false, debug_rpm=false, debug_tool=false;
+volatile boolean debug=true, debug_spi=true, debug_stepper=true, debug_active=false, debug_rpm=false, debug_tool=true;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
 volatile const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
