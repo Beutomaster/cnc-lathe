@@ -1,3 +1,9 @@
+<?php
+session_start();
+if(!$_SESSION['logged_in'])
+	header("Location: login.html");
+?>
+
 <!doctype html>
 
 <!-- Development-Version 0.1 -->
@@ -27,20 +33,23 @@
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
-    
+    <p>User: <?php echo $_SESSION['usr']; ?></p>
+	<p><a href="/php/logout.php">Logout</a></p>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
+	<!-- 
     <form action="php/login.php" method="post">
-        <label>User name:<br />
-        <input type="text" name="username" />
+        <label for="user">User:<br />
+        <input id="user" type="text" name="user" />
 		</label>
 		<span class="error"><?php echo $usernameErr;?></span>
 		<br />
-        <label>User password:<br />
-        <input type="password" name="pw" />
+        <label for="pw">Password:<br />
+        <input id="pw" type="password" name="pw" />
 		</label>
 		<span class="error"><?php echo $pwErr;?></span>
         <input type="submit" value="Submit" />
-    </form> 
+    </form>
+	-->
 </header>
 
 <nav>
@@ -243,6 +252,10 @@
 			<br />
 			Spindel-Error: <input type="text" name="spindel_error" id="spindel_error" />
 			<br />
+	</form>
+	
+	<form>
+	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
 	</form>
 	
 	<form>

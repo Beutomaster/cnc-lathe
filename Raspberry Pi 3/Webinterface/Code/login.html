@@ -1,0 +1,46 @@
+<!doctype html>
+
+<html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
+	<head>
+		<title>CNC-Lathe-Control - Login</title>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Web-GUI of an new Arduino MEGA and Raspberry Pi 3 driven CNC-Control for an old EMCO Compact 5 CNC Lathe" />
+		<meta name="keywords" content="CNC-Control, EMCO Compact 5 CNC, Lathe, Arduino MEGA, Raspberry Pi 3" />
+		<meta name="author" content="Hannes Beuter" />
+		<link rel="shortcut icon" href="images/favicon.ico" type="image/vnd.microsoft.icon" />
+		<link rel="stylesheet" href="css/styles.css" />
+		<link rel="stylesheet" href="css/styles_login.css" />
+		<!--[if lt IE 9]>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+		<![endif]-->
+			
+		<!-- no-js class replacement to js, remove this if you use Modernizr -->
+		<script>(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);</script>
+	</head>
+	<body>
+		<section id="loginpage" class="clearfix">
+			<noscript>
+				<h1>In Ihrem Browser ist JavaScript deaktiviert.</h1>
+				<p>
+					Ohne JavaScript funktioniert diese Seite nicht.
+					<br />
+					Im SELFHTML-Wiki erfahren Sie, <a href="https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/JavaScript_aktivieren"> wie Sie JavaScript in Ihrem Browser aktivieren können. </a>
+				</p>
+			</noscript>
+			<div id="loginmain">
+				<h1>CNC-Lathe-Control</h1>
+				<div id="login">
+					<h2>Login</h2>
+					<form action="/php/login.php" method="post">
+						<label>User :</label><br />
+						<input id="name" name="user" placeholder="username" type="text"><br /><br />
+						<label>Password :</label><br />
+						<input id="password" name="password" placeholder="**********" type="password"><br />
+						<input name="login" class="button" type="submit" value=" Login "><br /><br />
+						<span><?php echo $error; ?></span>
+					</form>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

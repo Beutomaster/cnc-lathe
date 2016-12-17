@@ -19,5 +19,10 @@ AddType text/cache-manifest .appcache
     #ExpiresByType text/javascript "access plus 1 months"
     #ExpiresByType application/javascript "access plus 1 months"
     #ExpiresByType application/x-shockwave-flash "access plus 1 months"
-	ExpiresByType text/cache-manifest "access plus 0 seconds"
+    ExpiresByType text/cache-manifest "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_php5.c>
+    AddType application/x-httpd-php .php
+    DirectoryIndex index.php index.hmtl
 </IfModule>
