@@ -1,3 +1,9 @@
+<?php
+session_start();
+if(!$_SESSION['logged_in'])
+	header("Location: login.html");
+?>
+
 <!doctype html>
 
 <!-- Development-Version 0.1 -->
@@ -27,20 +33,22 @@
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
-    
+    <p>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></p>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
+	<!-- 
     <form action="php/login.php" method="post">
-        <label>User name:<br />
-        <input type="text" name="username" />
+        <label for="user">User:<br />
+        <input id="user" type="text" name="user" />
 		</label>
 		<span class="error"><?php echo $usernameErr;?></span>
 		<br />
-        <label>User password:<br />
-        <input type="password" name="pw" />
+        <label for="pw">Password:<br />
+        <input id="pw" type="password" name="pw" />
 		</label>
 		<span class="error"><?php echo $pwErr;?></span>
         <input type="submit" value="Submit" />
-    </form> 
+    </form>
+	-->
 </header>
 
 <nav>
@@ -133,7 +141,7 @@
 				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" id="StepperON" class="button" value="Stepper ON" />
+				<input type="submit" id="StepperOn" class="button" value="Stepper ON" />
 				<br />
 				<input type="button" id="StepperOff" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
 			</fieldset>
@@ -206,43 +214,81 @@
 </section>
 
 <aside>
-	<h2>Machine state</h2>
+	<h2>Machine State</h2>
 	
 	<form>
-			Control active: <input type="text" name="active" id="active" />
+			<label>Control active:<br />
+			<input type="text" name="active" id="active" />
+			</label>
 			<br />
-			Init: <input type="text" name="init" id="init" />
+			<label>Init:<br />
+			<input type="text" name="init" id="init" />
+			</label>
 			<br />
-			Manual: <input type="text" name="manual" id="manual" />
+			<label>Manual:<br />
+			<input type="text" name="manual" id="manual" />
+			</label>
 			<br />
-			Pause: <input type="text" name="pause" id="pause" />
+			<label>Pause:<br />
+			<input type="text" name="pause" id="pause" />
+			</label>
 			<br />
-			inch: <input type="text" name="inch" id="inch" />
+			<label>inch:<br />
+			<input type="text" name="inch" id="inch" />
+			</label>
 			<br />
-			Spindel on: <input type="text" name="spindel_on" id="spindel_on" />
+			<label>Spindel on:<br />
+			<input type="text" name="spindel_on" id="spindel_on" />
+			</label>
 			<br />
-			Spindel-Direction: <input type="text" name="init" id="spindel_direction" />
+			<label>Spindel-Direction:<br />
+			<input type="text" name="init" id="spindel_direction" />
+			</label>
 			<br />
-			Stepper on: <input type="text" name="stepper_on" id="stepper_on" />
+			<label>Stepper on:<br />
+			<input type="text" name="stepper_on" id="stepper_on" />
+			</label>
 			<br /><br />
-			RPM: <input type="text" name="rpm_measure" id="rpm_measure" />
+			<label>RPM:<br />
+			<input type="text" name="rpm_measure" id="rpm_measure" />
+			</label>
 			<br />
-			X: <input type="text" name="x_actual" id="x_actual" />
+			<label>X:<br />
+			<input type="text" name="x_actual" id="x_actual" />
+			</label>
 			<br />
-			Z: <input type="text" name="z_actual" id="z_actual" />
+			<label>Z:<br />
+			<input type="text" name="z_actual" id="z_actual" />
+			</label>
 			<br />
-			Feed: <input type="text" name="f_actual" id="f_actual" />
+			<label>Feed:<br />
+			<input type="text" name="f_actual" id="f_actual" />
+			</label>
 			<br />
-			H: <input type="text" name="h_actual" id="h_actual" />
+			<label>H:<br />
+			<input type="text" name="h_actual" id="h_actual" />
+			</label>
 			<br />
-			Tool: <input type="text" name="t_actual" id="t_actual" />
+			<label>Tool:<br />
+			<input type="text" name="t_actual" id="t_actual" />
+			</label>
 			<br /><br />
-			SPI-Error: <input type="text" name="spi_error" id="spi_error" />
+			<label>SPI-Error:<br />
+			<input type="text" name="spi_error" id="spi_error" />
+			</label>
 			<br />
-			CNC-Code-Error: <input type="text" name="cnc_code_error" id="cnc_code_error" />
+			<label>CNC-Code-Error:<br />
+			<input type="text" name="cnc_code_error" id="cnc_code_error" />
+			</label>
 			<br />
-			Spindel-Error: <input type="text" name="spindel_error" id="spindel_error" />
+			<label>Spindel-Error:<br />
+			<input type="text" name="spindel_error" id="spindel_error" />
+			</label>
 			<br />
+	</form>
+	
+	<form>
+	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
 	</form>
 	
 	<form>

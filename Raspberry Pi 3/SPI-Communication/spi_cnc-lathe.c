@@ -26,7 +26,7 @@
 #include <signal.h>
 
  //defines
-#define SPI_MSG_LENGTH 17
+#define SPI_MSG_LENGTH 18
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 //Input Parameter Ranges
@@ -55,6 +55,53 @@
 #define REVOLUTIONS_MIN 460  //rpm
 #define REVOLUTIONS_MAX 3220 //rpm
 
+//Byte Postions of Arduino-Answer
+#define SPI_BYTE_PID 0
+#define SPI_BYTE_LASTSUCCESS_MSG_NO 1
+#define SPI_BYTE_STATE 2
+#define SPI_BYTE_RPM_H 3
+#define SPI_BYTE_RPM_L 4
+#define SPI_BYTE_X_H 5
+#define SPI_BYTE_X_L 6
+#define SPI_BYTE_Z_H 7
+#define SPI_BYTE_Z_L 8
+#define SPI_BYTE_F_H 9
+#define SPI_BYTE_F_L 10
+#define SPI_BYTE_H_H 11
+#define SPI_BYTE_H_L 12
+#define SPI_BYTE_T 13
+#define SPI_BYTE_N_H 14
+#define SPI_BYTE_N_L 15
+#define SPI_BYTE_ERROR_NO 16
+#define SPI_BYTE_CRC8 17
+
+//Byte Postions of RASPI-Msg
+#define SPI_BYTE_RASPI_MSG_NO 1
+#define SPI_BYTE_RASPI_MSG_N_H 2
+#define SPI_BYTE_RASPI_MSG_N_L 3
+#define SPI_BYTE_RASPI_MSG_GM 4
+#define SPI_BYTE_RASPI_MSG_GM_NO 5
+#define SPI_BYTE_RASPI_MSG_XI_H 6
+#define SPI_BYTE_RASPI_MSG_XI_L 7
+#define SPI_BYTE_RASPI_MSG_ZK_H 8
+#define SPI_BYTE_RASPI_MSG_ZK_L 9
+#define SPI_BYTE_RASPI_MSG_FTLK_H 10
+#define SPI_BYTE_RASPI_MSG_FTLK_L 11
+#define SPI_BYTE_RASPI_MSG_HS_H 12
+#define SPI_BYTE_RASPI_MSG_HS_L 13
+#define SPI_BYTE_RASPI_MSG_RPM_H 2
+#define SPI_BYTE_RASPI_MSG_RPM_L 3
+#define SPI_BYTE_RASPI_MSG_DIRECTION 4
+#define SPI_BYTE_RASPI_MSG_F_H 2
+#define SPI_BYTE_RASPI_MSG_F_L 3
+#define SPI_BYTE_RASPI_MSG_X_H 2
+#define SPI_BYTE_RASPI_MSG_X_L 3
+#define SPI_BYTE_RASPI_MSG_Z_H 4
+#define SPI_BYTE_RASPI_MSG_Z_L 5
+#define SPI_BYTE_RASPI_MSG_T 6
+#define SPI_BYTE_RASPI_MSG_INCH 2
+#define SPI_BYTE_RASPI_MSG_G_INCH 4
+
 //Bit Postions of STATE
 #define STATE_CONTROL_ACTIVE_BIT 0
 #define STATE_INIT_BIT 1
@@ -76,6 +123,7 @@
 
 FILE *machinestatefile;
 int fd;
+uint8_t msg_number=1, lastsuccessful_msg =0;
 
 static void pabort(const char *s)
 {
@@ -96,22 +144,61 @@ signal_callback_handler(int signum)
 	exit(signum);
 }
 
+/*The Driver supports following speeds:
+
+  cdiv     speed          cdiv     speed
+    2    125.0 MHz          4     62.5 MHz
+    8     31.2 MHz         16     15.6 MHz
+   32      7.8 MHz         64      3.9 MHz
+  128     1953 kHz        256      976 kHz
+  512      488 kHz       1024      244 kHz
+ 2048      122 kHz       4096       61 kHz
+ 8192     30.5 kHz      16384     15.2 kHz
+32768     7629 Hz
+*/
+
 static const char *device = "/dev/spidev0.0";
 static uint8_t mode;
 static uint8_t bits = 8;
-static uint32_t speed = 500000;
+static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
 static uint16_t delay;
 
-uint8_t CRC8 (uint8_t * buf, uint8_t len) {
-  uint8_t crc_8 = 0; //stub
+uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
+	uint8_t i;
+	uint8_t data;
+
+	data = inCrc ^ inData;
+
+	for ( i = 0; i < 8; i++ ) {
+		if (( data & 0x80 ) != 0 ) {
+			data <<= 1;
+			data ^= 0x07;
+		}
+		else {
+			data <<= 1;
+		}
+	}
+	return data;
+}
+
+uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
+  //get the crc_8-value of the msg returned
+  //If the last byte of the message is the correct crc-value of the bytes before, CRC8 returns 0.
+  uint8_t bytecount, data, crc_8=0;
+  
+  for (bytecount=0;bytecount<used_message_bytes;bytecount++) {
+    data = buf[bytecount];
+    crc_8 = _crc8_ccitt_update (crc_8,data);
+  }
+  
   return crc_8;
 }
 
 static void transfer(int fd)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32760, ZZ=32760, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
-	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0};
+	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	
 	//User Input for Message
 	printf("Message-Types:\n");
@@ -141,6 +228,10 @@ static void transfer(int fd)
 		getchar();
 	} while ((msg_type<0) || (msg_type>16));
 	tx[pos++] = msg_type;
+		
+	//Message-Number
+	printf("Message-No: %i\n\n", msg_number);
+	tx[pos++] = msg_number;
 	
 	switch (msg_type) {
 		case 0:   	//Update Machine State
@@ -204,20 +295,20 @@ static void transfer(int fd)
 					break;
 		case 10:   	//Set Tool-Position (and INIT)
 					printf("X-Offset (+-5999): ");
-					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX); //does not work
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
 					else do {
 						scanf("%d",&XX);
 						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC)); //does not work
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
 					printf("Z-Offset (+-32700): ");
-					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ); //does not work
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
 					else do {
 						scanf("%d",&ZZ);
 						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC)); //does not work
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
@@ -231,20 +322,20 @@ static void transfer(int fd)
 					break;
 		case 11:   	//Origin-Offset
 					printf("X-Offset (+-5999): ");
-					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX); //does not work
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
 					else do {
 						scanf("%d",&XX);
 						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC)); //does not work
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
 					printf("Z-Offset (+-32700): ");
-					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ); //does not work
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
 					else do {
 						scanf("%d",&ZZ);
 						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC)); //does not work
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					break;
@@ -353,6 +444,10 @@ static void transfer(int fd)
 		case 15:  	//Shutdown
 					break;
 		case 16:  	//Reset Errors
+					msg_number = lastsuccessful_msg+1; //Reset Msg-No
+					pos--;
+					tx[pos++] = msg_number; 
+					//With the next message, lost messages can be repeated, if they were important. (2D-Array needed for saving last messages)
 					break;
 		default:  	//SPI-Error "PID unkown"
 					break;
@@ -398,103 +493,95 @@ static void transfer(int fd)
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 1)
-		pabort("can't send spi message");
+		pabort("can't send spi message"); //has to be replaced
 	else { //output received Message
-		/*
-		//Bit Postions of STATE
-		#define STATE_CONTROL_ACTIVE_BIT 0
-		#define STATE_INIT_BIT 1
-		#define STATE_MANUAL_BIT 2
-		#define STATE_PAUSE_BIT 3
-		#define STATE_INCH_BIT 4
-		#define STATE_SPINDLE_BIT 5
-		#define STATE_SPINDLE_DIRECTION_BIT 6
-		#define STATE_STEPPER_BIT 7
-
-		//Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
-		#define ERROR_SPI_BIT 0
-		#define ERROR_CNC_CODE_BIT 1
-		#define ERROR_SPINDLE_BIT 2
-		*/
-		//100 byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
+		//Byteorder: 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 		printf("Incomming Message:\n");
 		printf("------------------\n");
-		printf("PID: %i\n", rx[0]);
-		char active = (rx[1]>>STATE_CONTROL_ACTIVE_BIT)&1;
+		printf("PID: %i\n", rx[SPI_BYTE_PID]);
+		lastsuccessful_msg = rx[SPI_BYTE_LASTSUCCESS_MSG_NO];
+		printf("Last Successful Message: %i\n", lastsuccessful_msg);
+		char active = (rx[SPI_BYTE_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
 		printf("Control active: %i\n", active);
-		char init = (rx[1]>>STATE_INIT_BIT)&1;
+		char init = (rx[SPI_BYTE_STATE]>>STATE_INIT_BIT)&1;
 		printf("init: %i\n", init);
-		char manual = (rx[1]>>STATE_MANUAL_BIT)&1;
+		char manual = (rx[SPI_BYTE_STATE]>>STATE_MANUAL_BIT)&1;
 		printf("manual: %i\n", manual);
-		char pause = (rx[1]>>STATE_PAUSE_BIT)&1;
+		char pause = (rx[SPI_BYTE_STATE]>>STATE_PAUSE_BIT)&1;
 		printf("Pause: %i\n", pause);
-		char inch = (rx[1]>>STATE_INCH_BIT)&1;
+		char inch = (rx[SPI_BYTE_STATE]>>STATE_INCH_BIT)&1;
 		printf("inch: %i\n", inch);
-		char spindel_on = (rx[1]>>STATE_SPINDLE_BIT)&1;
+		char spindel_on = (rx[SPI_BYTE_STATE]>>STATE_SPINDLE_BIT)&1;
 		printf("Spindel on: %i\n", spindel_on);
-		char spindel_direction = (rx[1]>>STATE_SPINDLE_DIRECTION_BIT)&1;
+		char spindel_direction = (rx[SPI_BYTE_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
 		printf("Spindel direction: %i\n", spindel_direction);
-		char stepper_on = (rx[1]>>STATE_STEPPER_BIT)&1;
+		char stepper_on = (rx[SPI_BYTE_STATE]>>STATE_STEPPER_BIT)&1;
 		printf("Stepper on: %i\n", stepper_on);
-		rpm = (((int)rx[2]<<8)|(rx[3]));
+		rpm = (((int)rx[SPI_BYTE_RPM_H]<<8)|(rx[SPI_BYTE_RPM_L]));
 		printf("RPM: %i\n", rpm);
-		XX = (((int)rx[4]<<8)|(rx[5]));
+		XX = (((int)rx[SPI_BYTE_X_H]<<8)|(rx[SPI_BYTE_X_L]));
 		printf("X: %i\n", XX);
-		ZZ = (((int)rx[6]<<8)|(rx[7]));
+		ZZ = (((int)rx[SPI_BYTE_Z_H]<<8)|(rx[SPI_BYTE_Z_L]));
 		printf("Z: %i\n", ZZ);
-		feed = (((int)rx[8]<<8)|(rx[9]));
+		feed = (((int)rx[SPI_BYTE_F_H]<<8)|(rx[SPI_BYTE_F_L]));
 		printf("F: %i\n", feed);
-		HH = (((int)rx[10]<<8)|(rx[11]));
+		HH = (((int)rx[SPI_BYTE_H_H]<<8)|(rx[SPI_BYTE_H_L]));
 		printf("H: %i\n", HH);
-		tool = rx[12];
+		tool = rx[SPI_BYTE_T];
 		printf("T: %i\n", tool);
-		block = (((int)rx[13]<<8)|(rx[14]));
+		block = (((int)rx[SPI_BYTE_N_H]<<8)|(rx[SPI_BYTE_N_L]));
 		printf("Block-No: %i\n", block);
-		char spi_error = (rx[15]>>ERROR_SPI_BIT)&1;
+		char spi_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_SPI_BIT)&1;
 		printf("SPI-Error: %i\n", spi_error);
-		char cnc_code_error = (rx[15]>>ERROR_CNC_CODE_BIT)&1;
+		char cnc_code_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
 		printf("CNC-Code-Error: %i\n", cnc_code_error);
-		char spindel_error = (rx[15]>>ERROR_SPINDLE_BIT)&1;
+		char spindel_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
 		printf("Spindel-Error: %i\n", spindel_error);
-		char crc_in = rx[16];
+		char crc_in = rx[SPI_BYTE_CRC8];
 		printf("CRC: %i\n\n", crc_in);
 		
-		//Ouptut to Machine-State-File
-		machinestatefile = fopen(MACHINE_STATE_FILE, "w");
-		if (fd < 0) printf("can't open Machine State file\n");
+		if (CRC8(rx, SPI_MSG_LENGTH)) printf("CRC-Check of incomming message failed!!!\n\n");
 		else {
-			fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-			fprintf(machinestatefile, "<machinestate>\n");
-			fprintf(machinestatefile, "\t<state>\n");
-			fprintf(machinestatefile, "\t\t<active>%i</active>\n", active);
-			fprintf(machinestatefile, "\t\t<init>%i</init>\n", init);
-			fprintf(machinestatefile, "\t\t<manual>%i</manual>\n", manual);
-			fprintf(machinestatefile, "\t\t<pause>%i</pause>\n", pause);
-			fprintf(machinestatefile, "\t\t<inch>%i</inch>\n", inch);
-			fprintf(machinestatefile, "\t\t<spindel_on>%i</spindel_on>\n", spindel_on);
-			fprintf(machinestatefile, "\t\t<spindel_direction>%i</spindel_direction>\n", spindel_direction);
-			fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", stepper_on);
-			fprintf(machinestatefile, "\t</state>\n");
-			fprintf(machinestatefile, "\t<measure>\n");
-			fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", rpm);
-			fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", XX);
-			fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", ZZ);
-			fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", feed);
-			fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", HH);
-			fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", tool);	
-			fprintf(machinestatefile, "\t</measure>\n");
-			fprintf(machinestatefile, "\t<error>\n");
-			fprintf(machinestatefile, "\t\t<spi_error>%i</spi_error>\n", spi_error);
-			fprintf(machinestatefile, "\t\t<cnc_code_error>%i</cnc_code_error>\n", cnc_code_error);
-			fprintf(machinestatefile, "\t\t<spindel_error>%i</spindel_error>\n", spindel_error);
-			fprintf(machinestatefile, "\t</error>\n");
-			fprintf(machinestatefile, "\t<cncblock>\n");
-			fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", block);
-			fprintf(machinestatefile, "\t</cncblock>\n");
-			fprintf(machinestatefile, "</machinestate>\n");
+			//Inform about lost messages
+			if (msg_number != lastsuccessful_msg+1) printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", msg_number-lastsuccessful_msg-1);
+			
+			//Ouptut to Machine-State-File
+			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
+			if (fd < 0) printf("can't open Machine State file\n");
+			else {
+				fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+				fprintf(machinestatefile, "<machinestate>\n");
+				fprintf(machinestatefile, "\t<state>\n");
+				fprintf(machinestatefile, "\t\t<active>%i</active>\n", active);
+				fprintf(machinestatefile, "\t\t<init>%i</init>\n", init);
+				fprintf(machinestatefile, "\t\t<manual>%i</manual>\n", manual);
+				fprintf(machinestatefile, "\t\t<pause>%i</pause>\n", pause);
+				fprintf(machinestatefile, "\t\t<inch>%i</inch>\n", inch);
+				fprintf(machinestatefile, "\t\t<spindel_on>%i</spindel_on>\n", spindel_on);
+				fprintf(machinestatefile, "\t\t<spindel_direction>%i</spindel_direction>\n", spindel_direction);
+				fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", stepper_on);
+				fprintf(machinestatefile, "\t</state>\n");
+				fprintf(machinestatefile, "\t<measure>\n");
+				fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", rpm);
+				fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", XX);
+				fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", ZZ);
+				fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", feed);
+				fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", HH);
+				fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", tool);	
+				fprintf(machinestatefile, "\t</measure>\n");
+				fprintf(machinestatefile, "\t<error>\n");
+				fprintf(machinestatefile, "\t\t<spi_error>%i</spi_error>\n", spi_error);
+				fprintf(machinestatefile, "\t\t<cnc_code_error>%i</cnc_code_error>\n", cnc_code_error);
+				fprintf(machinestatefile, "\t\t<spindel_error>%i</spindel_error>\n", spindel_error);
+				fprintf(machinestatefile, "\t</error>\n");
+				fprintf(machinestatefile, "\t<cncblock>\n");
+				fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", block);
+				fprintf(machinestatefile, "\t</cncblock>\n");
+				fprintf(machinestatefile, "</machinestate>\n");
 
-			printf("close(machinestatefile)\n");
-			fclose(machinestatefile);
+				printf("close(machinestatefile)\n\n");
+				fclose(machinestatefile);
+			}
 		}
 	}
 	
@@ -515,6 +602,8 @@ static void transfer(int fd)
 	
 	puts("");
 	printf("\n");
+	
+	msg_number++; //for next message
 }
 
 static void print_usage(const char *prog)
