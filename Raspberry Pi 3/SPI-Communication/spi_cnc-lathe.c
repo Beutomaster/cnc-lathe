@@ -148,7 +148,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
 
 static void transfer(int fd)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32760, ZZ=32760, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
 	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0};
 	
@@ -243,20 +243,20 @@ static void transfer(int fd)
 					break;
 		case 10:   	//Set Tool-Position (and INIT)
 					printf("X-Offset (+-5999): ");
-					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX); //does not work
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
 					else do {
 						scanf("%d",&XX);
 						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC)); //does not work
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
 					printf("Z-Offset (+-32700): ");
-					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ); //does not work
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
 					else do {
 						scanf("%d",&ZZ);
 						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC)); //does not work
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
@@ -270,20 +270,20 @@ static void transfer(int fd)
 					break;
 		case 11:   	//Origin-Offset
 					printf("X-Offset (+-5999): ");
-					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX); //does not work
+					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
 					else do {
 						scanf("%d",&XX);
 						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC)); //does not work
+					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
 					printf("Z-Offset (+-32700): ");
-					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ); //does not work
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
 					else do {
 						scanf("%d",&ZZ);
 						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC)); //does not work
+					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					break;
