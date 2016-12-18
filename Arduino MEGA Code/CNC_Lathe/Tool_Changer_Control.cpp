@@ -17,6 +17,11 @@ void set_tool_position(byte tool) {
       if (i_tool>0) {
         //set new Tool Postion
         STATE_T=tool;
+
+        if (debug && debug_tool) {
+          Serial.print("Tool Changer starts moving to Position ");
+          Serial.println(tool, DEC);
+        }
       
         //Step1 TOOL_CHANGER_CHANGE 2,9s
         tool_step=1;
