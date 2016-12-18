@@ -115,8 +115,34 @@ static uint8_t bits = 8;
 static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
 static uint16_t delay;
 
-uint8_t CRC8 (uint8_t * buf, uint8_t len) {
-  uint8_t crc_8 = 0; //stub
+uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
+	uint8_t i;
+	uint8_t data;
+
+	data = inCrc ^ inData;
+
+	for ( i = 0; i < 8; i++ ) {
+		if (( data & 0x80 ) != 0 ) {
+			data <<= 1;
+			data ^= 0x07;
+		}
+		else {
+			data <<= 1;
+		}
+	}
+	return data;
+}
+
+uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
+  //get the crc_8-value of the msg returned
+  //If the last byte of the message is the correct crc-value of the bytes before, CRC8 returns 0.
+  uint8_t bytecount, data, crc_8=0;
+  
+  for (bytecount=0;bytecount<used_message_bytes;bytecount++) {
+    data = buf[bytecount];
+    crc_8 = _crc8_ccitt_update (crc_8,data);
+  }
+  
   return crc_8;
 }
 
@@ -472,42 +498,45 @@ static void transfer(int fd)
 		char crc_in = rx[16];
 		printf("CRC: %i\n\n", crc_in);
 		
-		//Ouptut to Machine-State-File
-		machinestatefile = fopen(MACHINE_STATE_FILE, "w");
-		if (fd < 0) printf("can't open Machine State file\n");
+		if (CRC8(rx, SPI_MSG_LENGTH)) printf("CRC-Check of incomming message failed!!!\n\n");
 		else {
-			fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-			fprintf(machinestatefile, "<machinestate>\n");
-			fprintf(machinestatefile, "\t<state>\n");
-			fprintf(machinestatefile, "\t\t<active>%i</active>\n", active);
-			fprintf(machinestatefile, "\t\t<init>%i</init>\n", init);
-			fprintf(machinestatefile, "\t\t<manual>%i</manual>\n", manual);
-			fprintf(machinestatefile, "\t\t<pause>%i</pause>\n", pause);
-			fprintf(machinestatefile, "\t\t<inch>%i</inch>\n", inch);
-			fprintf(machinestatefile, "\t\t<spindel_on>%i</spindel_on>\n", spindel_on);
-			fprintf(machinestatefile, "\t\t<spindel_direction>%i</spindel_direction>\n", spindel_direction);
-			fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", stepper_on);
-			fprintf(machinestatefile, "\t</state>\n");
-			fprintf(machinestatefile, "\t<measure>\n");
-			fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", rpm);
-			fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", XX);
-			fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", ZZ);
-			fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", feed);
-			fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", HH);
-			fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", tool);	
-			fprintf(machinestatefile, "\t</measure>\n");
-			fprintf(machinestatefile, "\t<error>\n");
-			fprintf(machinestatefile, "\t\t<spi_error>%i</spi_error>\n", spi_error);
-			fprintf(machinestatefile, "\t\t<cnc_code_error>%i</cnc_code_error>\n", cnc_code_error);
-			fprintf(machinestatefile, "\t\t<spindel_error>%i</spindel_error>\n", spindel_error);
-			fprintf(machinestatefile, "\t</error>\n");
-			fprintf(machinestatefile, "\t<cncblock>\n");
-			fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", block);
-			fprintf(machinestatefile, "\t</cncblock>\n");
-			fprintf(machinestatefile, "</machinestate>\n");
+			//Ouptut to Machine-State-File
+			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
+			if (fd < 0) printf("can't open Machine State file\n");
+			else {
+				fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+				fprintf(machinestatefile, "<machinestate>\n");
+				fprintf(machinestatefile, "\t<state>\n");
+				fprintf(machinestatefile, "\t\t<active>%i</active>\n", active);
+				fprintf(machinestatefile, "\t\t<init>%i</init>\n", init);
+				fprintf(machinestatefile, "\t\t<manual>%i</manual>\n", manual);
+				fprintf(machinestatefile, "\t\t<pause>%i</pause>\n", pause);
+				fprintf(machinestatefile, "\t\t<inch>%i</inch>\n", inch);
+				fprintf(machinestatefile, "\t\t<spindel_on>%i</spindel_on>\n", spindel_on);
+				fprintf(machinestatefile, "\t\t<spindel_direction>%i</spindel_direction>\n", spindel_direction);
+				fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", stepper_on);
+				fprintf(machinestatefile, "\t</state>\n");
+				fprintf(machinestatefile, "\t<measure>\n");
+				fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", rpm);
+				fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", XX);
+				fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", ZZ);
+				fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", feed);
+				fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", HH);
+				fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", tool);	
+				fprintf(machinestatefile, "\t</measure>\n");
+				fprintf(machinestatefile, "\t<error>\n");
+				fprintf(machinestatefile, "\t\t<spi_error>%i</spi_error>\n", spi_error);
+				fprintf(machinestatefile, "\t\t<cnc_code_error>%i</cnc_code_error>\n", cnc_code_error);
+				fprintf(machinestatefile, "\t\t<spindel_error>%i</spindel_error>\n", spindel_error);
+				fprintf(machinestatefile, "\t</error>\n");
+				fprintf(machinestatefile, "\t<cncblock>\n");
+				fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", block);
+				fprintf(machinestatefile, "\t</cncblock>\n");
+				fprintf(machinestatefile, "</machinestate>\n");
 
-			printf("close(machinestatefile)\n");
-			fclose(machinestatefile);
+				printf("close(machinestatefile)\n");
+				fclose(machinestatefile);
+			}
 		}
 	}
 	
