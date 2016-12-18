@@ -9,7 +9,7 @@ unused bytes are filled with zeros
 
 000 15xZero CRC-8 #Update Machine State
 
-maybe a Praeambel with 0xFF 0xFF is needed if bytes get lost
+maybe a Praeambel with 0xFF 0xFF (problematic because of 2s-complement) is needed if bytes get lost
 maybe followed by a Message-Counter, to detect lost messages
 
 maybe messages needed for:

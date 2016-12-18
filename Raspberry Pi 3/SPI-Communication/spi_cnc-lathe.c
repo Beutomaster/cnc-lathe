@@ -534,7 +534,7 @@ static void transfer(int fd)
 				fprintf(machinestatefile, "\t</cncblock>\n");
 				fprintf(machinestatefile, "</machinestate>\n");
 
-				printf("close(machinestatefile)\n");
+				printf("close(machinestatefile)\n\n");
 				fclose(machinestatefile);
 			}
 		}
