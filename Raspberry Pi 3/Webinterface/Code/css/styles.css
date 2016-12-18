@@ -297,7 +297,7 @@ nav ul li:active {
 }
 
 section {
-	width:60%;
+	width:65%;
     background-color:gold;
     float:left;
     padding:10px;
@@ -310,9 +310,14 @@ article {
 aside {
 	display:inline;
 	float:right;
+	width: 17%;
 	margin:5px;
     padding:20px;
-	text-align: right;
+	text-align: left;
+}
+
+aside h2 {
+	margin-top: 10px;
 }
 
 aside input {
