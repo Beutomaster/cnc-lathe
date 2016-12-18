@@ -19,7 +19,7 @@ if(!$_SESSION['logged_in'])
     <script src="js/jquery-3.0.0.min.js"></script>
     <script src="js/jquery_functions.js"></script>
 	<script src="js/style.js"></script>
-	<script src="js/ajax_com.js"></script>  
+	<script src="js/ajax_com.js"></script>
 	<link rel="stylesheet" href="css/styles.css" />
     <!--[if lt IE 9]>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
