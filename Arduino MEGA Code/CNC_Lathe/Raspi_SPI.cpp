@@ -9,9 +9,11 @@ unused bytes are filled with zeros
 
 000 15xZero CRC-8 #Update Machine State
 
-maybe messages needed for:
-#Transfererror of last Block
+maybe a Praeambel with 0xFF 0xFF is needed if bytes get lost
+maybe followed by a Message-Counter, to detect lost messages
 
+maybe messages needed for:
+#Transfererror of last Block or Message lost
 
 To Arduino:
 001 NN 13xZero CRC-8 #Programm Start at Block
