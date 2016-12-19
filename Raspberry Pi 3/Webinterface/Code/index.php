@@ -1,7 +1,7 @@
 <?php
 session_start();
 if(!$_SESSION['logged_in'])
-	header("Location: login.html");
+	header("Location: /login.html");
 ?>
 
 <!doctype html>
@@ -16,11 +16,11 @@ if(!$_SESSION['logged_in'])
     <meta name="keywords" content="CNC-Control, EMCO Compact 5 CNC, Lathe, Arduino MEGA, Raspberry Pi 3" />
     <meta name="author" content="Hannes Beuter" />
 	<link rel="shortcut icon" href="images/favicon.ico" type="image/vnd.microsoft.icon" />
-    <script src="js/jquery-3.0.0.min.js"></script>
-    <script src="js/jquery_functions.js"></script>
-	<script src="js/style.js"></script>
-	<script src="js/ajax_com.js"></script>
-	<link rel="stylesheet" href="css/styles.css" />
+    <script src="/js/jquery-3.0.0.min.js"></script>
+    <script src="/js/jquery_functions.js"></script>
+	<script src="/js/style.js"></script>
+	<script src="/js/ajax_com.js"></script>
+	<link rel="stylesheet" href="/css/styles.css" />
     <!--[if lt IE 9]>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
     <![endif]-->
@@ -29,7 +29,7 @@ if(!$_SESSION['logged_in'])
     <script>(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);</script>
 </head>
 
-<body onload="{loadDoc('xml/cnc_code.xml', cnc_code_table);}">
+<body onload="{loadDoc('/xml/cnc_code.xml', cnc_code_table);}">
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
@@ -75,34 +75,34 @@ if(!$_SESSION['logged_in'])
 		
 		<div class="clearfix solo">
 			<span class="left">
-			<form action="./cgi-bin/spi_com.cgi" method="post">
+			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
 					<label>X-Offset (+-5999):<br />
 					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
 					<br />
-					<input type="submit" class="button" value="Set X-Offset" />
+					<input type="submit" class="button" name="SetXOffset" value="Set X-Offset" />
 				</fieldset>
 			</form>
 			</span>
 			
 			<span class="left">
-			<form action="./cgi-bin/spi_com.cgi" method="post">
+			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
 					<label>Z-Offset (+-32700):<br />
 					<input type="number" name="zoffset" min="-32700" max="32700" value="0" autocomplete="off" required />
 					</label>
 					<br />
-					<input type="submit" class="button" value="Set Z-Offset" />
+					<input type="submit" class="button" name="SetZOffset" value="Set Z-Offset" />
 				</fieldset>
 			</form>
 			</span>
 			
 			<div class="clearfix">
 			<span class="right">
-			<form action="php/set_metric_inch.php" method="post">
+			<form action="/php/send_command.php" method="post"> <!--  some js needed -->
 				<fieldset>
 					<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
 					<br />
@@ -114,7 +114,7 @@ if(!$_SESSION['logged_in'])
 		</div>
 		
 		<span class="left">
-		<form action="php/set_rpm.php" method="post">
+		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Spindle:</legend>
 				<label><input type="radio" name="spindle_direction" value="right" checked="checked" />Rotation right handed</label>
@@ -125,31 +125,32 @@ if(!$_SESSION['logged_in'])
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" id="SpindleOn" class="button" value="Spindle ON" />
+				<input type="submit" id="SpindleOn" class="button" name="SpindleSetRPM" value="Spindle ON" />
 				<br />
-				<input type="button" id="SpindleOff" class="button" onclick="alert('Spindle OFF')" value="Spindle OFF" />
+				<input type="button" id="SpindleOff" class="button" name="SpindleOff" value="Spindle OFF" />
 			</fieldset>
 		</form>
 		</span>
 		
 		<span class="left">
 		<!-- <form action="php/set_feed.php" method="post"> -->
-		<form action="./cgi-bin/spidev_hello_world.cgi" method="post">
+		<!-- for SetStepperFeed a js-function is needed to set a client-variable, because no message is send -->
+		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Stepper:</legend>
 				<label>Feed (2 to 499):<br />
 				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" id="StepperOn" class="button" value="Stepper ON" />
+				<input type="submit" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
 				<br />
-				<input type="button" id="StepperOff" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
+				<input type="button" id="StepperOff" class="button" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
 		</form>
 		</span>
 		
 		<span class="left">
-		<form action="php/set_tool.php" method="post">
+		<form id="tool" action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Tool:</legend>
 				<label>Tool (1 to 6):<br />
@@ -164,7 +165,7 @@ if(!$_SESSION['logged_in'])
 				<input type="number" name="tool_z-correction" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" id="SetTool" class="button" value="Set Tool" />
+				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
 			</fieldset>
 		</form>
 		</span>
@@ -185,7 +186,7 @@ if(!$_SESSION['logged_in'])
     <article class="cnc clearfix">
         <h2>CNC-Control</h2>
         
-        <form action="php/upload_cam-file.php">
+        <form action="/php/upload_cam-file.php">
             <fieldset>
 				<legend>Select CAM-File:</legend>
 				<input type="file" name="file-1[]" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
@@ -197,8 +198,8 @@ if(!$_SESSION['logged_in'])
 		<form>
 			<fieldset>
 				<legend>Programm Control:</legend>
-				<input type="button" class="button" onclick="./cgi-bin/spidev_hello_world.cgi" method="post" value="Start/Stop" />
-				<input type="button" class="button" onclick="./cgi-bin/hello.cgi" method="post" value="Pause" />
+				<input type="button" class="button" onclick="/php/send_command.php" method="post" name="ProgramStartStop" value="Start" /> <!-- Set to Stop with js at Programmstart -->
+				<input type="button" class="button" onclick="/php/send_command.php" method="post" name="ProgramPause" value="Pause" />
 			</fieldset>
 		</form>
 		

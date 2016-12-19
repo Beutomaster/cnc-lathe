@@ -57,6 +57,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	  if (!debug) HideClass("emco");
 	  if (manual == 1) {
 		  //if (!debug) HideClass("cnc"); //should be shown while pause
+		  ShowClass("cnc"); //should be shown while pause
 		  ShowClass("manual");
 		  if (spindel_on == 1) {
 			  document.getElementById("SpindleOff").style.display='';
@@ -92,6 +93,51 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	  ShowClass("emco");
   }
 } 
+
+//send command
+function sendCommand(str) {
+    if (str.length == 0) {
+        document.getElementById("debug").innerHTML = "";
+        return;
+    } else {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("debug").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("POST", "gethint.php?q=" + str, true); //has to be changed
+        xmlhttp.send();
+    }
+}
+
+function testekennwortqualitaet(inhalt)
+{
+    if (inhalt=="")
+    {
+        document.getElementById("sicherheitshinweise").innerHTML="keine Eingabe da";
+        return;
+    }
+    if (window.XMLHttpRequest)
+    {
+        // AJAX nutzen mit IE7+, Chrome, Firefox, Safari, Opera
+        xmlhttp=new XMLHttpRequest();
+    }
+    else
+    {
+        // AJAX mit IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange=function()
+    {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+            document.getElementById("sicherheitshinweise").innerHTML=xmlhttp.responseText;
+        }
+    }
+    xmlhttp.open("GET","kennworttesten.php?q="+inhalt,true);
+    xmlhttp.send();
+}
 
 //Show CNC Code from cnc_code.xml
 function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
