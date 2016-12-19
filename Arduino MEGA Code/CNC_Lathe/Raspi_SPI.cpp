@@ -26,12 +26,13 @@ To Arduino:
 008 msg_no FF negativ_direction 12xZero CRC-8 #X-Stepper move with feed
 009 msg_no FF negativ_direction 12xZero CRC-8 #Z-Stepper move with feed
 010 msg_no XX ZZ T 10xZero CRC-8 #Set Tool-Position (and INIT)
-011 msg_no XX ZZ 11xZero CRC-8 #Origin-Offset
-012 msg_no metric 14xZero CRC-8 #metric or inch (maybe not needed)
-013 msg_no NN metric 12xZero CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
-014 msg_no NN GG XX ZZ FF HH 3xZero CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
-015 msg_no 15xZero CRC-8 #shutdown
-016 msg_no 15xZero CRC-8 #Reset Errors
+011 msg_no XX 13xZero CRC-8 #Origin-XOffset
+012 msg_no ZZ 13xZero CRC-8 #Origin-ZOffset
+013 msg_no metric 14xZero CRC-8 #metric or inch (maybe not needed)
+014 msg_no NN metric 12xZero CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
+015 msg_no NN GG XX ZZ FF HH 3xZero CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
+016 msg_no 15xZero CRC-8 #shutdown
+017 msg_no 15xZero CRC-8 #Reset Errors
 
 //Transmission-Factor needed for Calculation of Revolutions !!!
 //Change Spindle-Direction
@@ -192,14 +193,21 @@ boolean process_incomming_msg() {
                 set_tool_position(rx_doublebuf[SPI_BYTE_RASPI_MSG_T]);
               }
               break;
-    case 11:   //Origin-Offset
-              msg_length=6;
+    case 11:   //Origin-XOffset
+              msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
-                set_xz_coordinates(((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_X_L]), ((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_L]));
+                set_x_coordinate((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_X_L]);
               }
               break;
-    case 12:  //metric or inch (maybe not needed)
+    case 12:   //Origin-ZOffset
+              msg_length=4;
+              if (!check_msg(msg_length, false)) success=false; //msg-failure
+              else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
+                set_z_coordinate((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_L]);
+              }
+              break;
+    case 13:  //metric or inch (maybe not needed)
               msg_length=3;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
@@ -209,7 +217,7 @@ boolean process_incomming_msg() {
                 else STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
               }
               break;
-    case 13:  //New CNC-Programm wit N Blocks in metric or inch
+    case 14:  //New CNC-Programm wit N Blocks in metric or inch
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
@@ -227,7 +235,7 @@ boolean process_incomming_msg() {
               }
               else success=1;
               break;
-    case 14:  //CNC-Code-Block
+    case 15:  //CNC-Code-Block
               msg_length=14;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
@@ -242,7 +250,7 @@ boolean process_incomming_msg() {
               }
               else success=1;
               break;
-    case 15:  //Shutdown
+    case 16:  //Shutdown
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               else {
                 programm_stop();
@@ -253,7 +261,7 @@ boolean process_incomming_msg() {
                 save_current_tool_position();
               }
               break;
-    case 16:  //Reset Errors
+    case 17:  //Reset Errors
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               else {
                 ERROR_NO = 0;

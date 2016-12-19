@@ -26,6 +26,8 @@ extern volatile int command_time;
 extern volatile int X0, Z0;
 
 void set_xz_coordinates(int, int);
+void set_x_coordinate(int);
+void set_z_coordinate(int);
 int get_inc_X(int);
 int get_inc_Z(int);
 int get_Tool_X(int);
