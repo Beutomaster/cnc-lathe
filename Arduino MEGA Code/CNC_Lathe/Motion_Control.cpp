@@ -11,6 +11,14 @@ void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_Z -= z_origin;
 }
 
+void set_x_coordinate(int x_origin) {
+  STATE_X -= x_origin;
+}
+
+void set_z_coordinate(int z_origin) {
+  STATE_Z -= z_origin;
+}
+
 int get_inc_X(int abs_X) { //get incremental x-Coordinate
   return abs_X-STATE_X;
 }

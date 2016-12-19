@@ -21,8 +21,6 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-//#include <sys/types.h>
-#include <sys/stat.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <signal.h>
@@ -216,13 +214,12 @@ static void transfer(int fd)
 	printf("008 X-Stepper move with feed\n");
 	printf("009 Z-Stepper move with feed\n");
 	printf("010 Set Tool-Position (and INIT)\n");
-	printf("011 Origin-X-Offset\n");
-	printf("012 Origin-Z-Offset\n");
-	printf("013 metric or inch (maybe not needed)\n");
-	printf("014 New CNC-Programm wit NN Blocks in metric or inch\n");
-	printf("015 CNC-Code-Block\n");
-	printf("016 shutdown\n");
-	printf("017 Reset Errors\n\n");
+	printf("011 Origin-Offset\n");
+	printf("012 metric or inch (maybe not needed)\n");
+	printf("013 New CNC-Programm wit NN Blocks in metric or inch\n");
+	printf("014 CNC-Code-Block\n");
+	printf("015 shutdown\n");
+	printf("016 Reset Errors\n\n");
 	
 	printf("Message-Type: ");
 	if ((msg_type>=0) && (msg_type<=16)) printf("%i\n",msg_type);
@@ -323,7 +320,7 @@ static void transfer(int fd)
 					} while ((tool<T_MIN) || (tool>T_MAX));
 					tx[pos++] = tool;
 					break;
-		case 11:   	//Origin-X-Offset
+		case 11:   	//Origin-Offset
 					printf("X-Offset (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
 					else do {
@@ -332,8 +329,7 @@ static void transfer(int fd)
 					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
-					break;
-		case 12:   	//Origin-Z-Offset
+					
 					printf("Z-Offset (+-32700): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
 					else do {
@@ -343,7 +339,7 @@ static void transfer(int fd)
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					break;
-		case 13:  	//metric or inch (maybe not needed)
+		case 12:  	//metric or inch (maybe not needed)
 					printf("metric or inch (0 or 1): ");
 					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
 					else do {
@@ -352,7 +348,7 @@ static void transfer(int fd)
 					} while ((inch<0) || (inch>1));
 					tx[pos++] = inch;
 					break;
-		case 14:  	//New CNC-Programm wit N Blocks in metric or inch
+		case 13:  	//New CNC-Programm wit N Blocks in metric or inch
 					printf("Blocks (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
 					else do {
@@ -370,7 +366,7 @@ static void transfer(int fd)
 					} while ((inch<0) || (inch>1));
 					tx[pos++] = inch;
 					break;
-		case 15:  	//CNC-Code-Block
+		case 14:  	//CNC-Code-Block
 					printf("Block-No (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
 					else do {
@@ -445,9 +441,9 @@ static void transfer(int fd)
 					tx[pos++] = HH;
 					
 					break;
-		case 16:  	//Shutdown
+		case 15:  	//Shutdown
 					break;
-		case 17:  	//Reset Errors
+		case 16:  	//Reset Errors
 					msg_number = lastsuccessful_msg+1; //Reset Msg-No
 					pos--;
 					tx[pos++] = msg_number; 
