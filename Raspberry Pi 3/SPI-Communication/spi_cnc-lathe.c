@@ -222,7 +222,7 @@ static void transfer(int fd)
 	printf("014 New CNC-Programm wit NN Blocks in metric or inch\n");
 	printf("015 CNC-Code-Block\n");
 	printf("016 shutdown\n");
-	printf("017 Load last coordinates and tool position and init");
+	printf("017 Load last coordinates and tool position and init\n");
 	printf("018 Reset Errors\n\n");
 	
 	printf("Message-Type: ");
