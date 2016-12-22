@@ -15,7 +15,7 @@ volatile long clk_xfeed=0, clk_zfeed=0;
 volatile int phi_x=0;
 volatile int phi_z=0;
 
-volatile byte current_x_step=0, current_z_step=0;
+volatile byte current_x_step=0, current_z_step=0, last_x_step=0, last_z_step=0;
 volatile boolean reset_stepper_timeout=false;
 
 Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
@@ -60,6 +60,7 @@ void set_xstep(byte nextstep) {
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
+  last_x_step = current_x_step;
   switch (nextstep) {
       case 0:  // 0011
         digitalWrite(PIN_STEPPER_X_A, LOW);
@@ -95,6 +96,7 @@ void set_zstep(byte nextstep) {
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
+  last_z_step = current_z_step;
   switch (nextstep) {
       case 0:  // 0011
         digitalWrite(PIN_STEPPER_Z_A, LOW);
@@ -234,18 +236,6 @@ void set_z_steps(int z_steps_local, int z_feed_local) { //maybe not needed anymo
   //???
 }
 
-int count_x_steps() {
-  int x_steps_moved=0; //stub
-  //???
-	return x_steps_moved;
-}
-
-int count_z_steps() {
-	int z_steps_moved=0; //stub
-  //???
-	return z_steps_moved;
-}
-
 void get_current_x_step() { //to observe EMCO Control (ISR)
   //needs all four stepper pins to detect stepper off !!!
   //Problem: Switching Stepper off in Step 0 can't be detected
@@ -255,14 +245,28 @@ void get_current_x_step() { //to observe EMCO Control (ISR)
   step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A))<<1);
   step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B));
   switch (step_bincode) {
-    case 0: current_x_step = 0;
+    case 0: //A=B=0
+            if (last_x_step == 3) x_steps++;
+            if (last_x_step == 1) x_steps--;
+            current_x_step = 0;
             break;
-    case 1: current_x_step = 1;
+    case 1: //A=0,B=1
+            if (last_x_step == 0) x_steps++;
+            if (last_x_step == 2) x_steps--;
+            current_x_step = 1;
             break;
-    case 3: current_x_step = 2;
+    case 3: //A=1,B=1
+            if (last_x_step == 1) x_steps++;
+            if (last_x_step == 3) x_steps--;
+            current_x_step = 2;
             break;
-    case 2: current_x_step = 3;
+    case 2: //A=1,B=0
+            if (last_x_step == 2) x_steps++;
+            if (last_x_step == 0) x_steps--;
+            current_x_step = 3;
   }
+  last_x_step = current_x_step;
+  get_xz_coordinates(X0, x_steps);
 }
 
 void get_current_z_step() { //to observe EMCO Control (ISR)
@@ -274,14 +278,28 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
   step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A))<<1);
   step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B));
   switch (step_bincode) {
-    case 0: current_z_step = 0;
+    case 0: //A=B=0
+            if (last_z_step == 3) z_steps++;
+            if (last_z_step == 1) z_steps--;
+            current_z_step = 0;
             break;
-    case 1: current_z_step = 1;
+    case 1: //A=0,B=1
+            if (last_z_step == 0) z_steps++;
+            if (last_z_step == 2) z_steps--;
+            current_z_step = 1;
             break;
-    case 3: current_z_step = 2;
+    case 3: //A=1,B=1
+            if (last_z_step == 1) z_steps++;
+            if (last_z_step == 3) z_steps--;
+            current_z_step = 2;
             break;
-    case 2: current_z_step = 3;
+    case 2: //A=1,B=0
+            if (last_z_step == 2) z_steps++;
+            if (last_z_step == 0) z_steps--;
+            current_z_step = 3;
   }
+  last_z_step = current_z_step;
+  get_xz_coordinates(Z0, z_steps);
 }
 
 void get_stepper_on_off() { //to observe EMCO Control (ISR)

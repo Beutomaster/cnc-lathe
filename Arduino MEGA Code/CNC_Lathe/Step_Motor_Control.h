@@ -29,7 +29,7 @@ extern volatile long clk_feed; //clk_feed in 1/1024s (Overflow possible?)
 extern volatile long clk_xfeed, clk_zfeed; //clk_feed in 1/1024s
 extern volatile int phi_x;
 extern volatile int phi_z;
-extern volatile byte current_x_step, current_z_step;
+extern volatile byte current_x_step, current_z_step, last_x_step, last_z_step;
 extern volatile boolean reset_stepper_timeout;
 
 void stepper_on();
@@ -41,8 +41,6 @@ void set_xz_stepper_manual(int, char, char);
 void set_xz_stepper_manual_direct(int, char, char);
 void set_x_steps(int, int);
 void set_z_steps(int, int);
-int count_x_steps();
-int count_z_steps();
 void get_current_x_step();
 void get_current_z_step();
 void get_stepper_on_off();
