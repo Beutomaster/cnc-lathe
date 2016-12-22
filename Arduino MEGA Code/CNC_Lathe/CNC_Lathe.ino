@@ -74,12 +74,8 @@ void setup() {
   //Measurement of Revolutions
   attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
 
-  //Observing old Control
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_OFF),get_stepper_on_off,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_A),get_current_x_step,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_B),get_current_x_step,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_A),get_current_z_step,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_B),get_current_z_step,CHANGE);
+  //control active or not?
+  attachInterrupt(digitalPinToInterrupt(PIN_CONTROL_ACTIVE),get_control_active,CHANGE);
 
   //TIMER
   
@@ -124,6 +120,8 @@ void setup() {
   //set interrupt enable
   sei();
 
+  get_control_active(); //get initional state
+
   //read Last Steps
   //read_last_x_step();
   //read_last_z_step();
@@ -146,7 +144,7 @@ void loop() {
   spi_buffer_handling();
 
   //CNC-Lathe State-Machine  
-  if (get_control_active()) {
+  if (control_active) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
     if (initialized) {
       if (!command_time && i_tool && x_command_completed && z_command_completed) {
           command_completed=1;

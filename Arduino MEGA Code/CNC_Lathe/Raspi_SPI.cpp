@@ -127,7 +127,7 @@ boolean process_incomming_msg() {
     case 1:   //Programm Start at Block
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) {
+              else if (control_active && initialized && ((STATE>>STATE_PAUSE_BIT)&1) && command_completed) {
                 programm_start((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_N_L]);
               }
               break;
@@ -142,7 +142,7 @@ boolean process_incomming_msg() {
     case 4:   //Spindle on with RPM and Direction
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if ((STATE>>STATE_MANUAL_BIT)&1) {
+              else if (control_active && initialized && ((STATE>>STATE_MANUAL_BIT)&1)) {
                 set_revolutions((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_RPM_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_RPM_L]);
                 spindle_direction(rx_doublebuf[SPI_BYTE_RASPI_MSG_DIRECTION]);
                 spindle_on();
@@ -156,7 +156,7 @@ boolean process_incomming_msg() {
               break;
     case 6:   //Stepper on
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if ((STATE>>STATE_MANUAL_BIT)&1) {
+              else if (control_active && initialized && ((STATE>>STATE_MANUAL_BIT)&1)) {
                 if (command_completed) { //Error Handling needed
                   stepper_on();
                 }
@@ -173,21 +173,21 @@ boolean process_incomming_msg() {
     case 8:   //X-Stepper move with feed
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_MANUAL_BIT)&1) {
+              else if (control_active && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
                 set_xz_stepper_manual((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[SPI_BYTE_RASPI_MSG_DIRECTION], 0);
               }
               break;
     case 9:   //Z-Stepper move with feed
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) {
+              else if (control_active && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
                 set_xz_stepper_manual((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[SPI_BYTE_RASPI_MSG_DIRECTION], 1);
               }
               break;
     case 10:   //Set Tool-Position (and INIT)
               msg_length=7;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_MANUAL_BIT)&1) {
+              else if (control_active && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
                 get_Tool_X((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_X_L]);
                 get_Tool_Z((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_L]);
                 set_tool_position(rx_doublebuf[SPI_BYTE_RASPI_MSG_T]);
@@ -196,21 +196,21 @@ boolean process_incomming_msg() {
     case 11:   //Origin-XOffset
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
+              else if (control_active && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
                 set_x_coordinate((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_X_L]);
               }
               break;
     case 12:   //Origin-ZOffset
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
+              else if (control_active && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
                 set_z_coordinate((((int)rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[SPI_BYTE_RASPI_MSG_Z_L]);
               }
               break;
     case 13:  //metric or inch (maybe not needed)
               msg_length=3;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (command_completed && (STATE>>STATE_PAUSE_BIT)&1) { //Error Handling needed
+              else if (control_active && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
                 if (rx_doublebuf[SPI_BYTE_RASPI_MSG_INCH]){
                   STATE |= _BV(STATE_INCH_BIT); //set STATE_bit4 = 1
                 }
@@ -261,7 +261,18 @@ boolean process_incomming_msg() {
                 save_current_tool_position();
               }
               break;
-    case 17:  //Reset Errors
+    case 17:  //Load last coordinates and tool position and init
+              if (!check_msg(msg_length, true)) success=false; //msg-failure
+              else if (control_active && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
+                read_last_x_step();
+                read_last_z_step();
+                read_current_tool_position();
+                //initialize
+                STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
+                initialized=1;
+              }
+              break;
+    case 18:  //Reset Errors
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               else {
                 ERROR_NO = 0;
@@ -274,6 +285,7 @@ boolean process_incomming_msg() {
 }
 
 void create_machine_state_msg() {
+  //maybe the whole function needs to be atomic or tx double buffered!!!
   tx_buf [SPI_BYTE_PID] = 100; //PID
   tx_buf [SPI_BYTE_LASTSUCCESS_MSG_NO] = lastsuccessful_msg;
   tx_buf [SPI_BYTE_STATE] = STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
