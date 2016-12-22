@@ -3,7 +3,7 @@
 boolean control_active = 0;
 
 void get_control_active() { //maybe better with interrupt
-	boolean control_active = digitalRead(PIN_CONTROL_ACTIVE);
+	control_active = digitalRead(PIN_CONTROL_ACTIVE);
   if (control_active) {
     STATE |= _BV(STATE_CONTROL_ACTIVE_BIT); //set STATE_bit0 = control_active
     //Observing old Control
