@@ -76,7 +76,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
 
   //control active or not?
-  attachInterrupt(digitalPinToInterrupt(PIN_CONTROL_ACTIVE),get_control_active,CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_CONTROL_ACTIVE),get_control_active,CHANGE); //debouncing needed
 
   //TIMER
   
@@ -121,7 +121,7 @@ void setup() {
   //set interrupt enable
   sei();
 
-  get_control_active(); //get initional state
+  get_control_active(); //get initial state
 
   //read Last Steps
   //read_last_x_step();
