@@ -147,8 +147,12 @@
 					$msg_pid = "16";
 					$msg .= $msg_pid . "\n";
 					break;
-				case "ResetErrors":
+				case "LoadOldParameter":
 					$msg_pid = "17";
+					$msg .= $msg_pid . "\n";
+					break;
+				case "ResetErrors":
+					$msg_pid = "18";
 					$msg .= $msg_pid . "\n";
 					break;
 				default:

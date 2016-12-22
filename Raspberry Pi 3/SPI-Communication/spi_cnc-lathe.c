@@ -222,7 +222,8 @@ static void transfer(int fd)
 	printf("014 New CNC-Programm wit NN Blocks in metric or inch\n");
 	printf("015 CNC-Code-Block\n");
 	printf("016 shutdown\n");
-	printf("017 Reset Errors\n\n");
+	printf("017 Load last coordinates and tool position and init");
+	printf("018 Reset Errors\n\n");
 	
 	printf("Message-Type: ");
 	if ((msg_type>=0) && (msg_type<=16)) printf("%i\n",msg_type);
@@ -447,7 +448,9 @@ static void transfer(int fd)
 					break;
 		case 16:  	//Shutdown
 					break;
-		case 17:  	//Reset Errors
+		case 17:  	//Load last coordinates and tool position and init
+					break;
+		case 18:  	//Reset Errors
 					msg_number = lastsuccessful_msg+1; //Reset Msg-No
 					pos--;
 					tx[pos++] = msg_number; 

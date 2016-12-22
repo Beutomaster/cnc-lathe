@@ -21,7 +21,7 @@ void initialize_tool_position(byte tool) {
 */
 
 void reset_initialization() { 
-  spindle_direction(false); //includes spindle_off();
+  spindle_direction(false); //includes spindle_off()
   command_time = 0;
   stepper_off();
   
@@ -31,12 +31,12 @@ void reset_initialization() {
   //Input Compare Match Interrupt Disable
   TIMSK1 &= ~(_BV(ICIE1)); //set 0
   
-  STATE_X = 0; //reset X-position
-  STATE_Z = 0; //reset Z-position
+  //STATE_X = 0; //reset X-position
+  //STATE_Z = 0; //reset Z-position
+  //STATE_T = 0; //reset tool-position
   STATE_F = 0; //reset feed
   STATE_H = 0; //reset H
-  STATE_T = 0; //reset tool-position
-  STATE_H = 0; //reset N
+  STATE_N = 0; //reset N
 
   STATE &= ~(_BV(STATE_INIT_BIT)); //delete STATE_bit1 = STATE_INIT
   initialized=0;
