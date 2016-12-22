@@ -113,7 +113,7 @@
 extern volatile boolean debug, debug_spi, debug_stepper, debug_active, debug_rpm, debug_tool;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
-extern volatile const int lookup_cosinus[91];
+extern const int lookup_cosinus[91];
 
 //ERROR-Numbers
 extern volatile byte ERROR_NO;
