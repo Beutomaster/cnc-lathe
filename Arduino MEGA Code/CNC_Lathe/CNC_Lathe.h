@@ -71,6 +71,7 @@
 //#define PIN_SPI_MOSI 51         //D51 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SCK 52          //D52 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SS 53           //D53 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
+#define PIN_SPINDLE_ON_DETECT 55    //AIN1: Detect if Spindle-Switch is on
 #define PIN_SPINDLE_NEW 59    //PF5: Switch between Niko's Board and Hannes Servo
 #define PIN_DEBUG_INPUT_1 60    //Debug Input 1
 #define PIN_DEBUG_INPUT_2 61    //Debug Input 2
