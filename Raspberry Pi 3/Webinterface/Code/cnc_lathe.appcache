@@ -1,0 +1,16 @@
+CACHE MANIFEST
+# 2016-12-19 v1.0.1
+#/css/styles.css
+#/css/*
+#/images/*
+#/js/*
+/js/jquery-3.0.0.min.js
+/login.html
+
+NETWORK:
+*
+#/xml/*
+#/xml/machine_state.xml
+
+#FALLBACK:
+#/index.html /offline.html

@@ -1,8 +1,14 @@
+<?php
+session_start();
+if(!$_SESSION['logged_in'])
+	header("Location: /login.html");
+?>
+
 <!doctype html>
 
 <!-- Development-Version 0.1 -->
 
-<html lang="en-US" class="no-js">
+<html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 <head>
     <title>CNC-Lathe-Control</title>
     <meta charset="UTF-8" />
@@ -10,11 +16,11 @@
     <meta name="keywords" content="CNC-Control, EMCO Compact 5 CNC, Lathe, Arduino MEGA, Raspberry Pi 3" />
     <meta name="author" content="Hannes Beuter" />
 	<link rel="shortcut icon" href="images/favicon.ico" type="image/vnd.microsoft.icon" />
-    <script src="js/jquery-3.0.0.min.js"></script>
-    <script src="js/jquery_functions.js"></script>
-	<script src="js/style.js"></script>
-	<script src="js/ajax_com.js"></script>  
-	<link rel="stylesheet" href="css/styles.css" />
+    <script src="/js/jquery-3.0.0.min.js"></script>
+    <script src="/js/jquery_functions.js"></script>
+	<script src="/js/style.js"></script>
+	<script src="/js/ajax_com.js"></script>
+	<link rel="stylesheet" href="/css/styles.css" />
     <!--[if lt IE 9]>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
     <![endif]-->
@@ -23,30 +29,33 @@
     <script>(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);</script>
 </head>
 
-<body onload="{loadDoc('xml/cnc_code.xml', cnc_code_table);}">
+<body onload="{loadDoc('/xml/cnc_code.xml', cnc_code_table);}">
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
-    
+    <p>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></p>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
+	<!-- 
     <form action="php/login.php" method="post">
-        <label>User name:<br />
-        <input type="text" name="username" />
+        <label for="user">User:<br />
+        <input id="user" type="text" name="user" />
 		</label>
 		<span class="error"><?php echo $usernameErr;?></span>
 		<br />
-        <label>User password:<br />
-        <input type="password" name="pw" />
+        <label for="pw">Password:<br />
+        <input id="pw" type="password" name="pw" />
 		</label>
 		<span class="error"><?php echo $pwErr;?></span>
         <input type="submit" value="Submit" />
-    </form> 
+    </form>
+	-->
 </header>
 
 <nav>
 	<ul>
     <li id="manbutton" class="cnc clearfix">Manual Control</li>
     <li id="cncbutton" class="manual clearfix">CNC Control</li>
+	<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
     <li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
 	</ul>
 </nav>
@@ -66,34 +75,34 @@
 		
 		<div class="clearfix solo">
 			<span class="left">
-			<form action="./cgi-bin/spi_com.cgi" method="post">
+			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
-					<label>X-Offset:<br />
-					<input type="number" name="xoffset" value="0" autocomplete="off" required />
+					<label>X-Offset (+-5999):<br />
+					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
 					<br />
-					<input type="submit" class="button" value="Set X-Offset" />
+					<input type="submit" class="button" name="SetXOffset" value="Set X-Offset" />
 				</fieldset>
 			</form>
 			</span>
 			
 			<span class="left">
-			<form action="./cgi-bin/spi_com.cgi" method="post">
+			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
-					<label>Z-Offset:<br />
-					<input type="number" name="zoffset" value="0" autocomplete="off" required />
+					<label>Z-Offset (+-32700):<br />
+					<input type="number" name="zoffset" min="-32700" max="32700" value="0" autocomplete="off" required />
 					</label>
 					<br />
-					<input type="submit" class="button" value="Set Z-Offset" />
+					<input type="submit" class="button" name="SetZOffset" value="Set Z-Offset" />
 				</fieldset>
 			</form>
 			</span>
 			
 			<div class="clearfix">
 			<span class="right">
-			<form action="php/set_metric_inch.php" method="post">
+			<form action="/php/send_command.php" method="post"> <!--  some js needed -->
 				<fieldset>
 					<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
 					<br />
@@ -105,7 +114,7 @@
 		</div>
 		
 		<span class="left">
-		<form action="php/set_rpm.php" method="post">
+		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Spindle:</legend>
 				<label><input type="radio" name="spindle_direction" value="right" checked="checked" />Rotation right handed</label>
@@ -116,31 +125,32 @@
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Spindle ON" />
+				<input type="submit" id="SpindleOn" class="button" name="SpindleSetRPM" value="Spindle ON" />
 				<br />
-				<input type="button" id="spindle_off" class="button" onclick="alert('Spindle OFF')" value="Spindle OFF" />
+				<input type="button" id="SpindleOff" class="button" name="SpindleOff" value="Spindle OFF" />
 			</fieldset>
 		</form>
 		</span>
 		
 		<span class="left">
 		<!-- <form action="php/set_feed.php" method="post"> -->
-		<form action="./cgi-bin/spidev_hello_world.cgi" method="post">
+		<!-- for SetStepperFeed a js-function is needed to set a client-variable, because no message is send -->
+		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Stepper:</legend>
-				<label>Feed (10 to 499):<br />
-				<input type="number" name="feed" min="10" max="499" value="50" autocomplete="off" />
+				<label>Feed (2 to 499):<br />
+				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Stepper ON" />
+				<input type="submit" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
 				<br />
-				<input type="button" id="stepper_off" class="button" onclick="alert('Stepper OFF')" value="Stepper OFF" />
+				<input type="button" id="StepperOff" class="button" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
 		</form>
 		</span>
 		
 		<span class="left">
-		<form action="php/set_tool.php" method="post">
+		<form id="tool" action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Tool:</legend>
 				<label>Tool (1 to 6):<br />
@@ -155,7 +165,7 @@
 				<input type="number" name="tool_z-correction" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<input type="submit" class="button" value="Set Tool" />
+				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
 			</fieldset>
 		</form>
 		</span>
@@ -176,7 +186,7 @@
     <article class="cnc clearfix">
         <h2>CNC-Control</h2>
         
-        <form action="php/upload_cam-file.php">
+        <form action="/php/upload_cam-file.php">
             <fieldset>
 				<legend>Select CAM-File:</legend>
 				<input type="file" name="file-1[]" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
@@ -188,30 +198,98 @@
 		<form>
 			<fieldset>
 				<legend>Programm Control:</legend>
-				<input type="button" class="button" onclick="./cgi-bin/spidev_hello_world.cgi" method="post" value="Start/Stop" />
-				<input type="button" class="button" onclick="./cgi-bin/hello.cgi" method="post" value="Pause" />
+				<input type="button" class="button" onclick="/php/send_command.php" method="post" name="ProgramStartStop" value="Start" /> <!-- Set to Stop with js at Programmstart -->
+				<input type="button" class="button" onclick="/php/send_command.php" method="post" name="ProgramPause" value="Pause" />
 			</fieldset>
 		</form>
 		
         <table id="code"><tr><th>Block-Nr.</th><th>G/M-Code</th><th>X</th><th>Z</th><th>F</th><th>H</th></tr></table>
     </article>
+	
+	<article class="emco clearfix">
+        <h2>EMCO-Control</h2>
+		<!-- Stream Video of old Emco Control
+        <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
+		-->
+    </article>
 </section>
 
 <aside>
-	<h2>Machine state</h2>
+	<h2>Machine State</h2>
 	
 	<form>
-			RPM: <input type="text" name="rpm_measure" id="rpm_measure" />
+			<label>Control active:<br />
+			<input type="text" name="active" id="active" />
+			</label>
 			<br />
-			X: <input type="text" name="x_actual" id="x_actual" />
+			<label>Init:<br />
+			<input type="text" name="init" id="init" />
+			</label>
 			<br />
-			Z: <input type="text" name="z_actual" id="z_actual" />
+			<label>Manual:<br />
+			<input type="text" name="manual" id="manual" />
+			</label>
 			<br />
-			Feed: <input type="text" name="f_actual" id="f_actual" />
+			<label>Pause:<br />
+			<input type="text" name="pause" id="pause" />
+			</label>
 			<br />
-			Tool: <input type="text" name="t_actual" id="t_actual" />
+			<label>inch:<br />
+			<input type="text" name="inch" id="inch" />
+			</label>
 			<br />
-			ERROR: <input type="text" name="error_actual" id="error_actual" />
+			<label>Spindel on:<br />
+			<input type="text" name="spindel_on" id="spindel_on" />
+			</label>
+			<br />
+			<label>Spindel-Direction:<br />
+			<input type="text" name="init" id="spindel_direction" />
+			</label>
+			<br />
+			<label>Stepper on:<br />
+			<input type="text" name="stepper_on" id="stepper_on" />
+			</label>
+			<br /><br />
+			<label>RPM:<br />
+			<input type="text" name="rpm_measure" id="rpm_measure" />
+			</label>
+			<br />
+			<label>X:<br />
+			<input type="text" name="x_actual" id="x_actual" />
+			</label>
+			<br />
+			<label>Z:<br />
+			<input type="text" name="z_actual" id="z_actual" />
+			</label>
+			<br />
+			<label>Feed:<br />
+			<input type="text" name="f_actual" id="f_actual" />
+			</label>
+			<br />
+			<label>H:<br />
+			<input type="text" name="h_actual" id="h_actual" />
+			</label>
+			<br />
+			<label>Tool:<br />
+			<input type="text" name="t_actual" id="t_actual" />
+			</label>
+			<br /><br />
+			<label>SPI-Error:<br />
+			<input type="text" name="spi_error" id="spi_error" />
+			</label>
+			<br />
+			<label>CNC-Code-Error:<br />
+			<input type="text" name="cnc_code_error" id="cnc_code_error" />
+			</label>
+			<br />
+			<label>Spindel-Error:<br />
+			<input type="text" name="spindel_error" id="spindel_error" />
+			</label>
+			<br />
+	</form>
+	
+	<form>
+	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
 	</form>
 	
 	<form>

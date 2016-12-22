@@ -3,10 +3,19 @@
 boolean absolute=0, feed_modus=0;
 volatile byte interpolationmode=0, i_command_time=0;
 volatile int command_time=0;
+volatile int X0=0, Z0=0;
 
 
 void set_xz_coordinates(int x_origin, int z_origin) {
   STATE_X -= x_origin;
+  STATE_Z -= z_origin;
+}
+
+void set_x_coordinate(int x_origin) {
+  STATE_X -= x_origin;
+}
+
+void set_z_coordinate(int z_origin) {
   STATE_Z -= z_origin;
 }
 
@@ -42,6 +51,9 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
   //turn stepper on with last step
   if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+
+  X0 = STATE_X;
+  Z0 = STATE_Z;
   
   //get incremental coordinates
   if (absolute){
@@ -50,10 +62,19 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
 
   //calculate needed steps
-  x_steps = X*STEPS_PER_MM; //not finished, maybe overflow
-  z_steps = Z*STEPS_PER_MM; //not finished, maybe overflow
+  x_steps = (long)X*STEPS_PER_MM/100;
+  z_steps = (long)Z*STEPS_PER_MM/100;
 
-  clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min (Overflow possible?)
+  if (debug && debug_stepper) {
+    Serial.print("XStepper starts moving ");
+    Serial.print(x_steps, DEC);
+    Serial.println("Steps");
+    Serial.print("ZStepper starts moving ");
+    Serial.print(z_steps, DEC);
+    Serial.println("Steps");
+  }
+
+  clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min
 
   //Prepare Timer 1 for X-Stepper 
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
@@ -81,8 +102,8 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
       if (z_feed==0) z_feed=1; //Minimum needed
     }
 
-    clk_xfeed = (long)x_feed * STEPS_PER_MM; //clk_xfeed in Steps/min (Overflow possible?)
-    clk_zfeed = (long)z_feed * STEPS_PER_MM; //clk_xfeed in Steps/min (Overflow possible?)
+    clk_xfeed = (long)x_feed * STEPS_PER_MM; //clk_xfeed in Steps/min
+    clk_zfeed = (long)z_feed * STEPS_PER_MM; //clk_xfeed in Steps/min
 
     //set Timer-Compare-Values
     if (X) {
@@ -117,8 +138,32 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
     
     //next X- and Z-Step moving average feed
-    phi_x = (((long)(x_step))*90+45)/x_steps;
-    phi_z = (((long)(z_step))*90+45)/z_steps;
+    if (x_steps) {
+      long phi_x_fixp = ((((long)x_step)*90+45)<<9)/x_steps; //max 22 bit used with X=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((phi_x_fixp%512) < 256) {
+        phi_x = phi_x_fixp>>9;
+      }
+      else {
+        phi_x = (phi_x_fixp>>9)+1;
+      }
+      if (phi_x == 0) { //phi_x has to be greater zero
+        phi_x = 1;
+      }
+    }
+    if (z_steps) { 
+      long phi_z_fixp = ((((long)z_step)*90+45)<<9)/z_steps; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((phi_z_fixp%512) < 256) {
+        phi_z = phi_z_fixp>>9;
+      }
+      else {
+        phi_z = (phi_z_fixp>>9)+1;
+      }
+      if (phi_z == 0) { //phi_z has to be greater zero
+        phi_z = 1;
+      }
+    }
     
     if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
       //calculation of next x- and z-clk (Direction)
@@ -171,7 +216,8 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //every step has to be executed, feed can't be zero
     if (clk_xfeed) { //clock not zero
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/clk_xfeed)-1
+        ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/clk_xfeed)-1 
+        //Overflow possible!!!
       }
     } else {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
@@ -181,6 +227,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     if (clk_zfeed) { //clock not zero
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
         ICR3 = (3750000L/clk_zfeed)-1; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(s/min)/(256*clk_zfeed))-1 = (62500Hz*60(s/min)/clk_zfeed)-1
+        //Overflow possible!!!
       }
     } else {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
@@ -212,8 +259,17 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
 }
 
-void get_xz_coordinates() { //calculate Coordinates
-  
+int get_xz_coordinates(int XZ0, int xz_step) { //calculate Coordinates
+  int XZ_delta;
+  long XZ_delta_fixpoint = ((xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((XZ_delta_fixpoint%512) < 256) {
+        XZ_delta = XZ_delta_fixpoint>>9;
+      }
+      else {
+        XZ_delta = (XZ_delta_fixpoint>>9)+1;
+      }
+  return XZ0 + XZ_delta;
 }
 
 int get_xz_feed() {

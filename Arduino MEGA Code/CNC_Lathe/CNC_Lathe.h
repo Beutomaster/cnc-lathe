@@ -1,23 +1,36 @@
 #ifndef CNC_Lathe_h
 #define CNC_Lathe_h
 
-//includes
-#include <util/atomic.h>
-#include <Arduino.h>
-#include <EEPROM.h>
-#include "CNC_Control.h"
-#include "Control_Passiv.h"
-#include "Initialization.h"
-#include "Motion_Control.h"
-#include "Raspi_SPI.h"
-#include "Spindle_Control.h"
-#include "Step_Motor_Control.h"
-#include "Tool_Changer_Control.h"
-
 //many global vars could be replaced by defines (no short names, because compiler reports no errors)
 //many functions and vars should be private
 
 //defines
+//Input Parameter Ranges
+#define CNC_CODE_NMIN 0
+#define CNC_CODE_NMAX 500
+#define GM_CODE_MIN 0
+#define G_CODE_MAX 196
+#define M_CODE_MAX 99
+#define X_MIN_MAX_CNC 5999
+#define Z_MIN_MAX_CNC 32760
+#define XZ_MIN_MAX_HAND 89999L
+#define X_DWELL_MIN_MAX_CNC 5999
+#define F_MIN 2
+#define F_MAX 499
+#define IK_MIN 0
+#define I_MAX 5999
+#define K_MAX 5999
+#define K_THREAD_PITCH_MAX 499
+#define L_MIN 0
+#define L_MAX 499
+#define T_MIN 1
+#define T_MAX 6
+#define H_MIN 0
+#define H_G86_MIN 10
+#define H_MAX 999
+#define REVOLUTIONS_MIN 460  //rpm
+#define REVOLUTIONS_MAX 3220 //rpm
+
 //Bit Postions of STATE
 #define STATE_CONTROL_ACTIVE_BIT 0
 #define STATE_INIT_BIT 1
@@ -82,8 +95,21 @@
 #define CLK_TIMER1 3750000 //in 1/min
 #define CLK_TIMER3 3750000 //in 1/min
 
+//includes
+#include <util/atomic.h>
+#include <Arduino.h>
+#include <EEPROM.h>
+#include "CNC_Control.h"
+#include "Control_Passiv.h"
+#include "Initialization.h"
+#include "Motion_Control.h"
+#include "Raspi_SPI.h"
+#include "Spindle_Control.h"
+#include "Step_Motor_Control.h"
+#include "Tool_Changer_Control.h"
+
 //global vars
-extern boolean debug;
+extern volatile boolean debug, debug_spi, debug_stepper, debug_active, debug_rpm, debug_tool;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
 extern volatile const int lookup_cosinus[91];

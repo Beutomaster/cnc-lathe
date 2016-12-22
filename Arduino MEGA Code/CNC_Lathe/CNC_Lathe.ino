@@ -1,7 +1,7 @@
 #include "CNC_Lathe.h"
 
 //global vars
-boolean debug=true;
+volatile boolean debug=false, debug_spi=true, debug_stepper=false, debug_active=false, debug_rpm=false, debug_tool=true;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
 volatile const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
@@ -21,6 +21,9 @@ volatile int STATE_N=0;
 
 void setup() {
   // put your setup code here, to run once:
+  //set initional State
+  STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT); //set = 1
+  
   //PINs
   pinMode(PIN_CONTROL_ACTIVE, INPUT);
   pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
@@ -59,8 +62,9 @@ void setup() {
   //potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
   
   //Serial Communication
-  Serial.begin(115200); //for Debugging with Serial Monitor
-  Serial1.begin(9600); //Nikos Platine
+  //Serial.begin(115200); //for Debugging with Serial Monitor (115200 baud * 4 bit/baud = 460800 bit/s)
+  Serial.begin(74880); //for Debugging with Serial Monitor (74880 baud * 4 bit/baud = 299520 bit/s)
+  //Serial1.begin(9600); //Nikos Platine
   
   //SPI
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
@@ -70,12 +74,8 @@ void setup() {
   //Measurement of Revolutions
   attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
 
-  //Observing old Control
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_OFF),get_stepper_on_off,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_A),get_current_x_step,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_B),get_current_x_step,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_A),get_current_z_step,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_B),get_current_z_step,CHANGE);
+  //control active or not?
+  attachInterrupt(digitalPinToInterrupt(PIN_CONTROL_ACTIVE),get_control_active,CHANGE);
 
   //TIMER
   
@@ -120,40 +120,43 @@ void setup() {
   //set interrupt enable
   sei();
 
+  get_control_active(); //get initional state
+
   //read Last Steps
   //read_last_x_step();
   //read_last_z_step();
 }
 
-void set_error(byte error_number) {
-  ERROR_NO |= error_number;
+void set_error(byte error_bit_position) {
+  ERROR_NO |= _BV(error_bit_position);
 }
 
-void reset_error(byte error_number) {
-  ERROR_NO &= ~error_number;
+void reset_error(byte error_bit_position) {
+  ERROR_NO &= ~(_BV(error_bit_position));
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
   //SPI-Communication
-  if (!byte_received && tx_buf[0]==100) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress and no other message has to be sent
+  //if (!byte_received && tx_buf[0]==100) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress and no other message has to be sent
+  if (!byte_received) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress
   spi_buffer_handling();
 
   //CNC-Lathe State-Machine  
-  if (get_control_active()) {
+  if (control_active) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
     if (initialized) {
-      if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-        if (x_command_completed && z_command_completed) {
+      if (!command_time && i_tool && x_command_completed && z_command_completed) {
           command_completed=1;
           STATE_F = 0;
-        }
-        if (command_completed && !pause) {
-          process_cnc_listing();
-        }
-        else stepper_timeout();
+          stepper_timeout();
       }
-      else stepper_timeout();
+      if (command_completed) {
+        if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
+          if (!pause) process_cnc_listing();
+        }
+      }
+      else reset_stepper_timeout=true;
 	  }
     //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
   }

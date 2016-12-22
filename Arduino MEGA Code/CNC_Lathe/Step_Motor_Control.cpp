@@ -1,7 +1,7 @@
 #include "Step_Motor_Control.h"
 
 //ISR vars get_current_step
-volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0;
+volatile unsigned long xstep_time=0, last_xstep_time=0, zstep_time=0, last_zstep_time=0, stepper_timeout_timestamp=0;
 
 //TIMER ISR vars
 volatile int x_step=0;
@@ -10,12 +10,13 @@ volatile int x_steps=0; //has to be global for ISR
 volatile int z_steps=0; //has to be global for ISR
 volatile int x_feed=0; //has to be global for ISR
 volatile int z_feed=0; //has to be global for ISR
-volatile long clk_feed = 0; //clk_feed in 1/min (Overflow possible?)
+volatile long clk_feed = 0; //clk_feed in 1/min
 volatile long clk_xfeed=0, clk_zfeed=0;
 volatile int phi_x=0;
 volatile int phi_z=0;
 
-volatile byte current_x_step=0, current_z_step=0;
+volatile byte current_x_step=0, current_z_step=0, last_x_step=0, last_z_step=0;
+volatile boolean reset_stepper_timeout=false;
 
 Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
@@ -28,6 +29,21 @@ void stepper_on() {
 }
 
 void stepper_off() {
+  if (!command_time) {
+    TCCR1B = 0; //Disable Timer 1
+    TIMSK1 |= ~(_BV(OCIE1A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+  }
+  TCCR3B = 0; //Disable Timer 3
+  TIMSK3 |= ~(_BV(OCIE3A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+  phi_z=0;
+  phi_x=0;
+  x_step=0;
+  z_step=0;
+  x_steps=0;
+  z_steps=0;
+  x_command_completed=1;
+  z_command_completed=1;
+  
   //A,B,C,D LOW (We have to change the logic, because Signals at the moment are always C=!A, D=!B !!!)
   digitalWrite(PIN_STEPPER_X_A, LOW);
   digitalWrite(PIN_STEPPER_X_B, LOW);
@@ -44,6 +60,7 @@ void set_xstep(byte nextstep) {
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
+  last_x_step = current_x_step;
   switch (nextstep) {
       case 0:  // 0011
         digitalWrite(PIN_STEPPER_X_A, LOW);
@@ -79,6 +96,7 @@ void set_zstep(byte nextstep) {
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
+  last_z_step = current_z_step;
   switch (nextstep) {
       case 0:  // 0011
         digitalWrite(PIN_STEPPER_Z_A, LOW);
@@ -112,29 +130,84 @@ void set_zstep(byte nextstep) {
 
 void stepper_timeout() {
   //set timeout for stepper engines active after last move
+  if (reset_stepper_timeout) stepper_timeout_timestamp = millis();
+  reset_stepper_timeout=false;
+  if ((millis() - stepper_timeout_timestamp) > STEPPER_TIMEOUT_MS) stepper_off();
 }
 
-//continuous movement for manual control (maybe not needed)
-void set_xstepper(int feed, char negativ_direction) {
+//continuous movement for manual control
+void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
   //manual control
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  //if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  int X=0, Z=0;
+  
+  //calculate needed Coordinates for s/2
+  if (xz_stepper) {
+    Z = feed * 100 / 120; //100 for mm * min/60s * 1/2
+    if (negativ_direction) Z *= -1;
+    if (absolute) Z += STATE_Z;
+  }
+  else {
+    X = feed * 100 / 120; //100 for mm * min/60s * 1/2
+    if (negativ_direction) X *= -1;
+    if (absolute) X += STATE_X;
+  }
+  
   //set signal with feed and direction
-  //???
-  STATE_F = feed;
+  if (command_completed) {
+    set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
+  }
+  else {
+    //increase steps
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      if (!x_command_completed) {
+        x_steps += x_step;
+      }
+      if (!z_command_completed) {
+        z_steps += z_step;
+      } 
+    }
+  }
+  
   //set timeout for movement and reset STATE_F
-  command_running(MANUAL_IMPULSE);
+  //command_running(MANUAL_IMPULSE);
 }
 
-//continuous movement for manual control (maybe not needed)
-void set_zstepper(int feed, char negativ_direction) {
-  int command_time = MANUAL_IMPULSE;
-  //manual control
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
-  //set signal with feed and direction
-  //???
+//continuous movement for manual control second try ... not finished !!!
+void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
+  command_completed=0;
+  
   STATE_F = feed;
+  
+  interpolationmode=INTERPOLATION_LINEAR;
+
+  //turn stepper on with last step
+  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+
+  X0 = STATE_X;
+  Z0 = STATE_Z;
+  x_step=0;
+  z_step=0;
+
+  //calculate needed steps for s/2
+  if (xz_stepper) { //z_stepper
+    x_steps = 0;
+    z_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
+    if (negativ_direction) z_steps *= -1;
+    x_command_completed = 0;
+  }
+  else { //x_stepper
+    z_steps = 0;
+    x_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
+    if (negativ_direction) x_steps *= -1;
+    z_command_completed = 0;
+  }
+  //set signal with feed and direction
+  //configure and start Timer
+  //... not finished
+  
   //set timeout for movement and reset STATE_F
-  command_running(MANUAL_IMPULSE);
+  //command_running(MANUAL_IMPULSE);
 }
 
 void set_x_steps(int x_steps_local, int x_feed_local) { //maybe not needed anymore
@@ -163,18 +236,6 @@ void set_z_steps(int z_steps_local, int z_feed_local) { //maybe not needed anymo
   //???
 }
 
-int count_x_steps() {
-  int x_steps_moved=0; //stub
-  //???
-	return x_steps_moved;
-}
-
-int count_z_steps() {
-	int z_steps_moved=0; //stub
-  //???
-	return z_steps_moved;
-}
-
 void get_current_x_step() { //to observe EMCO Control (ISR)
   //needs all four stepper pins to detect stepper off !!!
   //Problem: Switching Stepper off in Step 0 can't be detected
@@ -184,14 +245,28 @@ void get_current_x_step() { //to observe EMCO Control (ISR)
   step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A))<<1);
   step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B));
   switch (step_bincode) {
-    case 0: current_x_step = 0;
+    case 0: //A=B=0
+            if (last_x_step == 3) x_steps++;
+            if (last_x_step == 1) x_steps--;
+            current_x_step = 0;
             break;
-    case 1: current_x_step = 1;
+    case 1: //A=0,B=1
+            if (last_x_step == 0) x_steps++;
+            if (last_x_step == 2) x_steps--;
+            current_x_step = 1;
             break;
-    case 3: current_x_step = 2;
+    case 3: //A=1,B=1
+            if (last_x_step == 1) x_steps++;
+            if (last_x_step == 3) x_steps--;
+            current_x_step = 2;
             break;
-    case 2: current_x_step = 3;
+    case 2: //A=1,B=0
+            if (last_x_step == 2) x_steps++;
+            if (last_x_step == 0) x_steps--;
+            current_x_step = 3;
   }
+  last_x_step = current_x_step;
+  get_xz_coordinates(X0, x_steps);
 }
 
 void get_current_z_step() { //to observe EMCO Control (ISR)
@@ -203,14 +278,28 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
   step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A))<<1);
   step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B));
   switch (step_bincode) {
-    case 0: current_z_step = 0;
+    case 0: //A=B=0
+            if (last_z_step == 3) z_steps++;
+            if (last_z_step == 1) z_steps--;
+            current_z_step = 0;
             break;
-    case 1: current_z_step = 1;
+    case 1: //A=0,B=1
+            if (last_z_step == 0) z_steps++;
+            if (last_z_step == 2) z_steps--;
+            current_z_step = 1;
             break;
-    case 3: current_z_step = 2;
+    case 3: //A=1,B=1
+            if (last_z_step == 1) z_steps++;
+            if (last_z_step == 3) z_steps--;
+            current_z_step = 2;
             break;
-    case 2: current_z_step = 3;
+    case 2: //A=1,B=0
+            if (last_z_step == 2) z_steps++;
+            if (last_z_step == 0) z_steps--;
+            current_z_step = 3;
   }
+  last_z_step = current_z_step;
+  get_xz_coordinates(Z0, z_steps);
 }
 
 void get_stepper_on_off() { //to observe EMCO Control (ISR)
@@ -248,16 +337,11 @@ void read_last_z_step() { //needed to switch on stepper without movement
   current_z_step = EEPROM.read(LAST_Z_STEP_ADDRESS);
 }
 
-//Stepper-Timeout-ISR:
-void stepper_timeout_ISR() {
-  stepper_off();
-}
-
 ISR(TIMER1_OVF_vect) {
   if (command_time) { //Dwell
     if (i_command_time==1) {
       ICR1 = (62500L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*command_time/100)-1
-      if (ICR1>TCNT1) {
+      if (ICR1<TCNT1) {
         TCNT1=0; //Checks if Timer already overrun the compare value
         //set Interrupt flag???
       }
@@ -280,7 +364,6 @@ ISR(TIMER1_OVF_vect) {
       }
       else current_x_step--;
       x_step--;
-      STATE_X--; //not finished, correction needed
     }
     //Movement in +X-Direction
     else {
@@ -289,17 +372,21 @@ ISR(TIMER1_OVF_vect) {
       }
       else current_x_step++;
       x_step++;
-      STATE_X++; //not finished, correction needed
     }
     
     //set next step
     set_xstep(current_x_step);
+
+    //set coordinate
+    STATE_X = get_xz_coordinates(X0, x_step);
 
     if (x_step==x_steps) { //last step reached?
       phi_x=0;
       x_step=0;
       x_steps=0;
       x_command_completed=1;
+      //Disable Output Compare A Match Interrupt Enable
+      TIMSK1 |= ~(_BV(OCIE1A)); //set 0
       TCCR1B = 0; //Disable Timer
     }
     else { //next Timer-Compare-Value
@@ -310,7 +397,17 @@ ISR(TIMER1_OVF_vect) {
         //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
         
         //next X-Step moving average feed
-        phi_x = (((long)(x_step))*90+45)/x_steps;
+        long phi_x_fixp = ((((long)x_step)*90+45)<<9)/x_steps; //max 22 bit used with X=32700 Fixpoint-Format => Q22.9
+        //Rounding
+        if ((phi_x_fixp%512) < 256) {
+          phi_x = phi_x_fixp>>9;
+        }
+        else {
+          phi_x = (phi_x_fixp>>9)+1;
+        }
+        if (phi_x == 0) { //phi_x has to be greater zero
+          phi_x = 1;
+        }
         
         if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
           //calculation of next x-clk (Direction)
@@ -355,6 +452,7 @@ ISR(TIMER1_OVF_vect) {
         //every step hast to be executed, feed can't be zero
         if (clk_xfeed) { //clock not zero
           ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/clk_xfeed)-1
+          //Overflow possible!!!
         } else ICR1 = 62499L;
       }
       
@@ -395,7 +493,6 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     }
     else current_z_step--;
     z_step--;
-    STATE_Z--; //not finished, correction needed
   }
   //Movement in +Z-Direction
   else {
@@ -404,17 +501,21 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     }
     else current_z_step++;
     z_step++;
-    STATE_Z++; //not finished, correction needed
   }
-  
+
   //set next step
   set_zstep(current_z_step);
+
+  //set coordinate
+  STATE_Z = get_xz_coordinates(Z0, z_step);
 
   if (z_step==z_steps) { //last step reached?
     phi_z=0;
     z_step=0;
     z_steps=0;
     z_command_completed=1;
+    //Disable Output Compare A Match Interrupt Enable
+    TIMSK3 |= ~(_BV(OCIE3A)); //set 0
     TCCR3B = 0; //Disable Timer
   }
   else { //next Timer-Compare-Value
@@ -425,7 +526,17 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       //Maybe an calculation of the next phi with a modified Bresenham-Algorithm could improve it.
       
       //next Z-Step moving average feed
-      phi_z = (((long)(z_step))*90+45)/z_steps;
+      long phi_z_fixp = ((((long)z_step)*90+45)<<9)/z_steps; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+      //Rounding
+      if ((phi_z_fixp%512) < 256) {
+        phi_z = phi_z_fixp>>9;
+      }
+      else {
+        phi_z = (phi_z_fixp>>9)+1;
+      }
+      if (phi_z == 0) { //phi_z has to be greater zero
+        phi_z = 1;
+      }
       
       if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
         //calculation of next z-clk (Direction)
@@ -470,6 +581,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       //every step hast to be executed, feed can't be zero
       if (clk_zfeed) { //clock not zero
         ICR3 = (3750000L/clk_zfeed)-1; //ICR3 = (16MHz*60(min/s)/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/clk_zfeed)-1
+        //Overflow possible!!!
       } else ICR3 = 62499L;
     }
 
