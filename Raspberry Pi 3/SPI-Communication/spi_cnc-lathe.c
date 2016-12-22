@@ -226,11 +226,11 @@ static void transfer(int fd)
 	printf("018 Reset Errors\n\n");
 	
 	printf("Message-Type: ");
-	if ((msg_type>=0) && (msg_type<=16)) printf("%i\n",msg_type);
+	if ((msg_type>=0) && (msg_type<=18)) printf("%i\n",msg_type);
 	else do {
 		scanf("%d",&msg_type);
 		getchar();
-	} while ((msg_type<0) || (msg_type>16));
+	} while ((msg_type<0) || (msg_type>18));
 	tx[pos++] = msg_type;
 		
 	//Message-Number
