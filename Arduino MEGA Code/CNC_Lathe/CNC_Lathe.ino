@@ -1,10 +1,10 @@
 #include "CNC_Lathe.h"
 
 //global vars
-volatile boolean debug=false, debug_spi=true, debug_stepper=false, debug_active=false, debug_rpm=false, debug_tool=true;
+volatile boolean debug=true, debug_spi=false, debug_stepper=false, debug_active=false, debug_rpm=true, debug_tool=true;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
-volatile const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
+const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
 
 //ERROR-Numbers
 volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
@@ -28,6 +28,7 @@ void setup() {
   pinMode(PIN_CONTROL_ACTIVE, INPUT);
   pinMode(PIN_REVOLUTIONS_SYNC, INPUT_PULLUP);
   pinMode(PIN_REVOLUTIONS_COUNT, INPUT_PULLUP);
+  pinMode(PIN_SPINDLE_ON_DETECT, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_OFF, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_X_B, INPUT);
@@ -75,7 +76,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
 
   //control active or not?
-  attachInterrupt(digitalPinToInterrupt(PIN_CONTROL_ACTIVE),get_control_active,CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_CONTROL_ACTIVE),get_control_active,CHANGE); //debouncing needed
 
   //TIMER
   
@@ -120,7 +121,7 @@ void setup() {
   //set interrupt enable
   sei();
 
-  get_control_active(); //get initional state
+  get_control_active(); //get initial state
 
   //read Last Steps
   //read_last_x_step();
