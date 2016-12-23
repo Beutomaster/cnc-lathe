@@ -1,7 +1,6 @@
 #include "CNC_Lathe.h"
 
 //global vars
-volatile boolean debug_serial_off=false, debug_spi_off=false, debug_stepper_off=false, debug_rpm_off=false, debug_tool_off=false, debug_msg_spi=false, debug_msg_stepper=false, debug_msg_active=false, debug_msg_rpm=false, debug_msg_tool=false;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
 const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
@@ -65,19 +64,26 @@ void setup() {
   get_control_active(); //get initial state
   
   //Serial Communication
-  if (!debug_serial_off) {
+  #ifndef DEBUG_SERIAL_OFF
+    //#error Serial compilation activated!
     //Serial.begin(115200); //for Debugging with Serial Monitor (115200 baud * 4 bit/baud = 460800 bit/s)
     Serial.begin(74880); //for Debugging with Serial Monitor (74880 baud * 4 bit/baud = 299520 bit/s)
     //Serial1.begin(9600); //Nikos Platine
-  }
+  #endif
   
   //SPI
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
   create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
-  if (!debug_spi_off) SPI.attachInterrupt();  //turn on interrupt
+  #ifndef DEBUG_SPI_OFF
+    //#error SPI compilation activated!
+    SPI.attachInterrupt();  //turn on interrupt
+  #endif
 
   //Measurement of Revolutions
-  if (!debug_rpm_off) attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
+  #ifndef DEBUG_RPM_OFF
+    //#error RPM compilation activated!
+    attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
+  #endif
 
   //TIMER
   
@@ -139,11 +145,12 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   //SPI-Communication
-  if (!debug_spi_off) {
+  #ifndef DEBUG_SPI_OFF
+    //#error SPI compilation activated!
     //if (!byte_received && tx_buf[0]==100) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress and no other message has to be sent
     if (!byte_received) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress
     spi_buffer_handling();
-  }
+  #endif
 
   //CNC-Lathe State-Machine  
   if (get_control_active()) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug

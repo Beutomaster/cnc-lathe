@@ -64,16 +64,17 @@ void spi_buffer_handling() {
     
     //Debug
     //String debug_string;
-    if (!debug_serial_off && debug_msg_spi) { //for debugging
-      Serial.print("SPI-Buffer:");
-      for (int i=0; i<pos; i++) {
-        Serial.print(" ");
-        //debug_string =  String(rx_doublebuf[i], DEC);
-        //Serial.print(debug_string);
-        Serial.print(rx_doublebuf[i], HEX);
-      }
-      Serial.println();
-    }
+    #if !defined DEBUG_SERIAL_OFF && defined DEBUG_MSG_SPI
+      //#error SPI debug-msg compilation activated!
+        Serial.print("SPI-Buffer:");
+        for (int i=0; i<pos; i++) {
+          Serial.print(" ");
+          //debug_string =  String(rx_doublebuf[i], DEC);
+          //Serial.print(debug_string);
+          Serial.print(rx_doublebuf[i], HEX);
+        }
+        Serial.println();
+    #endif
 
     process_incomming_msg();
     create_machine_state_msg();
@@ -336,10 +337,12 @@ ISR (SPI_STC_vect) {
   }  // end of room available
 
   /*
-  if (!debug_serial_off && debug_msg_spi) { //for debugging
-      Serial.print("pos: ");
-      Serial.println(pos);
-  }
+  //for debugging
+  #if !defined DEBUG_SERIAL_OFF && defined DEBUG_MSG_SPI
+    //#error SPI debug-msg compilation activated!
+    Serial.print("pos: ");
+    Serial.println(pos);
+  #endif
   */
 
   pos++;

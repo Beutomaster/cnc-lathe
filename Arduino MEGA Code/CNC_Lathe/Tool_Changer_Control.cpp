@@ -18,12 +18,14 @@ void set_tool_position(byte tool) {
         //set new Tool Postion
         STATE_T=tool;
 
-        if (!debug_serial_off && debug_msg_tool) {
+        #if !defined DEBUG_SERIAL_OFF && defined DEBUG_MSG_TOOL
+          //#error Tool debug-msg compilation activated!
           Serial.print("Tool Changer starts moving to Position ");
           Serial.println(tool, DEC);
-        }
+        #endif
 
-        if (!debug_tool_off) {
+        #ifndef DEBUG_TOOL_OFF
+          //#error Tool compilation activated!
           //Step1 TOOL_CHANGER_CHANGE 2,9s
           tool_step=1;
           command_completed=0;
@@ -44,8 +46,9 @@ void set_tool_position(byte tool) {
           TIMSK1 |= _BV(ICIE1); //set 1
           //Prescaler 1024 and Start Timer
           TCCR1B |= (_BV(CS12)|_BV(CS10)); //set 1
-        }
-        else i_tool=0;
+        #else
+          i_tool=0;
+        #endif
       }
     }
     else {

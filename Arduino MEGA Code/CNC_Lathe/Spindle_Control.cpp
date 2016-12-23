@@ -72,10 +72,11 @@ void set_revolutions(int target_revolutions_local) {
   //Serial1.write (rev_niko);
   
   //Debug
-  if (!debug_serial_off && debug_msg_rpm) { //for debugging
+  #if !defined DEBUG_SERIAL_OFF && defined DEBUG_MSG_RPM
+    //#error RPM debug-msg compilation activated!
     Serial.print("RPM-set-Value: ");
     Serial.println (target_revolutions_local);
-  }
+  #endif
 
   //Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
   //min. 16KHz?
