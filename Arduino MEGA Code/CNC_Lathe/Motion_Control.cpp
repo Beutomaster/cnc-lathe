@@ -65,7 +65,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   x_steps = (long)X*STEPS_PER_MM/100;
   z_steps = (long)Z*STEPS_PER_MM/100;
 
-  if (debug && debug_stepper) {
+  if (!debug_serial_off && debug_msg_stepper) {
     Serial.print("XStepper starts moving ");
     Serial.print(x_steps, DEC);
     Serial.println("Steps");

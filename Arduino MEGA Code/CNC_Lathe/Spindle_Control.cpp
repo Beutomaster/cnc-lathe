@@ -27,7 +27,7 @@ void spindle_off() {
 
 void spindle_direction(boolean spindle_reverse) {
   //don't change the spindle-direction, while the spindle is turning!!! Turn the Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!
-  if (control_active) { //Hotfix for Board V1.25, should be changed in V2.1
+  if (get_control_active()) { //Hotfix for Board V1.25, should be changed in V2.1
       spindle_off();
     //if (spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
     if (spindle_reverse) {
@@ -72,7 +72,7 @@ void set_revolutions(int target_revolutions_local) {
   //Serial1.write (rev_niko);
   
   //Debug
-  if (debug && debug_rpm) { //for debugging
+  if (!debug_serial_off && debug_msg_rpm) { //for debugging
     Serial.print("RPM-set-Value: ");
     Serial.println (target_revolutions_local);
   }
