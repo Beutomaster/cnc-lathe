@@ -110,7 +110,7 @@
 #include "Tool_Changer_Control.h"
 
 //global vars
-extern volatile boolean debug, debug_spi, debug_stepper, debug_active, debug_rpm, debug_tool;
+extern volatile boolean debug_serial_off, debug_spi_off, debug_stepper_off, debug_rpm_off, debug_tool_off, debug_msg_spi, debug_msg_stepper, debug_msg_active, debug_msg_rpm, debug_msg_tool;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
 extern const int lookup_cosinus[91];
