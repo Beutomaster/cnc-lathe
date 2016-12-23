@@ -5,6 +5,19 @@
 //many functions and vars should be private
 
 //defines
+
+//Debug-Switches
+#define DEBUG_SERIAL_OFF
+//#define DEBUG_SPI_OFF
+//#define DEBUG_STEPPER_OFF
+//#define DEBUG_RPM_OFF
+//#define DEBUG_TOOL_OFF
+//#define DEBUG_MSG_SPI
+//#define DEBUG_MSG_STEPPER
+//#define DEBUG_MSG_ACTIVE
+#define DEBUG_MSG_RPM
+#define DEBUG_MSG_TOOL
+
 //Input Parameter Ranges
 #define CNC_CODE_NMIN 0
 #define CNC_CODE_NMAX 500
@@ -110,10 +123,9 @@
 #include "Tool_Changer_Control.h"
 
 //global vars
-extern volatile boolean debug, debug_spi, debug_stepper, debug_active, debug_rpm, debug_tool;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
-extern volatile const int lookup_cosinus[91];
+extern const int lookup_cosinus[91];
 
 //ERROR-Numbers
 extern volatile byte ERROR_NO;

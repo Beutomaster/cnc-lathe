@@ -1,9 +1,7 @@
 #include "Control_Passiv.h"
 
-boolean control_active = 0;
-
-void get_control_active() { //maybe better with interrupt
-	control_active = digitalRead(PIN_CONTROL_ACTIVE);
+boolean get_control_active() { //not detected with interrupt, because of switch-bouncing
+	boolean control_active = digitalRead(PIN_CONTROL_ACTIVE);
   if (control_active) {
     STATE |= _BV(STATE_CONTROL_ACTIVE_BIT); //set STATE_bit0 = control_active
     //Observing old Control
@@ -33,6 +31,7 @@ void get_control_active() { //maybe better with interrupt
     attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_A),get_current_z_step,CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_B),get_current_z_step,CHANGE);
   }
+  return control_active;
 }
 
 void observe_machine() {
