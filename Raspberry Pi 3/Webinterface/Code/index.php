@@ -74,7 +74,7 @@ if(!$_SESSION['logged_in'])
         <h2>Manual Control</h2>
 		
 		<div class="clearfix solo">
-			<span class="left">
+			<div class="left">
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
@@ -85,9 +85,9 @@ if(!$_SESSION['logged_in'])
 					<input type="submit" class="button" name="SetXOffset" value="Set X-Offset" />
 				</fieldset>
 			</form>
-			</span>
+			</div>
 			
-			<span class="left">
+			<div class="left">
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
@@ -98,10 +98,10 @@ if(!$_SESSION['logged_in'])
 					<input type="submit" class="button" name="SetZOffset" value="Set Z-Offset" />
 				</fieldset>
 			</form>
-			</span>
+			</div>
 			
 			<div class="clearfix">
-			<span class="right">
+			<div class="right">
 			<form action="/php/send_command.php" method="post"> <!--  some js needed -->
 				<fieldset>
 					<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
@@ -109,11 +109,11 @@ if(!$_SESSION['logged_in'])
 					<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
 				</fieldset>
 			</form>
-			</span>
+			</div>
 			</div>
 		</div>
 		
-		<span class="left">
+		<div class="left">
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Spindle:</legend>
@@ -130,9 +130,9 @@ if(!$_SESSION['logged_in'])
 				<input type="button" id="SpindleOff" class="button" name="SpindleOff" value="Spindle OFF" />
 			</fieldset>
 		</form>
-		</span>
+		</div>
 		
-		<span class="left">
+		<div class="left">
 		<!-- <form action="php/set_feed.php" method="post"> -->
 		<!-- for SetStepperFeed a js-function is needed to set a client-variable, because no message is send -->
 		<form action="/php/send_command.php" method="post">
@@ -147,9 +147,9 @@ if(!$_SESSION['logged_in'])
 				<input type="button" id="StepperOff" class="button" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
 		</form>
-		</span>
+		</div>
 		
-		<span class="left">
+		<div class="left">
 		<form id="tool" action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Tool:</legend>
@@ -168,7 +168,7 @@ if(!$_SESSION['logged_in'])
 				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
 			</fieldset>
 		</form>
-		</span>
+		</div>
 		
 		<form class="solo" id="controls">
 			<fieldset>
@@ -300,10 +300,10 @@ if(!$_SESSION['logged_in'])
 <footer>
     <p>
         Semesterproject SS2016: CNC-Drehbank<br />
-        by Hannes Beuter, Hannes Schuhmacher &amp Niko Ramdorf<br />
+        by Hannes Beuter, Hannes Schuhmacher &amp; Niko Ramdorf<br />
         at the University of Applied Sciences Kiel, Germany<br />
         <a href="impressum.html">Impressum</a><br />
-		<div id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+		<span id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></span>
     </p>
 </footer>
 
