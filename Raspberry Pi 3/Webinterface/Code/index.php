@@ -91,8 +91,8 @@ if(!$_SESSION['logged_in'])
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
-					<label>Z-Offset (+-32700):<br />
-					<input type="number" name="zoffset" min="-32700" max="32700" value="0" autocomplete="off" required />
+					<label>Z-Offset (+-32760):<br />
+					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
 					<br />
 					<input type="submit" class="button" name="SetZOffset" value="Set Z-Offset" />
@@ -157,12 +157,12 @@ if(!$_SESSION['logged_in'])
 				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<label>X-Correction:<br />
-				<input type="number" name="tool_x-correction" value="0" autocomplete="off" />
+				<label>X-Correction (+-5999):<br />
+				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<label>Z-Correction:<br />
-				<input type="number" name="tool_z-correction" value="0" autocomplete="off" />
+				<label>Z-Correction (+-32760):<br />
+				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" />
 				</label>
 				<br />
 				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
