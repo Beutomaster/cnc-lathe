@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if(!$_SESSION['logged_in'])
 	header("Location: /login.html");
@@ -33,7 +33,18 @@ if(!$_SESSION['logged_in'])
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
-    <p>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></p>
+</header>
+
+<nav class="clearfix">
+	<ul class="top_nav">
+		<li id="manbutton" class="clearfix">Manual Control</li>
+		<li id="cncbutton" class="clearfix">CNC Control</li>
+		<li id="emcobutton" class="emco clearfix">EMCO Control</li>
+		<li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
+	</ul>
+    <ul class="top_login">
+		<li>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></li>
+	</ul>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
 	<!-- 
     <form action="php/login.php" method="post">
@@ -49,15 +60,6 @@ if(!$_SESSION['logged_in'])
         <input type="submit" value="Submit" />
     </form>
 	-->
-</header>
-
-<nav>
-	<ul>
-    <li id="manbutton" class="cnc clearfix">Manual Control</li>
-    <li id="cncbutton" class="manual clearfix">CNC Control</li>
-	<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
-    <li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
-	</ul>
 </nav>
 
 <section class="clearfix">
@@ -74,7 +76,7 @@ if(!$_SESSION['logged_in'])
         <h2>Manual Control</h2>
 		
 		<div class="clearfix solo">
-			<span class="left">
+			<div class="left">
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
@@ -85,23 +87,23 @@ if(!$_SESSION['logged_in'])
 					<input type="submit" class="button" name="SetXOffset" value="Set X-Offset" />
 				</fieldset>
 			</form>
-			</span>
+			</div>
 			
-			<span class="left">
+			<div class="left">
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
-					<label>Z-Offset (+-32700):<br />
-					<input type="number" name="zoffset" min="-32700" max="32700" value="0" autocomplete="off" required />
+					<label>Z-Offset (+-32760):<br />
+					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
 					<br />
 					<input type="submit" class="button" name="SetZOffset" value="Set Z-Offset" />
 				</fieldset>
 			</form>
-			</span>
+			</div>
 			
 			<div class="clearfix">
-			<span class="right">
+			<div class="right">
 			<form action="/php/send_command.php" method="post"> <!--  some js needed -->
 				<fieldset>
 					<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
@@ -109,11 +111,11 @@ if(!$_SESSION['logged_in'])
 					<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
 				</fieldset>
 			</form>
-			</span>
+			</div>
 			</div>
 		</div>
 		
-		<span class="left">
+		<div class="left">
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Spindle:</legend>
@@ -130,9 +132,9 @@ if(!$_SESSION['logged_in'])
 				<input type="button" id="SpindleOff" class="button" name="SpindleOff" value="Spindle OFF" />
 			</fieldset>
 		</form>
-		</span>
+		</div>
 		
-		<span class="left">
+		<div class="left">
 		<!-- <form action="php/set_feed.php" method="post"> -->
 		<!-- for SetStepperFeed a js-function is needed to set a client-variable, because no message is send -->
 		<form action="/php/send_command.php" method="post">
@@ -147,9 +149,9 @@ if(!$_SESSION['logged_in'])
 				<input type="button" id="StepperOff" class="button" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
 		</form>
-		</span>
+		</div>
 		
-		<span class="left">
+		<div class="left">
 		<form id="tool" action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Tool:</legend>
@@ -157,18 +159,18 @@ if(!$_SESSION['logged_in'])
 				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<label>X-Correction:<br />
-				<input type="number" name="tool_x-correction" value="0" autocomplete="off" />
+				<label>X-Correction (+-5999):<br />
+				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" />
 				</label>
 				<br />
-				<label>Z-Correction:<br />
-				<input type="number" name="tool_z-correction" value="0" autocomplete="off" />
+				<label>Z-Correction (+-32760):<br />
+				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" />
 				</label>
 				<br />
 				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
 			</fieldset>
 		</form>
-		</span>
+		</div>
 		
 		<form class="solo" id="controls">
 			<fieldset>
@@ -186,12 +188,13 @@ if(!$_SESSION['logged_in'])
     <article class="cnc clearfix">
         <h2>CNC-Control</h2>
         
-        <form action="/php/upload_cam-file.php">
+        <form>
             <fieldset>
 				<legend>Select CAM-File:</legend>
 				<input type="file" name="file-1[]" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
 				<label for="file-1"><span></span> <strong><svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17"><path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg> Choose a file&hellip;</strong></label>
 				<input type="submit" class="button" value="Upload" />
+				<div id="responses"></div>
 			</fieldset>
         </form>
 		
@@ -203,7 +206,7 @@ if(!$_SESSION['logged_in'])
 			</fieldset>
 		</form>
 		
-        <table id="code"><tr><th>Block-Nr.</th><th>G/M-Code</th><th>X</th><th>Z</th><th>F</th><th>H</th></tr></table>
+        <table id="code"><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></table>
     </article>
 	
 	<article class="emco clearfix">
@@ -216,7 +219,76 @@ if(!$_SESSION['logged_in'])
 
 <aside>
 	<h2>Machine State</h2>
+	<div class="state clearfix">
+				<div id="activeLED" class="led-grey"></div>
+				<p>Control active</p>
+	</div>
+	<div class="state clearfix">
+				<div id="initLED" class="led-grey"></div>
+				<p>Init</p>
+	</div>
+	<div class="state clearfix">
+				<div id="manualLED" class="led-grey"></div>
+				<p>Manual</p>
+	</div>
+	<div class="state clearfix">
+				<div id="pauseLED" class="led-grey"></div>
+				<p>Pause</p>
+	</div>
+	<div class="state clearfix">
+				<div id="inchLED" class="led-grey"></div>
+				<p>inch</p>
+	</div>
+	<div class="state clearfix">
+				<div id="SpindelOnLED" class="led-grey"></div>
+				<p>Spindel on</p>
+	</div>
+	<div class="state clearfix">
+				<div id="SpindelDirectionLED" class="led-grey"></div>
+				<p>Spindel-Direction</p>
+	</div>
+	<div class="state clearfix">
+				<div id="StepperOnLED" class="led-grey"></div>
+				<p>Stepper on</p>
+	</div>
+	<div class="state clearfix">
+				<p>RPM:</p>
+				<div id="RPMDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>X:</p>
+				<div id="XDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>Z:</p>
+				<div id="ZDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>Feed:</p>
+				<div id="FeedDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>H:</p>
+				<div id="HDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>Tool:</p>
+				<div id="ToolDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<div id="SpiErrorLED" class="led-grey"></div>
+				<p>SPI-Error</p>
+	</div>
+	<div class="state clearfix">
+				<div id="CNCErrorLED" class="led-grey"></div>
+				<p>CNC-Code-Error</p>
+	</div>
+	<div class="state clearfix">
+				<div id="SpindelErrorLED" class="led-grey"></div>
+				<p>Spindel-Error</p>
+	</div>
 	
+<!--
 	<form>
 			<label>Control active:<br />
 			<input type="text" name="active" id="active" />
@@ -287,6 +359,7 @@ if(!$_SESSION['logged_in'])
 			</label>
 			<br />
 	</form>
+-->
 	
 	<form>
 	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
@@ -299,15 +372,15 @@ if(!$_SESSION['logged_in'])
 
 <footer>
     <p>
-        Semesterproject SS2016: CNC-Drehbank<br />
-        by Hannes Beuter, Hannes Schuhmacher &amp Niko Ramdorf<br />
-        at the University of Applied Sciences Kiel, Germany<br />
-        <a href="impressum.html">Impressum</a><br />
-		<div id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
-    </p>
+        Semesterproject SS2016: CNC-Drehbank <br />
+        by Hannes Beuter, Hannes Schuhmacher &amp; Niko Ramdorf <br />
+        at the University of Applied Sciences Kiel, Germany
+	</p>
+	<p><a href="/impressum.html">Impressum</a></p>
+	<p id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></p>
 </footer>
 
-<script src="js/jquery.custom-file-input.js"></script>
+<script src="/js/jquery.custom-file-input.js"></script>
 
 </body>
 </html>

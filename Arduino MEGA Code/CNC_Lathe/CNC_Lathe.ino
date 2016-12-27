@@ -64,7 +64,7 @@ void setup() {
   get_control_active(); //get initial state
   
   //Serial Communication
-  #ifndef DEBUG_SERIAL_OFF
+  #ifndef DEBUG_SERIAL_CODE_OFF
     //#error Serial compilation activated!
     //Serial.begin(115200); //for Debugging with Serial Monitor (115200 baud * 4 bit/baud = 460800 bit/s)
     Serial.begin(74880); //for Debugging with Serial Monitor (74880 baud * 4 bit/baud = 299520 bit/s)
@@ -74,13 +74,13 @@ void setup() {
   //SPI
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
   create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
-  #ifndef DEBUG_SPI_OFF
+  #ifndef DEBUG_SPI_CODE_OFF
     //#error SPI compilation activated!
     SPI.attachInterrupt();  //turn on interrupt
   #endif
 
   //Measurement of Revolutions
-  #ifndef DEBUG_RPM_OFF
+  #ifndef DEBUG_RPM_CODE_OFF
     //#error RPM compilation activated!
     attachInterrupt(digitalPinToInterrupt(PIN_REVOLUTIONS_SYNC),get_revolutions_ISR,RISING);
   #endif
@@ -145,7 +145,7 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   //SPI-Communication
-  #ifndef DEBUG_SPI_OFF
+  #ifndef DEBUG_SPI_CODE_OFF
     //#error SPI compilation activated!
     //if (!byte_received && tx_buf[0]==100) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress and no other message has to be sent
     if (!byte_received) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress
