@@ -35,6 +35,8 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
   var spi_error=xmlDoc.getElementsByTagName("spi_error")[0].textContent;
   var cnc_code_error=xmlDoc.getElementsByTagName("cnc_code_error")[0].textContent;
   var spindel_error=xmlDoc.getElementsByTagName("spindel_error")[0].textContent;
+  
+  /*
   document.getElementById("active").setAttribute("value", active);
   document.getElementById("init").setAttribute("value", init);
   document.getElementById("manual").setAttribute("value", manual);
@@ -52,8 +54,17 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
   document.getElementById("spi_error").setAttribute("value", spi_error);
   document.getElementById("cnc_code_error").setAttribute("value", cnc_code_error);
   document.getElementById("spindel_error").setAttribute("value", spindel_error);
+  */
+  
+  document.getElementById("RPMDisplaybox").innerHTML = rpm_measure;
+  document.getElementById("XDisplaybox").innerHTML = x_actual;
+  document.getElementById("ZDisplaybox").innerHTML = z_actual;
+  document.getElementById("FeedDisplaybox").innerHTML = f_actual;
+  document.getElementById("HDisplaybox").innerHTML = h_actual;
+  document.getElementById("ToolDisplaybox").innerHTML = t_actual;
   
   if (active == 1) {
+	  document.getElementById("activeLED").className = "led-red";
 	  if (!debug) HideClass("emco");
 	  if (manual == 1) {
 		  //if (!debug) HideClass("cnc"); //should be shown while pause
@@ -88,11 +99,82 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	  }  
   }
   else {
+	  document.getElementById("activeLED").className = "led-grey";
 	  if (!debug) HideClass("manual");
 	  if (!debug) HideClass("cnc");
 	  ShowClass("emco");
   }
-} 
+  
+	if (init == 1) {
+		document.getElementById("initLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("initLED").className = "led-grey";
+	}
+	
+	if (manual == 1) {
+		document.getElementById("manualLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("manualLED").className = "led-grey";
+	}
+	
+	if (pause == 1) {
+		document.getElementById("pauseLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("pauseLED").className = "led-grey";
+	}
+	
+	if (inch == 1) {
+		document.getElementById("inchLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("inchLED").className = "led-grey";
+	}
+	
+	if (spindel_on == 1) {
+		document.getElementById("SpindelOnLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("SpindelOnLED").className = "led-grey";
+	}
+	
+	if (spindel_direction == 1) {
+		document.getElementById("SpindelDirectionLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("SpindelDirectionLED").className = "led-grey";
+	}
+	
+	if (stepper_on == 1) {
+		document.getElementById("StepperOnLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("StepperOnLED").className = "led-grey";
+	}
+	
+	if (spi_error == 1) {
+		document.getElementById("SpiErrorLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("SpiErrorLED").className = "led-grey";
+	}
+	
+	if (cnc_code_error == 1) {
+		document.getElementById("CNCErrorLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("CNCErrorLED").className = "led-grey";
+	}
+	
+	if (spindel_error == 1) {
+		document.getElementById("SpindelErrorLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("SpindelErrorLED").className = "led-grey";
+	}
+}
 
 //send command
 function sendCommand(str) {
@@ -143,21 +225,23 @@ function testekennwortqualitaet(inhalt)
 function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
   var i;
   var xmlDoc = xml.responseXML;
-  var table="<tr><th>Block-Nr.</th><th>G/M-Code</th><th>X</th><th>Z</th><th>F</th><th>H</th></tr>";
+  var table="<tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr>";
   var x = xmlDoc.getElementsByTagName("block");
   for (i = 0; i <x.length; i++) {
     table += "<tr><td>" +
-    x[i].getElementsByTagName("blockno")[0].childNodes[0].nodeValue +
+    x[i].getElementsByTagName("NValue")[0].childNodes[0].nodeValue +
     "</td><td>" +
-	x[i].getElementsByTagName("gmcode")[0].childNodes[0].nodeValue +
+	x[i].getElementsByTagName("GMCode")[0].childNodes[0].nodeValue +
     "</td><td>" +
-	x[i].getElementsByTagName("xvalue")[0].childNodes[0].nodeValue +
+	x[i].getElementsByTagName("GMValue")[0].childNodes[0].nodeValue +
     "</td><td>" +
-	x[i].getElementsByTagName("zvalue")[0].childNodes[0].nodeValue +
+	x[i].getElementsByTagName("XIValue")[0].childNodes[0].nodeValue +
     "</td><td>" +
-	x[i].getElementsByTagName("fvalue")[0].childNodes[0].nodeValue +
+	x[i].getElementsByTagName("ZKValue")[0].childNodes[0].nodeValue +
     "</td><td>" +
-    x[i].getElementsByTagName("hvalue")[0].childNodes[0].nodeValue +
+	x[i].getElementsByTagName("FTLKValue")[0].childNodes[0].nodeValue +
+    "</td><td>" +
+    x[i].getElementsByTagName("HSValue")[0].childNodes[0].nodeValue +
     "</td></tr>";
   }
   document.getElementById("code").innerHTML = table;

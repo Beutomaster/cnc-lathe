@@ -106,5 +106,22 @@ $(document).ready(function(){
 		});
 	});
 	*/
+	
+	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
+	// wenn es sich ändert
+	$('body').on('change', '#file-1', function() {
+	   var data = new FormData(); // das ist unser Daten-Objekt ...
+	   data.append('file', this.files[0]); // ... an die wir unsere Datei anhängen
+	   $.ajax({
+		  url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
+		  data: data,          // Das ist unser Datenobjekt.
+		  type: 'POST',         // HTTP-Methode, hier: POST
+		  processData: false,
+		  contentType: false,
+		  // und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
+		  // in das Response-Div
+		  success: function() { $("#responses").append("File successfully uploaded!");}
+	   });
+	})
 
 }); 

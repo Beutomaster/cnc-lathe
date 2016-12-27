@@ -33,7 +33,19 @@ if(!$_SESSION['logged_in'])
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
-    <p>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></p>
+</header>
+
+<nav class="clearfix">
+	<ul class="top_nav">
+		<li id="manbutton" class="cnc clearfix">Manual Control</li>
+		<li id="cncbutton" class="manual clearfix">CNC Control</li>
+		<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
+		<li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
+	</ul>
+    <ul class="top_login">
+		<li>User: <?php echo $_SESSION['usr']; ?></li>
+		<li><a href="/php/logout.php">Logout</a></li>
+	</ul>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
 	<!-- 
     <form action="php/login.php" method="post">
@@ -49,15 +61,6 @@ if(!$_SESSION['logged_in'])
         <input type="submit" value="Submit" />
     </form>
 	-->
-</header>
-
-<nav>
-	<ul>
-    <li id="manbutton" class="cnc clearfix">Manual Control</li>
-    <li id="cncbutton" class="manual clearfix">CNC Control</li>
-	<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
-    <li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
-	</ul>
 </nav>
 
 <section class="clearfix">
@@ -186,12 +189,13 @@ if(!$_SESSION['logged_in'])
     <article class="cnc clearfix">
         <h2>CNC-Control</h2>
         
-        <form action="/php/upload_cam-file.php">
+        <form>
             <fieldset>
 				<legend>Select CAM-File:</legend>
 				<input type="file" name="file-1[]" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
 				<label for="file-1"><span></span> <strong><svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17"><path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg> Choose a file&hellip;</strong></label>
 				<input type="submit" class="button" value="Upload" />
+				<div id="responses"></div>
 			</fieldset>
         </form>
 		
@@ -203,7 +207,7 @@ if(!$_SESSION['logged_in'])
 			</fieldset>
 		</form>
 		
-        <table id="code"><tr><th>Block-Nr.</th><th>G/M-Code</th><th>X</th><th>Z</th><th>F</th><th>H</th></tr></table>
+        <table id="code"><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></table>
     </article>
 	
 	<article class="emco clearfix">
@@ -216,7 +220,76 @@ if(!$_SESSION['logged_in'])
 
 <aside>
 	<h2>Machine State</h2>
+	<div class="state clearfix">
+				<div id="activeLED" class="led-grey"></div>
+				<p>Control active</p>
+	</div>
+	<div class="state clearfix">
+				<div id="initLED" class="led-grey"></div>
+				<p>Init</p>
+	</div>
+	<div class="state clearfix">
+				<div id="manualLED" class="led-grey"></div>
+				<p>Manual</p>
+	</div>
+	<div class="state clearfix">
+				<div id="pauseLED" class="led-grey"></div>
+				<p>Pause</p>
+	</div>
+	<div class="state clearfix">
+				<div id="inchLED" class="led-grey"></div>
+				<p>inch</p>
+	</div>
+	<div class="state clearfix">
+				<div id="SpindelOnLED" class="led-grey"></div>
+				<p>Spindel on</p>
+	</div>
+	<div class="state clearfix">
+				<div id="SpindelDirectionLED" class="led-grey"></div>
+				<p>Spindel-Direction</p>
+	</div>
+	<div class="state clearfix">
+				<div id="StepperOnLED" class="led-grey"></div>
+				<p>Stepper on</p>
+	</div>
+	<div class="state clearfix">
+				<p>RPM:</p>
+				<div id="RPMDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>X:</p>
+				<div id="XDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>Z:</p>
+				<div id="ZDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>Feed:</p>
+				<div id="FeedDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>H:</p>
+				<div id="HDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>Tool:</p>
+				<div id="ToolDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<div id="SpiErrorLED" class="led-grey"></div>
+				<p>SPI-Error</p>
+	</div>
+	<div class="state clearfix">
+				<div id="CNCErrorLED" class="led-grey"></div>
+				<p>CNC-Code-Error</p>
+	</div>
+	<div class="state clearfix">
+				<div id="SpindelErrorLED" class="led-grey"></div>
+				<p>Spindel-Error</p>
+	</div>
 	
+<!--
 	<form>
 			<label>Control active:<br />
 			<input type="text" name="active" id="active" />
@@ -287,6 +360,7 @@ if(!$_SESSION['logged_in'])
 			</label>
 			<br />
 	</form>
+-->
 	
 	<form>
 	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
@@ -299,15 +373,15 @@ if(!$_SESSION['logged_in'])
 
 <footer>
     <p>
-        Semesterproject SS2016: CNC-Drehbank<br />
-        by Hannes Beuter, Hannes Schuhmacher &amp; Niko Ramdorf<br />
-        at the University of Applied Sciences Kiel, Germany<br />
-        <a href="impressum.html">Impressum</a><br />
-		<span id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></span>
-    </p>
+        Semesterproject SS2016: CNC-Drehbank <br />
+        by Hannes Beuter, Hannes Schuhmacher &amp; Niko Ramdorf <br />
+        at the University of Applied Sciences Kiel, Germany
+	</p>
+	<p><a href="impressum.html">Impressum</a></p>
+	<p id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></p>
 </footer>
 
-<script src="js/jquery.custom-file-input.js"></script>
+<script src="/js/jquery.custom-file-input.js"></script>
 
 </body>
 </html>
