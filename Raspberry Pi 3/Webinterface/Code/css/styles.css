@@ -76,15 +76,15 @@ input {
     cursor: not-allowed;
 }
 
-#shutdown, #SpindleOff, #StepperOff {
+#shutdown, #SpindleOff, #StepperOff, #ProgramStop {
 	background-color: #d3394c; /* red */
 }
 
-#shutdown:hover, #SpindleOff:hover, #StepperOff:hover {
+#shutdown:hover, #SpindleOff:hover, #StepperOff:hover, #ProgramStop:hover {
     background-color: #722040;
 }
 
-#shutdown:active, #SpindleOff:active, #StepperOff:active {
+#shutdown:active, #SpindleOff:active, #StepperOff:active, #ProgramStop:active {
     background-color: #722040;
 }
 
