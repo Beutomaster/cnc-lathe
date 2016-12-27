@@ -1,27 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <cnccode>
 	<block>
-		<blockno>N0000</blockno>
-		<gmcode>G01</gmcode>
-		<xvalue>94</xvalue>
-		<zvalue>-120</zvalue>
-		<fvalue>200</fvalue>
-		<hvalue>160</hvalue>
+		<NValue>0000</NValue>
+		<GMCode>G</GMCode>
+		<GMValue>1</GMValue>
+		<XIValue>94</XIValue>
+		<ZKValue>-120</ZKValue>
+		<FTLKValue>200</FTLKValue>
+		<HSValue>160</HSValue>
 	</block>
 	<block>
-		<blockno>N0001</blockno>
-		<gmcode>G01</gmcode>
-		<xvalue>-94</xvalue>
-		<zvalue>120</zvalue>
-		<fvalue>200</fvalue>
-		<hvalue>160</hvalue>
+		<NValue>0001</NValue>
+		<GMCode>G</GMCode>
+		<GMValue>1</GMValue>
+		<XIValue>-94</XIValue>
+		<ZKValue>120</ZKValue>
+		<FTLKValue>200</FTLKValue>
+		<HSValue>160</HSValue>
 	</block>
 	<block>
-		<blockno>N0003</blockno>
-		<gmcode>M00</gmcode>
-		<xvalue>0</xvalue>
-		<zvalue>0</zvalue>
-		<fvalue>0</fvalue>
-		<hvalue>0</hvalue>
+		<NValue>0002</NValue>
+		<GMCode>M</GMCode>
+		<GMValue>0</GMValue>
+		<XIValue>0</XIValue>
+		<ZKValue>0</ZKValue>
+		<FTLKValue>0</FTLKValue>
+		<HSValue>0</HSValue>
 	</block>
 </cnccode>

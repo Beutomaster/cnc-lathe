@@ -64,7 +64,7 @@ void spi_buffer_handling() {
     
     //Debug
     //String debug_string;
-    #if !defined DEBUG_SERIAL_OFF && defined DEBUG_MSG_SPI
+    #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
       //#error SPI debug-msg compilation activated!
         Serial.print("SPI-Buffer:");
         for (int i=0; i<pos; i++) {
@@ -338,7 +338,7 @@ ISR (SPI_STC_vect) {
 
   /*
   //for debugging
-  #if !defined DEBUG_SERIAL_OFF && defined DEBUG_MSG_SPI
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
     //#error SPI debug-msg compilation activated!
     Serial.print("pos: ");
     Serial.println(pos);
