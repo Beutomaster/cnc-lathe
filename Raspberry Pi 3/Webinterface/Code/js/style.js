@@ -1,4 +1,4 @@
-function toggleClassHide(classToHide, classToShow) {
+﻿function toggleClassHide(classToHide, classToShow) {
 	var x = document.getElementsByClassName(classToHide);
 	var i;
 	for (i = 0; i < x.length; i++) {
