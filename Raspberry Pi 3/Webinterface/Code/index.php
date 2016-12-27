@@ -37,9 +37,9 @@ if(!$_SESSION['logged_in'])
 
 <nav class="clearfix">
 	<ul class="top_nav">
-		<li id="manbutton" class="cnc clearfix">Manual Control</li>
-		<li id="cncbutton" class="manual clearfix">CNC Control</li>
-		<li id="emcobutton" class="manual cnc clearfix">EMCO Control</li>
+		<li id="manbutton" class="clearfix">Manual Control</li>
+		<li id="cncbutton" class="clearfix">CNC Control</li>
+		<li id="emcobutton" class="emco clearfix">EMCO Control</li>
 		<li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
 	</ul>
     <ul class="top_login">
