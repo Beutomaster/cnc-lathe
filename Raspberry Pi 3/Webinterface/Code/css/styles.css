@@ -1,4 +1,4 @@
-* {
+﻿* {
     box-sizing: border-box;
 }
 
@@ -220,6 +220,10 @@ table {
     background-color: #f1f1c1;
 }
 
+table.impressum {
+	table-layout: auto;
+}
+
 table, th, td {
     border: 1px solid black;
     border-collapse: collapse;
@@ -348,6 +352,11 @@ section {
     float:left;
     padding:0px;
 	border-right: 1px solid #000;
+}
+
+section.impressum {
+	width:100%;
+	padding:0 15%;
 }
 
 article {

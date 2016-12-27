@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if(!$_SESSION['logged_in'])
 	header("Location: /login.html");
@@ -377,7 +377,7 @@ if(!$_SESSION['logged_in'])
         by Hannes Beuter, Hannes Schuhmacher &amp; Niko Ramdorf <br />
         at the University of Applied Sciences Kiel, Germany
 	</p>
-	<p><a href="impressum.html">Impressum</a></p>
+	<p><a href="/impressum.html">Impressum</a></p>
 	<p id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></p>
 </footer>
 

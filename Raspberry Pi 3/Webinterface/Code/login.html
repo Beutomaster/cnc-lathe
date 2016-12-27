@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 	<head>
@@ -18,6 +18,10 @@
 		<script>(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);</script>
 	</head>
 	<body>
+		<header class="clearfix">
+			<h1>CNC-Lathe-Control</h1>
+		</header>
+		
 		<section id="loginpage" class="clearfix">
 			<noscript>
 				<h1>In Ihrem Browser ist JavaScript deaktiviert.</h1>
@@ -27,8 +31,8 @@
 					Im SELFHTML-Wiki erfahren Sie, <a href="https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/JavaScript_aktivieren"> wie Sie JavaScript in Ihrem Browser aktivieren können. </a>
 				</p>
 			</noscript>
+			
 			<div id="loginmain" class="clearfix">
-				<h1>CNC-Lathe-Control</h1>
 				<div id="login">
 					<h2>Login</h2>
 					<form action="/php/login.php" method="post">
@@ -42,5 +46,14 @@
 				</div>
 			</div>
 		</section>
+		
+		<footer>
+			<p>
+				Semesterproject SS2016: CNC-Drehbank <br />
+				by Hannes Beuter, Hannes Schuhmacher &amp; Niko Ramdorf <br />
+				at the University of Applied Sciences Kiel, Germany
+			</p>
+			<p><a href="/impressum.html">Impressum</a></p>
+		</footer>
 	</body>
 </html>

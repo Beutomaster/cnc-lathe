@@ -1,4 +1,4 @@
-/*
+﻿/*
 URL: window.location.origin
 */
 

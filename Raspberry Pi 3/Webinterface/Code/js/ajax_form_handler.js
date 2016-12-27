@@ -1,4 +1,4 @@
-/*\
+﻿/*\
 |*|  AJAX submit for each form of the webpage
 |*|  
 |*|  This code can handle all four versions of form submit via AJAX:
