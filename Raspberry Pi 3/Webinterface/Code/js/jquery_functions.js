@@ -2,6 +2,8 @@
 
     // jQuery methods go here...
 	
+	$(".help").hide();
+	
 	//Polling Machine State
 	var pollTimeout = 1000; //1000 = every second
 	
@@ -16,25 +18,39 @@
 	})();
 	
 	//Toggle Visibility of Manual and CNC Control
-    $("#manbutton").click(function(){
+    $("#ManButton").click(function(){
 	   $(".cnc").hide();
 	   //$(".emco").hide();
+	   $(".help").hide();
 	   $(".manual").show();
 	});
 	
-	$("#cncbutton").click(function(){
+	$("#CncButton").click(function(){
 	   $(".manual").hide();
 	   //$(".emco").hide();
+	   $(".help").hide();
 	   $(".cnc").show();
 	});
 	
 	/*
-	$("#emcobutton").click(function(){
+	$("#EmcoButton").click(function(){
 	   $(".manual").hide();
 	   $(".cnc").hide();
+	   $(".help").hide();
 	   $(".emco").show();
 	});
 	*/
+	
+	$("#HelpButton").click(function(){
+		$(".manual").hide();
+		$(".cnc").hide();
+		$(".emco").hide();
+		$(".help").show();
+	});
+	
+	$("#LogoutButton").click(function(){
+	   location.href = href="/php/logout.php";
+	});
 
 	/*
 	$(function() {

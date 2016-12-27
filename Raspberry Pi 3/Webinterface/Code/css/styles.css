@@ -511,3 +511,8 @@ aside p {
     float: left;
     position: relative;
 }
+
+#helpwiki {
+	width: 100%;
+	height: 100vh;
+}

@@ -37,13 +37,13 @@ if(!$_SESSION['logged_in'])
 
 <nav class="clearfix">
 	<ul class="top_nav">
-		<li id="manbutton" class="clearfix">Manual Control</li>
-		<li id="cncbutton" class="clearfix">CNC Control</li>
-		<li id="emcobutton" class="emco clearfix">EMCO Control</li>
-		<li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
+		<li id="ManButton" class="clearfix">Manual Control</li>
+		<li id="CncButton" class="clearfix">CNC Control</li>
+		<li id="EmcoButton" class="emco clearfix">EMCO Control</li>
+		<li id="HelpButton" class="clearfix">Help</li>
 	</ul>
     <ul class="top_login">
-		<li>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></li>
+		<li id="LogoutButton">Logout User: <?php echo $_SESSION['usr']; ?></li>
 	</ul>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
 	<!-- 
@@ -214,6 +214,11 @@ if(!$_SESSION['logged_in'])
 		<!-- Stream Video of old Emco Control
         <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
 		-->
+    </article>
+	
+	<article class="help clearfix">
+        <h2>Help</h2>
+		<iframe id="helpwiki" src="/dokuwiki/index.php"></iframe> 
     </article>
 </section>
 
