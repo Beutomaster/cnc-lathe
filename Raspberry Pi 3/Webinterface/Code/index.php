@@ -43,8 +43,7 @@ if(!$_SESSION['logged_in'])
 		<li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
 	</ul>
     <ul class="top_login">
-		<li>User: <?php echo $_SESSION['usr']; ?></li>
-		<li><a href="/php/logout.php">Logout</a></li>
+		<li>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></li>
 	</ul>
 	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
 	<!-- 
