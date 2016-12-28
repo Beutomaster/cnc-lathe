@@ -7,7 +7,7 @@ if(!$_SESSION['logged_in'])
 
 <!doctype html>
 
-<!-- Development-Version 0.1 -->
+<!-- Development-Version 0.2 -->
 
 <html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 <head>
@@ -61,7 +61,18 @@ if(!$_SESSION['logged_in'])
     <article class="manual clearfix">
         <h2>Manual Control</h2>
 		
-		<div class="clearfix solo">
+		<!-- <div class="clearfix solo"> -->
+			<div class="left">
+				<form action="/php/send_command.php" method="post"> <!--  some js needed -->
+					<fieldset>
+						<legend>Scale:</legend>
+						<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
+						<br />
+						<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
+					</fieldset>
+				</form>
+			</div>
+				
 			<div class="left">
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
@@ -87,19 +98,7 @@ if(!$_SESSION['logged_in'])
 				</fieldset>
 			</form>
 			</div>
-			
-			<div class="clearfix">
-			<div class="right">
-			<form action="/php/send_command.php" method="post"> <!--  some js needed -->
-				<fieldset>
-					<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
-					<br />
-					<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
-				</fieldset>
-			</form>
-			</div>
-			</div>
-		</div>
+		<!-- </div> -->
 		
 		<div class="left">
 		<form action="/php/send_command.php" method="post">
@@ -374,7 +373,6 @@ if(!$_SESSION['logged_in'])
         at the University of Applied Sciences Kiel, Germany
 	</p>
 	<p><a href="/impressum.html">Impressum</a></p>
-	<p id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></p>
 </footer>
 
 <script src="/js/jquery.custom-file-input.js"></script>

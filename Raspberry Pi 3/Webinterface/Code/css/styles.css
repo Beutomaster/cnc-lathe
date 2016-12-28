@@ -35,7 +35,7 @@ p {
 }
 
 form {
-    margin-bottom: 15px;
+    margin: 0 15px 15px 15px;
 }
 
 input {
@@ -261,10 +261,10 @@ td {
 }
 
 #controls input {
-	height: 125px;
-	width: 125px;
+	height: 100px;
+	width: 100px;
 	padding: auto;
-    margin: 5px 100px;
+    margin: 10px 55px;
 	background-color:gold;
 	font-size: 1.5em;
 	font-weight: bold;
