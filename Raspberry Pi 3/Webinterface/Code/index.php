@@ -108,7 +108,7 @@ if(!$_SESSION['logged_in'])
 				<label><input type="radio" name="spindle_direction" value="right" checked="checked" />Rotation right handed</label>
 				<br />
 				<label><input type="radio" name="spindle_direction" value="left" />Rotation left handed</label>
-				<br /><br />
+				<br />
 				<label>RPM (460 to 3220):<br />
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
 				</label>

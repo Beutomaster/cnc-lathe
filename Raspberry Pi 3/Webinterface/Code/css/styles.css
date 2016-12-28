@@ -49,6 +49,16 @@ input:out-of-range {
 	background-color: red;
 }
 
+fieldset {
+	border-color: #999;
+}
+
+label {
+	display: inline-block;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
 .button {
     background-color: #4CAF50; /* green */
     border: none;
