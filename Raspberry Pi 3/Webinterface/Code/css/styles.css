@@ -45,6 +45,10 @@ input {
 	background-color: gold;
 }
 
+input:out-of-range {
+	background-color: red;
+}
+
 .button {
     background-color: #4CAF50; /* green */
     border: none;
