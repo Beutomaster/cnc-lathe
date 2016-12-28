@@ -135,11 +135,21 @@
 		  data: data,          // Das ist unser Datenobjekt.
 		  type: 'POST',         // HTTP-Methode, hier: POST
 		  processData: false,
+		  //contentType : 'multipart/form-data',
 		  contentType: false,
 		  // und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
 		  // in das Response-Div
 		  success: function() { $("#responses").append("File successfully uploaded!");}
-	   });
+	   }).done(function (data) {
+			// Bei Erfolg
+			alert("Erfolgreich:" + data);
+		}).fail(function() {
+			// Bei Fehler
+			alert("Fehler!");
+		}).always(function() {
+			// Immer
+			alert("Beendet!");
+		});
 	})
 
 }); 
