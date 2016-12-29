@@ -109,7 +109,7 @@ if(!$_SESSION['logged_in'])
 				<label><input type="radio" name="spindle_direction" value="left" />Rotation left handed</label>
 				<br />
 				<label>RPM (460 to 3220):<br />
-				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
+				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
 				</label>
 				<br />
 				<input type="submit" id="SpindleOn" class="button" name="SpindleSetRPM" value="Spindle ON" />
@@ -126,7 +126,7 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Stepper:</legend>
 				<label>Feed (2 to 499):<br />
-				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
+				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" required />
 				</label>
 				<br />
 				<input type="submit" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
@@ -141,15 +141,15 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Tool:</legend>
 				<label>Tool (1 to 6):<br />
-				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" />
+				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" required />
 				</label>
 				<br />
 				<label>X-Correction (+-5999):<br />
-				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" />
+				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" required />
 				</label>
 				<br />
 				<label>Z-Correction (+-32760):<br />
-				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" />
+				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" required />
 				</label>
 				<br />
 				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
@@ -173,15 +173,16 @@ if(!$_SESSION['logged_in'])
     <article class="cnc clearfix">
         <h2>CNC-Control</h2>
         
-		<!--
-        <form enctype="multipart/form-data" method="POST">
-		-->
+<!--		
+        <form enctype="multipart/form-data" method="POST" action="/php/upload_cam-file.php">
+-->
 		<form>
             <fieldset>
 				<legend>Select CAM-File:</legend>
 				<input type="hidden" name="MAX_FILE_SIZE" value="500000" />
 				<input type="file" name="file-1" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" />
 				<label for="file-1"><span></span> <strong><svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17"><path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg> Upload File</strong></label>
+				<!--	<input type="submit" class="button" value="Upload File" />	-->
 				<input type="button" class="button" value="Upload Changes" />
 				<input type="button" class="button" value="Reset Changes" />
 				<input type="button" class="button" value="Save File" />
@@ -192,8 +193,8 @@ if(!$_SESSION['logged_in'])
 		<form>
 			<fieldset>
 				<legend>Programm Control:</legend>
-				<input type="button" id="ProgramStartPause" class="button" onclick="/php/send_command.php" name="ProgramStartPause" value="Start" /> <!-- Set to Stop with js at Programmstart -->
-				<input type="button" id="ProgramStop" class="button" onclick="/php/send_command.php" name="ProgramStop" value="Stop" />
+				<input type="button" id="ProgramStartPause" class="button" name="ProgramStartPause" value="Start" /> <!-- Set to Stop with js at Programmstart -->
+				<input type="button" id="ProgramStop" class="button" name="ProgramStop" value="Stop" />
 			</fieldset>
 		</form>
 		
