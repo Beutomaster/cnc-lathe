@@ -270,3 +270,27 @@ function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
   table += "</tbody>";
   document.getElementById("code").innerHTML = table;
 } 
+
+//Save as File
+function saveTextAsFile()
+{
+    var textToSave = document.getElementById("CncCodeTxt").value;
+    var textToSaveAsBlob = new Blob([textToSave], {type:"text/plain"});
+    var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
+    var fileNameToSaveAs = "cnc_code.txt"; //document.getElementById("inputFileNameToSaveAs").value;
+ 
+    var downloadLink = document.createElement("a");
+    downloadLink.download = fileNameToSaveAs;
+    downloadLink.innerHTML = "Download File";
+    downloadLink.href = textToSaveAsURL;
+    downloadLink.onclick = destroyClickedElement;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+ 
+    downloadLink.click();
+}
+
+function destroyClickedElement(event)
+{
+    document.body.removeChild(event.target);
+}

@@ -185,7 +185,7 @@ if(!$_SESSION['logged_in'])
 				<!--	<input type="submit" class="button" value="Upload File" />	-->
 				<input id="UploadChanges" type="button" class="button" value="Upload Changes" />
 				<input id="ResetChanges" type="button" class="button" value="Reset Changes" />
-				<input id="SaveFile" type="button" class="button" value="Save File" />
+				<input id="SaveFile" type="button" class="button" onclick="saveTextAsFile()" value="Save File" />
 				<div id="responses"></div>
 			</fieldset>
         </form>
