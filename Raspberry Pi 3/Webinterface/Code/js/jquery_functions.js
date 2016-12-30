@@ -57,7 +57,32 @@
 	
 	//Reload CNC-Code-File from Server
 	$("#ResetChanges").click(function(){
-		$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+		$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
+		//$("#CncCode").reset();
+		alert( "Reset does not work yet!" );
+	}); 
+	
+	//Upload Changes to CNC-Code-File on Server
+	$("#UploadChanges").click(function(){
+		$.ajax({type:'POST', url: '/php/update_cam-file.php', data:$('#CncCode').serialize(), success: function(response) {
+				//$('#ContactForm').find('.form_result').html(response);
+				//$("#responses").html("Response: " +  JSON.stringify(data));
+			}
+		}).done(function (data) {
+			// Bei Erfolg
+			//alert("Erfolgreich:" + data);
+			$("#responses").html("Response: " +  JSON.stringify(data));
+		}).fail(function() {
+			// Bei Fehler
+			$("#responses").html("Request-Error: Upload failed!");
+			//alert("Fehler!");
+		}).always(function() {
+			// Immer
+			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
+			//alert("Beendet!");
+			//Load new CNC-Code-File from Server (for Security)
+			$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
+		});
 	}); 
 
 	/*

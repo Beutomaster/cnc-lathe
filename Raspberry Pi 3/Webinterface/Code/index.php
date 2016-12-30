@@ -205,9 +205,9 @@ if(!$_SESSION['logged_in'])
 		
 		<p></p>
 		
-		<form>
+		<form id="CncCode">
 			<label for="CncCodeTxt">CNC-Code:</label><br />
-			<textarea id="CncCodeTxt" cols="120" rows="50" wrap="off"></textarea>
+			<textarea id="CncCodeTxt" name="CncCodeTxt" cols="120" rows="50" wrap="off"></textarea>
 		</form>
     </article>
 	
