@@ -2,6 +2,11 @@
 
     // jQuery methods go here...
 	
+	$.ajaxSetup ({
+		// Disable caching of AJAX responses
+		cache: false
+	});
+	
 	//Polling Machine State
 	var pollTimeout = 1000; //1000 = every second
 	
@@ -32,15 +37,6 @@
 	   $(".cnc").show();
 	});
 	
-	/*
-	$("#EmcoButton").click(function(){
-	   $(".manual").hide();
-	   $(".cnc").hide();
-	   $(".help").hide();
-	   $(".emco").show();
-	});
-	*/
-	
 	$("#HelpButton").click(function(){
 		$(".manual").hide();
 		$(".cnc").hide();
@@ -52,18 +48,72 @@
 	   location.href = href="/php/logout.php";
 	});
 	
+		
+	function UpdateAndResizeTextarea() {		
+		$.ajax({
+			url: "/uploads/cnc_code.txt",
+			success: function(result){
+				$("#CncCodeTxt").val(result);
+				$("#responses").append("<br />Textarea Updated!");
+				var txt = $("#CncCodeTxt").val();
+				//console.log(txt);
+				var lines = txt.split(/\r|\r\n|\n/);
+				var count = lines.length;
+				//console.log(count);
+				document.getElementById("CncCodeTxt").rows=count;
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
+			}
+		});
+		
+		/*
+		$("#CncCodeTxt").load("/uploads/cnc_code.txt", function(responseTxt, statusTxt, xhr){  //load does not work sometimes ... why???
+			if(statusTxt == "success") {
+				//alert("External content loaded successfully!");
+				$("#responses").append("<br />Textarea Updated!");
+				var txt = $("#CncCodeTxt").val();
+				//console.log(txt);
+				var lines = txt.split(/\r|\r\n|\n/);
+				var count = lines.length;
+				//console.log(count);
+				document.getElementById("CncCodeTxt").rows=count;
+			}
+			if(statusTxt == "error") {
+				//alert("Error: " + xhr.status + ": " + xhr.statusText);
+				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
+			}
+		});
+		*/
+	}
+	
 	//load last CNC-Code-File from Server
-	$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+	UpdateAndResizeTextarea();
 	
 	//Reload CNC-Code-File from Server
 	$("#ResetChanges").click(function(){
-		$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
-		//$("#CncCode").reset();
-		alert( "Reset does not work yet!" );
+		UpdateAndResizeTextarea();
 	}); 
 	
 	//Upload Changes to CNC-Code-File on Server
 	$("#UploadChanges").click(function(){
+		$.ajax({
+			type:'POST',
+			url: '/php/update_cam-file.php',
+			data:$('#CncCode').serialize(),
+			success: function(response) {
+				$("#responses").html("Response: " +  JSON.stringify(response));
+				//Load new CNC-Code-File from Server (for Security)
+				UpdateAndResizeTextarea(); //Error-Handling needed!!!
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
+			}
+		});
+		
+		/*
 		$.ajax({type:'POST', url: '/php/update_cam-file.php', data:$('#CncCode').serialize(), success: function(response) {
 				//$('#ContactForm').find('.form_result').html(response);
 				//$("#responses").html("Response: " +  JSON.stringify(data));
@@ -81,8 +131,10 @@
 			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
 			//alert("Beendet!");
 			//Load new CNC-Code-File from Server (for Security)
-			$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
+			//$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
+			UpdateAndResizeTextarea(); //Error-Handling needed!!!
 		});
+		*/
 	}); 
 
 	/*
@@ -170,6 +222,13 @@
 			processData: false,
 			//contentType : 'multipart/form-data',
 			contentType: false,
+			success: function(response) {
+				$("#responses").html("Response: " +  JSON.stringify(response));
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
+			}
 			// und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
 			// in das Response-Div
 			//success: function() { $("#responses").html("File successfully uploaded!");}
@@ -183,6 +242,7 @@
 				console.log(errResponse);
 			}
 			*/
+			/*
 		}).done(function (data) {
 			// Bei Erfolg
 			//alert("Erfolgreich:" + data);
@@ -191,12 +251,14 @@
 			// Bei Fehler
 			$("#responses").html("Request-Error: Upload failed!");
 			//alert("Fehler!");
+			*/
 		}).always(function() {
 			// Immer
 			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
 			//alert("Beendet!");
 			//Load new CNC-Code-File from Server (for Security)
-			$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+			//$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+			UpdateAndResizeTextarea();
 		});
 	})
 

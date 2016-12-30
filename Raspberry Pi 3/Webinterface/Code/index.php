@@ -207,7 +207,7 @@ if(!$_SESSION['logged_in'])
 		
 		<form id="CncCode">
 			<label for="CncCodeTxt">CNC-Code:</label><br />
-			<textarea id="CncCodeTxt" name="CncCodeTxt" cols="120" rows="50" wrap="off"></textarea>
+			<textarea id="CncCodeTxt" name="CncCodeTxt" cols="120" rows="50" wrap="soft"></textarea>
 		</form>
     </article>
 	
