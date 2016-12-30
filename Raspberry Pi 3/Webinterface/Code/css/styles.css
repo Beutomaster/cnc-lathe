@@ -90,15 +90,17 @@ label {
     cursor: not-allowed;
 }
 
-#shutdown, #SpindleOff, #StepperOff, #ProgramStop {
+
+/* #shutdown, #SpindleOff, #StepperOff, #ProgramStop */
+.button_red {
 	background-color: #d3394c; /* red */
 }
 
-#shutdown:hover, #SpindleOff:hover, #StepperOff:hover, #ProgramStop:hover {
+.button_red:hover {
     background-color: #722040;
 }
 
-#shutdown:active, #SpindleOff:active, #StepperOff:active, #ProgramStop:active {
+.button_red:active {
     background-color: #722040;
 }
 

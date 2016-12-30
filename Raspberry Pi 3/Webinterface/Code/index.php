@@ -114,7 +114,7 @@ if(!$_SESSION['logged_in'])
 				<br />
 				<input type="submit" id="SpindleOn" class="button" name="SpindleSetRPM" value="Spindle ON" />
 				<br />
-				<input type="button" id="SpindleOff" class="button" name="SpindleOff" value="Spindle OFF" />
+				<input type="button" id="SpindleOff" class="button button_red" name="SpindleOff" value="Spindle OFF" />
 			</fieldset>
 		</form>
 		</div>
@@ -131,7 +131,7 @@ if(!$_SESSION['logged_in'])
 				<br />
 				<input type="submit" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
 				<br />
-				<input type="button" id="StepperOff" class="button" name="StepperOff" value="Stepper OFF" />
+				<input type="button" id="StepperOff" class="button button_red" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
 		</form>
 		</div>
@@ -184,7 +184,7 @@ if(!$_SESSION['logged_in'])
 				<label for="file-1"><span></span> <strong><svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17"><path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg> Upload File</strong></label>
 				<!--	<input type="submit" class="button" value="Upload File" />	-->
 				<input id="UploadChanges" type="button" class="button" value="Upload Changes" />
-				<input id="ResetChanges" type="button" class="button" value="Reset Changes" />
+				<input id="ResetChanges" type="button" class="button button_red" value="Reset Changes" />
 				<input id="SaveFile" type="button" class="button" onclick="saveTextAsFile()" value="Save File" />
 				<div id="responses"></div>
 			</fieldset>
@@ -193,8 +193,11 @@ if(!$_SESSION['logged_in'])
 		<form>
 			<fieldset>
 				<legend>Programm Control:</legend>
+				<label>Start-Block:
+				<input type="number" name="block" min="0" max="9999" value="0" autocomplete="off" required />
+				</label>
 				<input type="button" id="ProgramStartPause" class="button" name="ProgramStartPause" value="Start" /> <!-- Set to Stop with js at Programmstart -->
-				<input type="button" id="ProgramStop" class="button" name="ProgramStop" value="Stop" />
+				<input type="button" id="ProgramStop" class="button button_red" name="ProgramStop" value="Stop" />
 			</fieldset>
 		</form>
 		
@@ -280,6 +283,10 @@ if(!$_SESSION['logged_in'])
 				<div id="ToolDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
+				<p>N:</p>
+				<div id="NDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
 				<div id="SpiErrorLED" class="led-grey"></div>
 				<p>SPI-Error</p>
 	</div>
@@ -349,6 +356,10 @@ if(!$_SESSION['logged_in'])
 			<label>Tool:<br />
 			<input type="text" name="t_actual" id="t_actual" />
 			</label>
+			<br />
+			<label>N:<br />
+			<input type="text" name="n_actual" id="n_actual" />
+			</label>
 			<br /><br />
 			<label>SPI-Error:<br />
 			<input type="text" name="spi_error" id="spi_error" />
@@ -370,7 +381,7 @@ if(!$_SESSION['logged_in'])
 	</form>
 	
 	<form>
-	<input type="button" name="shutdown" id="shutdown" class="button" onclick="alert('Shutdown Pi')" value="Shutdown Pi" />
+	<input type="button" name="shutdown" id="shutdown" class="button button_red" onclick="alert('Shutdown Pi')" value="Shutdown Pi" />
 	</form>
 </aside>
 

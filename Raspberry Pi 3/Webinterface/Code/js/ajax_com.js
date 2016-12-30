@@ -37,6 +37,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var spi_error=xmlDoc.getElementsByTagName("spi_error")[0].textContent;
 	var cnc_code_error=xmlDoc.getElementsByTagName("cnc_code_error")[0].textContent;
 	var spindel_error=xmlDoc.getElementsByTagName("spindel_error")[0].textContent;
+	var n_actual=xmlDoc.getElementsByTagName("n_actual")[0].textContent;
 
 	/*
 	document.getElementById("active").setAttribute("value", active);
@@ -56,8 +57,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	document.getElementById("spi_error").setAttribute("value", spi_error);
 	document.getElementById("cnc_code_error").setAttribute("value", cnc_code_error);
 	document.getElementById("spindel_error").setAttribute("value", spindel_error);
+	document.getElementById("n_actual").setAttribute("value", n_actual);
 	*/
-
+	
+	document.getElementById("NDisplaybox").innerHTML = n_actual;
 	document.getElementById("RPMDisplaybox").innerHTML = rpm_measure;
 	document.getElementById("XDisplaybox").innerHTML = x_actual;
 	document.getElementById("ZDisplaybox").innerHTML = z_actual;
