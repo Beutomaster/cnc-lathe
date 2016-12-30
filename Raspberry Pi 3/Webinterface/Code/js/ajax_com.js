@@ -248,7 +248,7 @@ function testekennwortqualitaet(inhalt)
 function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
   var i;
   var xmlDoc = xml.responseXML;
-  var table="<tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr>";
+  var table="<thead><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></thead><tbody>";
   var x = xmlDoc.getElementsByTagName("block");
   for (i = 0; i <x.length; i++) {
     table += "<tr><td>" +
@@ -267,5 +267,6 @@ function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
     x[i].getElementsByTagName("HSValue")[0].childNodes[0].nodeValue +
     "</td></tr>";
   }
+  table += "</tbody>";
   document.getElementById("code").innerHTML = table;
 } 

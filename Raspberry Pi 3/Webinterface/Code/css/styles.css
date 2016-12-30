@@ -34,7 +34,7 @@ p {
     font-size: 0.875em;
 }
 
-form {
+form, table {
     margin: 0 15px 15px 15px;
 }
 
@@ -230,12 +230,11 @@ nav ul li>a:active  {color:red; background-color:transparent; text-decoration:un
 
 table {
 	display:block;
-    margin: 2px;
     background-color: #f1f1c1;
 }
 
 table.impressum {
-	table-layout: auto;
+	table-layout: fixed;
 }
 
 table, th, td {
@@ -243,9 +242,13 @@ table, th, td {
     border-collapse: collapse;
 }
 
+thead, tbody {
+	width:100%
+}
+
 th, td {
     padding: 15px;
-	width:15%
+	width:10%
 }
 
 th {
@@ -529,4 +532,9 @@ aside p {
 #helpwiki {
 	width: 100%;
 	height: 100vh;
+}
+
+#CncCodeTxt {
+	width: 100%;
+    background-color: #f1f1c1;
 }

@@ -2,8 +2,6 @@
 
     // jQuery methods go here...
 	
-	$(".help").hide();
-	
 	//Polling Machine State
 	var pollTimeout = 1000; //1000 = every second
 	
@@ -17,7 +15,9 @@
 		}, pollTimeout);
 	})();
 	
-	//Toggle Visibility of Manual and CNC Control
+	//Toggle Visibility of Manual-, CNC-, Emco-Control and Help
+	$(".help").hide();
+	
     $("#ManButton").click(function(){
 	   $(".cnc").hide();
 	   //$(".emco").hide();
@@ -51,6 +51,14 @@
 	$("#LogoutButton").click(function(){
 	   location.href = href="/php/logout.php";
 	});
+	
+	//load last CNC-Code-File from Server
+	$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+	
+	//Reload CNC-Code-File from Server
+	$("#ResetChanges").click(function(){
+		$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+	}); 
 
 	/*
 	$(function() {
@@ -129,26 +137,41 @@
 	// wenn es sich ändert
 	$('body').on('change', '#file-1', function() {
 	   var data = new FormData(); // das ist unser Daten-Objekt ...
-	   data.append('file', this.files[0]); // ... an die wir unsere Datei anhängen
+	   data.append('file-1', this.files[0]); // ... an die wir unsere Datei anhängen
 	   $.ajax({
-		  url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
-		  data: data,          // Das ist unser Datenobjekt.
-		  type: 'POST',         // HTTP-Methode, hier: POST
-		  processData: false,
-		  //contentType : 'multipart/form-data',
-		  contentType: false,
-		  // und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
-		  // in das Response-Div
-		  success: function() { $("#responses").append("File successfully uploaded!");}
-	   }).done(function (data) {
+			url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
+			data: data,          // Das ist unser Datenobjekt.
+			type: 'POST',         // HTTP-Methode, hier: POST
+			processData: false,
+			//contentType : 'multipart/form-data',
+			contentType: false,
+			// und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
+			// in das Response-Div
+			//success: function() { $("#responses").html("File successfully uploaded!");}
+			//success: function() { $("#responses").html("Success: " +  JSON.stringify(data));},
+			//error: function( jqXhr, textStatus, errorThrown ){console.log( errorThrown );}
+			/*
+			success: function(response) {
+				console.log(response);
+			},
+			error: function(errResponse) {
+				console.log(errResponse);
+			}
+			*/
+		}).done(function (data) {
 			// Bei Erfolg
-			alert("Erfolgreich:" + data);
+			//alert("Erfolgreich:" + data);
+			$("#responses").html("Response: " +  JSON.stringify(data));
 		}).fail(function() {
 			// Bei Fehler
-			alert("Fehler!");
+			$("#responses").html("Request-Error: Upload failed!");
+			//alert("Fehler!");
 		}).always(function() {
 			// Immer
-			alert("Beendet!");
+			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
+			//alert("Beendet!");
+			//Load new CNC-Code-File from Server (for Security)
+			$("#CncCodeTxt").load("/uploads/cnc_code.txt");
 		});
 	})
 
