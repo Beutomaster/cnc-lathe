@@ -215,14 +215,26 @@
 	}
 	
 	if (!$success) exit(1);
+	
+	ignore_user_abort(true);
 
 	//create client-pipe
 	//$success = posix_mkfifo ("/home/pi/spi_com/client_session_pipe.".session_id(), int $mode ) or exit ("Could not create client-pipe!");
 	
 	//open server pipe writeonly (shorter timeout needed!!!)
 	$server_pipe = fopen("/home/pi/spi_com/arduino_pipe.tx", "w") or exit("Unable to open server-pipe!");
+	//stream_set_blocking($server_pipe, false); // prevent fread / fwrite blocking
+	stream_set_timeout($server_pipe, 2); //wait 2s for pipe
 	fwrite($server_pipe, $msg);
+	$info = stream_get_meta_data($server_pipe);
 	fclose($server_pipe);
+	
+	if ($info['timed_out']) {
+        echo 'Pipe-Write timed out!';
+		exit(1);
+    } else {
+        exit(0);
+    }
 	
 	//non-blocking
 	//$fh=fopen($fifo, "r+"); // ensures at least one writer (us) so will be non-blocking

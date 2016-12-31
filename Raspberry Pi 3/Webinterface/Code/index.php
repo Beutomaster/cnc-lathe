@@ -173,6 +173,8 @@ if(!$_SESSION['logged_in'])
 				<input type="button" onclick="alert('+X')" value="+X" />
 			</fieldset>
 		</form>
+		
+		<div id="manual_responses"></div>
     </article>
     
     <article class="cnc clearfix">

@@ -181,7 +181,6 @@
 	});
 	*/
 	
-	/*
 	$("form").submit(function(event) {
 		// Das eigentliche Absenden verhindern
 		event.preventDefault();
@@ -208,7 +207,6 @@
 			alert("Beendet!");
 		});
 	});
-	*/
 	
 	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
 	// wenn es sich ändert
