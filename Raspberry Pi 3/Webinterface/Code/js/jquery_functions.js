@@ -138,6 +138,7 @@
 	}); 
 
 	/*
+	//Ajax Form Submit for form #tool
 	$(function() {
     //hang on event of form with id=myform
 		$("#tool").submit(function(e) {
@@ -165,6 +166,7 @@
 	*/
 	
 	/*
+	//Ajax Form Submit with name and value of Submit-Button (does not work)
 	var form = $("form");
 	$(":submit",form).click(function(){
 			if($(this).attr('name')) {
@@ -181,6 +183,7 @@
 	});
 	*/
 	
+	//Ajax Form Submit
 	$("form").submit(function(event) {
 		// Das eigentliche Absenden verhindern
 		event.preventDefault();
@@ -195,7 +198,15 @@
 		$.ajax({
 			url : action,
 			type : method,
-			data : data
+			data : data,
+			success: function(response) {
+				$("#manual_responses").html("Response:<br />" +  JSON.stringify(response));
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#manual_responses").html("Request-Error: Submitting Command failed!<br />" + xhr.status + ": " + xhr.statusText);
+			}
+		/*
 		}).done(function (data) {
 			// Bei Erfolg
 			alert("Erfolgreich:" + data);
@@ -205,6 +216,7 @@
 		}).always(function() {
 			// Immer
 			alert("Beendet!");
+		*/
 		});
 	});
 	

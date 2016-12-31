@@ -47,8 +47,7 @@
 	
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		foreach($_POST as $name => $value) { // Most people refer to $key => $value
-			echo "HTML name: $name <br />";
-			echo "value of it: $value <br />";
+			echo "HTML-Input name: $name, value: $value <br />";
 		}
 		
 		$success=true;
@@ -224,7 +223,7 @@
 	//open server pipe writeonly (shorter timeout needed!!!)
 	$server_pipe = fopen("/home/pi/spi_com/arduino_pipe.tx", "w") or exit("Unable to open server-pipe!");
 	//stream_set_blocking($server_pipe, false); // prevent fread / fwrite blocking
-	stream_set_timeout($server_pipe, 2); //wait 2s for pipe
+	stream_set_timeout($server_pipe, 2); //wait 2s for pipe (does not work)
 	fwrite($server_pipe, $msg);
 	$info = stream_get_meta_data($server_pipe);
 	fclose($server_pipe);
