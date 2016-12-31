@@ -17,7 +17,7 @@ if(!$_SESSION['logged_in'])
     <meta name="keywords" content="CNC-Control, EMCO Compact 5 CNC, Lathe, Arduino MEGA, Raspberry Pi 3" />
     <meta name="author" content="Hannes Beuter" />
 	<link rel="shortcut icon" href="images/favicon.ico" type="image/vnd.microsoft.icon" />
-    <script src="/js/jquery-3.0.0.min.js"></script>
+    <script src="/js/jquery-3.1.1.min.js"></script>
     <script src="/js/jquery_functions.js"></script>
 	<script src="/js/style.js"></script>
 	<script src="/js/ajax_com.js"></script>
