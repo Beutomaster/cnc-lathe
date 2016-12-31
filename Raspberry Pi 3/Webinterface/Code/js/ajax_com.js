@@ -131,9 +131,11 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
   
 	if (init == 1) {
 		document.getElementById("initLED").className = "led-red";
+		document.getElementById("LoadOldParameter").style.display='none';
 	} 
 	else {
 		document.getElementById("initLED").className = "led-grey";
+		document.getElementById("LoadOldParameter").style.display='';
 	}
 	
 	if (manual == 1) {
@@ -206,6 +208,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	}
 }
 
+/*
 //send command
 function sendCommand(str) {
     if (str.length == 0) {
@@ -250,6 +253,7 @@ function testekennwortqualitaet(inhalt)
     xmlhttp.open("GET","kennworttesten.php?q="+inhalt,true);
     xmlhttp.send();
 }
+*/
 
 //Show CNC Code from cnc_code.xml
 function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);

@@ -183,6 +183,101 @@
 	});
 	*/
 	
+	function sendCommand(data) {
+		// AJAX-Call
+		$.ajax({
+			url : '/php/send_command.php',
+			type : 'POST',
+			data : data,
+			success: function(response) {
+				$("#manual_responses").html("Response:<br />" +  JSON.stringify(response));
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#manual_responses").html("Request-Error: Submitting Command failed!<br />" + xhr.status + ": " + xhr.statusText);
+			}
+		});
+	}
+	
+	$("#ProgramStart").click(function(){
+		var StartBlock = document.getElementById("block").value;
+		var data = {command: "ProgramStart", block: StartBlock};
+		sendCommand(data);
+	});
+	
+	$("#ProgramStop").click(function(){
+		var data = {command: "ProgramStop"};
+		sendCommand(data);
+	});
+	
+	$("#ProgramPause").click(function(){
+		var data = {command: "ProgramPause"};
+		sendCommand(data);
+	});
+	
+	$("#SpindleOff").click(function(){
+		var data = {command: "SpindleOff"};
+		sendCommand(data);
+	});
+	
+	$("#StepperOn").click(function(){
+		var data = {command: "StepperOn"};
+		sendCommand(data);
+	});
+	
+	$("#StepperOff").click(function(){
+		var data = {command: "StepperOff"};
+		sendCommand(data);
+	});
+	
+	$("#XStepperPositiv").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "XStepper", stepper_direction: "0", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#ZStepperPositiv").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "ZStepper", stepper_direction: "0", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#XStepperNegativ").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "XStepper", stepper_direction: "1", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#ZStepperNegativ").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "ZStepper", stepper_direction: "1", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#ResetErrors").click(function(){
+		var data = {command: "ResetErrors"};
+		sendCommand(data);
+	});
+	
+	$("#LoadOldParameter").click(function(){
+		var data = {command: "LoadOldParameter"};
+		sendCommand(data);
+	});
+	
+	$("#shutdown").click(function(){
+		var data = {command: "Shutdown"};
+		sendCommand(data);
+		alert('Saving parameter and shutting down Pi!');
+	});
+	
+	/*
+	$('body').on('change', '#metric_inch', function(){
+		var scale = document.getElementById("metric_inch").value;
+		var data = {command: "SetMetricOrInch", metric_inch: scale};
+		sendCommand(data);
+	});
+	*/
+	
 	//Ajax Form Submit
 	$("form").submit(function(event) {
 		// Das eigentliche Absenden verhindern

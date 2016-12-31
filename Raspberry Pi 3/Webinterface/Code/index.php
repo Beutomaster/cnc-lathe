@@ -130,10 +130,10 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Stepper:</legend>
 				<label>Feed (2 to 499):<br />
-				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" required />
+				<input type="number" id="feed" name="feed" min="2" max="499" value="50" autocomplete="off" required />
 				</label>
 				<br />
-				<input type="submit" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
+				<input type="button" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
 				<br />
 				<input type="button" id="StepperOff" class="button button_red" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
@@ -165,12 +165,12 @@ if(!$_SESSION['logged_in'])
 		<form class="solo" id="controls">
 			<fieldset>
 				<legend>Manual Stepper Controls:</legend>
-				<input type="button" onclick="alert('-X')" value="-X" />
+				<input id="XStepperNegativ" type="button" value="-X" />
 				<br />
-				<input type="button" onclick="alert('-Z')" value="-Z" />
-				<input type="button" onclick="alert('+Z')" value="+Z" />
+				<input id="ZStepperNegativ" type="button" value="-Z" />
+				<input id="ZStepperPositiv" type="button" value="+Z" />
 				<br />
-				<input type="button" onclick="alert('+X')" value="+X" />
+				<input id="XStepperPositiv" type="button" value="+X" />
 			</fieldset>
 		</form>
 		
@@ -202,7 +202,7 @@ if(!$_SESSION['logged_in'])
 				<legend>Programm Control:</legend>
 				<input type="hidden" name="command" value="ProgramStart" />
 				<label>Start-Block:
-				<input type="number" name="block" min="0" max="9999" value="0" autocomplete="off" required />
+				<input id="block" type="number" name="block" min="0" max="9999" value="0" autocomplete="off" required />
 				</label>
 				<input type="submit" id="ProgramStart" class="button" name="ProgramStart" value="Start" />
 				<input type="button" id="ProgramPause" class="button" name="ProgramPause" value="Pause" />
@@ -384,13 +384,16 @@ if(!$_SESSION['logged_in'])
 			<br />
 	</form>
 -->
-	
 	<form>
-	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
+	<input type="button" name="LoadOldParameter" id="LoadOldParameter" class="button" value="Load Parameter" />
 	</form>
 	
 	<form>
-	<input type="button" name="shutdown" id="shutdown" class="button button_red" onclick="alert('Shutdown Pi')" value="Shutdown Pi" />
+	<input type="button" name="ResetErrors" id="ResetErrors" class="button" value="Reset Errors" />
+	</form>
+	
+	<form>
+	<input type="button" name="shutdown" id="shutdown" class="button button_red" value="Shutdown Pi" />
 	</form>
 </aside>
 
