@@ -66,6 +66,7 @@ if(!$_SESSION['logged_in'])
 				<form action="/php/send_command.php" method="post"> <!--  some js needed -->
 					<fieldset>
 						<legend>Scale:</legend>
+						<input type="hidden" name="command" value="SetMetricOrInch" />
 						<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
 						<br />
 						<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
@@ -77,6 +78,7 @@ if(!$_SESSION['logged_in'])
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
+					<input type="hidden" name="command" value="SetXOffset" />
 					<label>X-Offset (+-5999):<br />
 					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
@@ -90,6 +92,7 @@ if(!$_SESSION['logged_in'])
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
+					<input type="hidden" name="command" value="SetZOffset" />
 					<label>Z-Offset (+-32760):<br />
 					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
@@ -104,9 +107,10 @@ if(!$_SESSION['logged_in'])
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Spindle:</legend>
-				<label><input type="radio" name="spindle_direction" value="right" checked="checked" />Rotation right handed</label>
+				<input type="hidden" name="command" value="SpindleSetRPM" />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />Rotation right handed</label>
 				<br />
-				<label><input type="radio" name="spindle_direction" value="left" />Rotation left handed</label>
+				<label><input type="radio" name="spindle_direction" value="1" />Rotation left handed</label>
 				<br />
 				<label>RPM (460 to 3220):<br />
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
@@ -140,6 +144,7 @@ if(!$_SESSION['logged_in'])
 		<form id="tool" action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Tool:</legend>
+				<input type="hidden" name="command" value="SetTool" />
 				<label>Tool (1 to 6):<br />
 				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" required />
 				</label>
@@ -193,10 +198,12 @@ if(!$_SESSION['logged_in'])
 		<form>
 			<fieldset>
 				<legend>Programm Control:</legend>
+				<input type="hidden" name="command" value="ProgramStart" />
 				<label>Start-Block:
 				<input type="number" name="block" min="0" max="9999" value="0" autocomplete="off" required />
 				</label>
-				<input type="button" id="ProgramStartPause" class="button" name="ProgramStartPause" value="Start" /> <!-- Set to Stop with js at Programmstart -->
+				<input type="submit" id="ProgramStart" class="button" name="ProgramStart" value="Start" />
+				<input type="button" id="ProgramPause" class="button" name="ProgramPause" value="Pause" />
 				<input type="button" id="ProgramStop" class="button button_red" name="ProgramStop" value="Stop" />
 			</fieldset>
 		</form>

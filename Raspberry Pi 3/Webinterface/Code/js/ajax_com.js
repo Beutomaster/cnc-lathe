@@ -145,11 +145,15 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	
 	if (pause == 1) {
 		document.getElementById("pauseLED").className = "led-red";
-		document.getElementById("ProgramStartPause").value = "Start";
+		document.getElementById("ProgramPause").style.display='none';
+		document.getElementById("ProgramStart").style.display='';
+		//document.getElementById("ProgramStartPause").value = "Start";
 	} 
 	else {
 		document.getElementById("pauseLED").className = "led-grey";
-		document.getElementById("ProgramStartPause").value = "Pause";
+		document.getElementById("ProgramPause").style.display='';
+		document.getElementById("ProgramStart").style.display='none';
+		//document.getElementById("ProgramStartPause").value = "Pause";
 	}
 	
 	if (inch == 1) {

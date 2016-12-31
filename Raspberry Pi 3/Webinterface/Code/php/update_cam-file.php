@@ -13,8 +13,8 @@
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		/*
 		foreach($_POST as $name => $value) { // Most people refer to $key => $value
-			echo "HTML name: $name <br>";
-			echo "value of it: $value <br>";
+			echo "HTML name: $name <br />";
+			echo "value of it: $value <br />";
 		}
 		*/
 		$txt = test_input($_POST['CncCodeTxt']);
