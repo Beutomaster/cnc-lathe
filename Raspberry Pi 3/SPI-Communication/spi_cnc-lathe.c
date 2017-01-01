@@ -1,4 +1,5 @@
-/* SPI Communication Tool for an modified Emco Compact 5 CNC-Lathe
+/* spi_cnc-lathe.c
+ * SPI Communication Tool for an modified Emco Compact 5 CNC-Lathe
  * written by Hannes Beuter
  * 
  * influenced by following Code Examples:
@@ -12,6 +13,7 @@
  * the Free Software Foundation; either version 2 of the License.
  *
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
+ * On Raspberry Pi compile with: gcc -o spi_cnc-lathe spi_cnc-lathe.c
  */
  
 #include <stdint.h>
@@ -124,7 +126,7 @@
 //#define MACHINE_STATE_FILE "machine_state.xml"
 
 FILE *machinestatefile;
-int fd;
+int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
 
 static void pabort(const char *s)
@@ -134,13 +136,12 @@ static void pabort(const char *s)
 }
 
 // Define the function to be called when ctrl-c (SIGINT) signal is sent to process
-void
-signal_callback_handler(int signum)
+void signal_callback_handler(int signum)
 {
 	printf("\nCaught signal %d\n",signum);
 	// Cleanup and close up stuff here
-	printf("close(fd)\n");
-	close(fd);
+	printf("close(spi_fd)\n");
+	close(spi_fd);
 		
 	// Terminate program
 	exit(signum);
@@ -164,6 +165,57 @@ static uint8_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
 static uint16_t delay;
+
+int setup_spi()
+{
+	int ret = 0;
+
+	spi_fd = open(device, O_RDWR);
+	if (spi_fd < 0)
+		pabort("can't open SPI-device");
+	
+	// Register signal and signal handler
+	signal(SIGINT, signal_callback_handler);
+
+	/*
+	 * spi mode
+	 */
+	ret = ioctl(spi_fd, SPI_IOC_WR_MODE, &mode);
+	if (ret == -1)
+		pabort("can't set spi mode");
+
+	ret = ioctl(spi_fd, SPI_IOC_RD_MODE, &mode);
+	if (ret == -1)
+		pabort("can't get spi mode");
+
+	/*
+	 * bits per word
+	 */
+	ret = ioctl(spi_fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't set bits per word");
+
+	ret = ioctl(spi_fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't get bits per word");
+
+	/*
+	 * max speed hz
+	 */
+	ret = ioctl(spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't set max speed hz");
+
+	ret = ioctl(spi_fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't get max speed hz");
+
+	printf("spi mode: %d\n", mode);
+	printf("bits per word: %d\n", bits);
+	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
+
+	return ret;
+}
 
 uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
 	uint8_t i;
@@ -196,7 +248,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
   return crc_8;
 }
 
-static void transfer(int fd)
+static void transfer(int spi_fd)
 {
 	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
@@ -498,7 +550,7 @@ static void transfer(int fd)
 		.bits_per_word = bits,
 	};
 
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+	ret = ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 1)
 		pabort("can't send spi message"); //has to be replaced
 	else { //output received Message
@@ -554,7 +606,7 @@ static void transfer(int fd)
 			
 			//Ouptut to Machine-State-File
 			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
-			if (fd < 0) printf("can't open Machine State file\n");
+			if (spi_fd < 0) printf("can't open Machine State file\n");
 			else {
 				fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 				fprintf(machinestatefile, "<machinestate>\n");
@@ -698,62 +750,13 @@ static void parse_opts(int argc, char *argv[])
 	}
 }
 
-int main(int argc, char *argv[])
-{
-	int ret = 0;
-	
+void main(int argc, char *argv[])
+{	
 	parse_opts(argc, argv);
 
-	fd = open(device, O_RDWR);
-	if (fd < 0)
-		pabort("can't open SPI-device");
-	
-	// Register signal and signal handler
-	signal(SIGINT, signal_callback_handler);
-
-	/*
-	 * spi mode
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
-	if (ret == -1)
-		pabort("can't set spi mode");
-
-	ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
-	if (ret == -1)
-		pabort("can't get spi mode");
-
-	/*
-	 * bits per word
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't set bits per word");
-
-	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't get bits per word");
-
-	/*
-	 * max speed hz
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't set max speed hz");
-
-	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't get max speed hz");
-
-	printf("spi mode: %d\n", mode);
-	printf("bits per word: %d\n", bits);
-	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
-
-	while(1) {
-		transfer(fd);
+	if (setup_spi() == 0){
+		while(1) {
+			transfer(spi_fd);
+		}
 	}
-	
-	//printf("close(fd)\n");
-	//close(fd);
-
-	return ret;
 }
