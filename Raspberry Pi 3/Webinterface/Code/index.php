@@ -67,9 +67,9 @@ if(!$_SESSION['logged_in'])
 					<fieldset>
 						<legend>Scale:</legend>
 						<input type="hidden" name="command" value="SetMetricOrInch" />
-						<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
+						<label><input type="radio" name="metric_inch" id="metric" value="metric" checked="checked" />Metric</label>
 						<br />
-						<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
+						<label><input type="radio" name="metric_inch" id="inch" value="inch" />Inch</label>
 					</fieldset>
 				</form>
 			</div>

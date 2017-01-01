@@ -270,13 +270,12 @@
 		alert('Saving parameter and shutting down Pi!');
 	});
 	
-	/*
-	$('body').on('change', '#metric_inch', function(){
-		var scale = document.getElementById("metric_inch").value;
+	//$('body').on('change', '#metric_inch', function(){
+	$( "input[name='metric_inch']" ).change(function() {
+		var scale = $("input[name='metric_inch']:checked").val();
 		var data = {command: "SetMetricOrInch", metric_inch: scale};
 		sendCommand(data);
 	});
-	*/
 	
 	//Ajax Form Submit
 	$("form").submit(function(event) {

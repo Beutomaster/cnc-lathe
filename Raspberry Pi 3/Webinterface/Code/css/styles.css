@@ -395,10 +395,6 @@ aside h2 {
 	margin-top: 10px;
 }
 
-aside input {
-	text-align: right;
-}
-
 footer {
     clear:both;
     text-align:center;
@@ -435,8 +431,9 @@ aside form {
 	margin: 15px 0;
 }
 
-aside input {
+.Displaybox {
 	width: 150px;
+	text-align: right;
 }
 
 .state {
