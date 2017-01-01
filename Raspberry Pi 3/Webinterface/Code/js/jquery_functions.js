@@ -2,6 +2,11 @@
 
     // jQuery methods go here...
 	
+	$.ajaxSetup ({
+		// Disable caching of AJAX responses
+		cache: false
+	});
+	
 	//Polling Machine State
 	var pollTimeout = 1000; //1000 = every second
 	
@@ -15,28 +20,125 @@
 		}, pollTimeout);
 	})();
 	
-	//Toggle Visibility of Manual and CNC Control
-    $("#manbutton").click(function(){
+	//Toggle Visibility of Manual-, CNC-, Emco-Control and Help
+	$(".help").hide();
+	
+    $("#ManButton").click(function(){
 	   $(".cnc").hide();
 	   //$(".emco").hide();
+	   $(".help").hide();
 	   $(".manual").show();
 	});
 	
-	$("#cncbutton").click(function(){
+	$("#CncButton").click(function(){
 	   $(".manual").hide();
 	   //$(".emco").hide();
+	   $(".help").hide();
 	   $(".cnc").show();
 	});
 	
-	/*
-	$("#emcobutton").click(function(){
-	   $(".manual").hide();
-	   $(".cnc").hide();
-	   $(".emco").show();
+	$("#HelpButton").click(function(){
+		$(".manual").hide();
+		$(".cnc").hide();
+		$(".emco").hide();
+		$(".help").show();
 	});
-	*/
+	
+	$("#LogoutButton").click(function(){
+	   location.href = href="/php/logout.php";
+	});
+	
+		
+	function UpdateAndResizeTextarea() {		
+		$.ajax({
+			url: "/uploads/cnc_code.txt",
+			success: function(result){
+				$("#CncCodeTxt").val(result);
+				$("#responses").append("<br />Textarea Updated!");
+				var txt = $("#CncCodeTxt").val();
+				//console.log(txt);
+				var lines = txt.split(/\r|\r\n|\n/);
+				var count = lines.length;
+				//console.log(count);
+				document.getElementById("CncCodeTxt").rows=count;
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
+			}
+		});
+		
+		/*
+		$("#CncCodeTxt").load("/uploads/cnc_code.txt", function(responseTxt, statusTxt, xhr){  //load does not work sometimes ... why???
+			if(statusTxt == "success") {
+				//alert("External content loaded successfully!");
+				$("#responses").append("<br />Textarea Updated!");
+				var txt = $("#CncCodeTxt").val();
+				//console.log(txt);
+				var lines = txt.split(/\r|\r\n|\n/);
+				var count = lines.length;
+				//console.log(count);
+				document.getElementById("CncCodeTxt").rows=count;
+			}
+			if(statusTxt == "error") {
+				//alert("Error: " + xhr.status + ": " + xhr.statusText);
+				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
+			}
+		});
+		*/
+	}
+	
+	//load last CNC-Code-File from Server
+	UpdateAndResizeTextarea();
+	
+	//Reload CNC-Code-File from Server
+	$("#ResetChanges").click(function(){
+		UpdateAndResizeTextarea();
+	}); 
+	
+	//Upload Changes to CNC-Code-File on Server
+	$("#UploadChanges").click(function(){
+		$.ajax({
+			type:'POST',
+			url: '/php/update_cam-file.php',
+			data:$('#CncCode').serialize(),
+			success: function(response) {
+				$("#responses").html("Response: " +  JSON.stringify(response));
+				//Load new CNC-Code-File from Server (for Security)
+				UpdateAndResizeTextarea(); //Error-Handling needed!!!
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
+			}
+		});
+		
+		/*
+		$.ajax({type:'POST', url: '/php/update_cam-file.php', data:$('#CncCode').serialize(), success: function(response) {
+				//$('#ContactForm').find('.form_result').html(response);
+				//$("#responses").html("Response: " +  JSON.stringify(data));
+			}
+		}).done(function (data) {
+			// Bei Erfolg
+			//alert("Erfolgreich:" + data);
+			$("#responses").html("Response: " +  JSON.stringify(data));
+		}).fail(function() {
+			// Bei Fehler
+			$("#responses").html("Request-Error: Upload failed!");
+			//alert("Fehler!");
+		}).always(function() {
+			// Immer
+			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
+			//alert("Beendet!");
+			//Load new CNC-Code-File from Server (for Security)
+			//$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
+			UpdateAndResizeTextarea(); //Error-Handling needed!!!
+		});
+		*/
+	}); 
 
 	/*
+	//Ajax Form Submit for form #tool
 	$(function() {
     //hang on event of form with id=myform
 		$("#tool").submit(function(e) {
@@ -64,6 +166,7 @@
 	*/
 	
 	/*
+	//Ajax Form Submit with name and value of Submit-Button (does not work)
 	var form = $("form");
 	$(":submit",form).click(function(){
 			if($(this).attr('name')) {
@@ -80,7 +183,101 @@
 	});
 	*/
 	
-	/*
+	function sendCommand(data) {
+		// AJAX-Call
+		$.ajax({
+			url : '/php/send_command.php',
+			type : 'POST',
+			data : data,
+			success: function(response) {
+				$("#manual_responses").html("Response:<br />" +  JSON.stringify(response));
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#manual_responses").html("Request-Error: Submitting Command failed!<br />" + xhr.status + ": " + xhr.statusText);
+			}
+		});
+	}
+	
+	$("#ProgramStart").click(function(){
+		var StartBlock = document.getElementById("block").value;
+		var data = {command: "ProgramStart", block: StartBlock};
+		sendCommand(data);
+	});
+	
+	$("#ProgramStop").click(function(){
+		var data = {command: "ProgramStop"};
+		sendCommand(data);
+	});
+	
+	$("#ProgramPause").click(function(){
+		var data = {command: "ProgramPause"};
+		sendCommand(data);
+	});
+	
+	$("#SpindleOff").click(function(){
+		var data = {command: "SpindleOff"};
+		sendCommand(data);
+	});
+	
+	$("#StepperOn").click(function(){
+		var data = {command: "StepperOn"};
+		sendCommand(data);
+	});
+	
+	$("#StepperOff").click(function(){
+		var data = {command: "StepperOff"};
+		sendCommand(data);
+	});
+	
+	$("#XStepperPositiv").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "XStepper", stepper_direction: "0", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#ZStepperPositiv").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "ZStepper", stepper_direction: "0", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#XStepperNegativ").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "XStepper", stepper_direction: "1", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#ZStepperNegativ").click(function(){ //needs to be sent every 400ms, while button is pressed
+		var feedvalue = document.getElementById("feed").value;
+		var data = {command: "ZStepper", stepper_direction: "1", feed: feedvalue};
+		sendCommand(data);
+	});
+	
+	$("#ResetErrors").click(function(){
+		var data = {command: "ResetErrors"};
+		sendCommand(data);
+	});
+	
+	$("#LoadOldParameter").click(function(){
+		var data = {command: "LoadOldParameter"};
+		sendCommand(data);
+	});
+	
+	$("#shutdown").click(function(){
+		var data = {command: "Shutdown"};
+		sendCommand(data);
+		alert('Saving parameter and shutting down Pi!');
+	});
+	
+	//$('body').on('change', '#metric_inch', function(){
+	$( "input[name='metric_inch']" ).change(function() {
+		var scale = $("input[name='metric_inch']:checked").val();
+		var data = {command: "SetMetricOrInch", metric_inch: scale};
+		sendCommand(data);
+	});
+	
+	//Ajax Form Submit
 	$("form").submit(function(event) {
 		// Das eigentliche Absenden verhindern
 		event.preventDefault();
@@ -95,7 +292,15 @@
 		$.ajax({
 			url : action,
 			type : method,
-			data : data
+			data : data,
+			success: function(response) {
+				$("#manual_responses").html("Response:<br />" +  JSON.stringify(response));
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#manual_responses").html("Request-Error: Submitting Command failed!<br />" + xhr.status + ": " + xhr.statusText);
+			}
+		/*
 		}).done(function (data) {
 			// Bei Erfolg
 			alert("Erfolgreich:" + data);
@@ -105,25 +310,60 @@
 		}).always(function() {
 			// Immer
 			alert("Beendet!");
+		*/
 		});
 	});
-	*/
 	
 	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
 	// wenn es sich ändert
 	$('body').on('change', '#file-1', function() {
 	   var data = new FormData(); // das ist unser Daten-Objekt ...
-	   data.append('file', this.files[0]); // ... an die wir unsere Datei anhängen
+	   data.append('file-1', this.files[0]); // ... an die wir unsere Datei anhängen
 	   $.ajax({
-		  url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
-		  data: data,          // Das ist unser Datenobjekt.
-		  type: 'POST',         // HTTP-Methode, hier: POST
-		  processData: false,
-		  contentType: false,
-		  // und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
-		  // in das Response-Div
-		  success: function() { $("#responses").append("File successfully uploaded!");}
-	   });
+			url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
+			data: data,          // Das ist unser Datenobjekt.
+			type: 'POST',         // HTTP-Methode, hier: POST
+			processData: false,
+			//contentType : 'multipart/form-data',
+			contentType: false,
+			success: function(response) {
+				$("#responses").html("Response: " +  JSON.stringify(response));
+			},
+			error: function(xhr){
+				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
+			}
+			// und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
+			// in das Response-Div
+			//success: function() { $("#responses").html("File successfully uploaded!");}
+			//success: function() { $("#responses").html("Success: " +  JSON.stringify(data));},
+			//error: function( jqXhr, textStatus, errorThrown ){console.log( errorThrown );}
+			/*
+			success: function(response) {
+				console.log(response);
+			},
+			error: function(errResponse) {
+				console.log(errResponse);
+			}
+			*/
+			/*
+		}).done(function (data) {
+			// Bei Erfolg
+			//alert("Erfolgreich:" + data);
+			$("#responses").html("Response: " +  JSON.stringify(data));
+		}).fail(function() {
+			// Bei Fehler
+			$("#responses").html("Request-Error: Upload failed!");
+			//alert("Fehler!");
+			*/
+		}).always(function() {
+			// Immer
+			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
+			//alert("Beendet!");
+			//Load new CNC-Code-File from Server (for Security)
+			//$("#CncCodeTxt").load("/uploads/cnc_code.txt");
+			UpdateAndResizeTextarea();
+		});
 	})
 
 }); 

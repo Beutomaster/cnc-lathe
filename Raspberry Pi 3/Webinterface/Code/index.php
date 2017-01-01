@@ -3,10 +3,11 @@ session_start();
 if(!$_SESSION['logged_in'])
 	header("Location: /login.html");
 ?>
+<!-- Login muss noch auf https eingeschraenkt werden!!!-->
 
 <!doctype html>
 
-<!-- Development-Version 0.1 -->
+<!-- Development-Version 0.2 -->
 
 <html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 <head>
@@ -16,7 +17,7 @@ if(!$_SESSION['logged_in'])
     <meta name="keywords" content="CNC-Control, EMCO Compact 5 CNC, Lathe, Arduino MEGA, Raspberry Pi 3" />
     <meta name="author" content="Hannes Beuter" />
 	<link rel="shortcut icon" href="images/favicon.ico" type="image/vnd.microsoft.icon" />
-    <script src="/js/jquery-3.0.0.min.js"></script>
+    <script src="/js/jquery-3.1.1.min.js"></script>
     <script src="/js/jquery_functions.js"></script>
 	<script src="/js/style.js"></script>
 	<script src="/js/ajax_com.js"></script>
@@ -37,29 +38,14 @@ if(!$_SESSION['logged_in'])
 
 <nav class="clearfix">
 	<ul class="top_nav">
-		<li id="manbutton" class="clearfix">Manual Control</li>
-		<li id="cncbutton" class="clearfix">CNC Control</li>
-		<li id="emcobutton" class="emco clearfix">EMCO Control</li>
-		<li class="clearfix"><a href="/dokuwiki/index.php">Help</a></li>
+		<li id="ManButton" class="clearfix">Manual Control</li>
+		<li id="CncButton" class="clearfix">CNC Control</li>
+		<li id="EmcoButton" class="emco clearfix">EMCO Control</li>
+		<li id="HelpButton" class="clearfix">Help</li>
 	</ul>
     <ul class="top_login">
-		<li>User: <?php echo $_SESSION['usr']; ?> <a href="/php/logout.php">Logout</a></li>
+		<li id="LogoutButton">Logout User: <?php echo $_SESSION['usr']; ?></li>
 	</ul>
-	<!-- Login muss noch auf https eingeschraenkt werden!!!-->
-	<!-- 
-    <form action="php/login.php" method="post">
-        <label for="user">User:<br />
-        <input id="user" type="text" name="user" />
-		</label>
-		<span class="error"><?php echo $usernameErr;?></span>
-		<br />
-        <label for="pw">Password:<br />
-        <input id="pw" type="password" name="pw" />
-		</label>
-		<span class="error"><?php echo $pwErr;?></span>
-        <input type="submit" value="Submit" />
-    </form>
-	-->
 </nav>
 
 <section class="clearfix">
@@ -75,11 +61,24 @@ if(!$_SESSION['logged_in'])
     <article class="manual clearfix">
         <h2>Manual Control</h2>
 		
-		<div class="clearfix solo">
+		<!-- <div class="clearfix solo"> -->
+			<div class="left">
+				<form action="/php/send_command.php" method="post"> <!--  some js needed -->
+					<fieldset>
+						<legend>Scale:</legend>
+						<input type="hidden" name="command" value="SetMetricOrInch" />
+						<label><input type="radio" name="metric_inch" id="metric" value="metric" checked="checked" />Metric</label>
+						<br />
+						<label><input type="radio" name="metric_inch" id="inch" value="inch" />Inch</label>
+					</fieldset>
+				</form>
+			</div>
+				
 			<div class="left">
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
+					<input type="hidden" name="command" value="SetXOffset" />
 					<label>X-Offset (+-5999):<br />
 					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
@@ -93,6 +92,7 @@ if(!$_SESSION['logged_in'])
 			<form action="/php/send_command.php" method="post">
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
+					<input type="hidden" name="command" value="SetZOffset" />
 					<label>Z-Offset (+-32760):<br />
 					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
@@ -101,35 +101,24 @@ if(!$_SESSION['logged_in'])
 				</fieldset>
 			</form>
 			</div>
-			
-			<div class="clearfix">
-			<div class="right">
-			<form action="/php/send_command.php" method="post"> <!--  some js needed -->
-				<fieldset>
-					<label><input type="radio" name="metric_inch" value="metric" checked="checked" />Metric</label>
-					<br />
-					<label><input type="radio" name="metric_inch" value="inch" />Inch</label>
-				</fieldset>
-			</form>
-			</div>
-			</div>
-		</div>
+		<!-- </div> -->
 		
 		<div class="left">
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Spindle:</legend>
-				<label><input type="radio" name="spindle_direction" value="right" checked="checked" />Rotation right handed</label>
+				<input type="hidden" name="command" value="SpindleSetRPM" />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />Rotation right handed</label>
 				<br />
-				<label><input type="radio" name="spindle_direction" value="left" />Rotation left handed</label>
-				<br /><br />
+				<label><input type="radio" name="spindle_direction" value="1" />Rotation left handed</label>
+				<br />
 				<label>RPM (460 to 3220):<br />
-				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" />
+				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
 				</label>
 				<br />
 				<input type="submit" id="SpindleOn" class="button" name="SpindleSetRPM" value="Spindle ON" />
 				<br />
-				<input type="button" id="SpindleOff" class="button" name="SpindleOff" value="Spindle OFF" />
+				<input type="button" id="SpindleOff" class="button button_red" name="SpindleOff" value="Spindle OFF" />
 			</fieldset>
 		</form>
 		</div>
@@ -141,12 +130,12 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Stepper:</legend>
 				<label>Feed (2 to 499):<br />
-				<input type="number" name="feed" min="2" max="499" value="50" autocomplete="off" />
+				<input type="number" id="feed" name="feed" min="2" max="499" value="50" autocomplete="off" required />
 				</label>
 				<br />
-				<input type="submit" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
+				<input type="button" id="StepperOn" class="button" name="StepperOn" value="Stepper ON" />
 				<br />
-				<input type="button" id="StepperOff" class="button" name="StepperOff" value="Stepper OFF" />
+				<input type="button" id="StepperOff" class="button button_red" name="StepperOff" value="Stepper OFF" />
 			</fieldset>
 		</form>
 		</div>
@@ -155,16 +144,17 @@ if(!$_SESSION['logged_in'])
 		<form id="tool" action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Tool:</legend>
+				<input type="hidden" name="command" value="SetTool" />
 				<label>Tool (1 to 6):<br />
-				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" />
+				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" required />
 				</label>
 				<br />
 				<label>X-Correction (+-5999):<br />
-				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" />
+				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" required />
 				</label>
 				<br />
 				<label>Z-Correction (+-32760):<br />
-				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" />
+				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" required />
 				</label>
 				<br />
 				<input type="submit" id="SetTool" class="button" name="SetTool" value="Set Tool" />
@@ -175,25 +165,34 @@ if(!$_SESSION['logged_in'])
 		<form class="solo" id="controls">
 			<fieldset>
 				<legend>Manual Stepper Controls:</legend>
-				<input type="button" onclick="alert('-X')" value="-X" />
+				<input id="XStepperNegativ" type="button" value="-X" />
 				<br />
-				<input type="button" onclick="alert('-Z')" value="-Z" />
-				<input type="button" onclick="alert('+Z')" value="+Z" />
+				<input id="ZStepperNegativ" type="button" value="-Z" />
+				<input id="ZStepperPositiv" type="button" value="+Z" />
 				<br />
-				<input type="button" onclick="alert('+X')" value="+X" />
+				<input id="XStepperPositiv" type="button" value="+X" />
 			</fieldset>
 		</form>
+		
+		<div id="manual_responses"></div>
     </article>
     
     <article class="cnc clearfix">
         <h2>CNC-Control</h2>
         
-        <form>
+<!--		
+        <form enctype="multipart/form-data" method="POST" action="/php/upload_cam-file.php">
+-->
+		<form>
             <fieldset>
 				<legend>Select CAM-File:</legend>
-				<input type="file" name="file-1[]" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
-				<label for="file-1"><span></span> <strong><svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17"><path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg> Choose a file&hellip;</strong></label>
-				<input type="submit" class="button" value="Upload" />
+				<input type="hidden" name="MAX_FILE_SIZE" value="500000" />
+				<input type="file" name="file-1" id="file-1" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" />
+				<label for="file-1"><span></span> <strong><svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17"><path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg> Upload File</strong></label>
+				<!--	<input type="submit" class="button" value="Upload File" />	-->
+				<input id="UploadChanges" type="button" class="button" value="Upload Changes" />
+				<input id="ResetChanges" type="button" class="button button_red" value="Reset Changes" />
+				<input id="SaveFile" type="button" class="button" onclick="saveTextAsFile()" value="Save File" />
 				<div id="responses"></div>
 			</fieldset>
         </form>
@@ -201,12 +200,24 @@ if(!$_SESSION['logged_in'])
 		<form>
 			<fieldset>
 				<legend>Programm Control:</legend>
-				<input type="button" class="button" onclick="/php/send_command.php" method="post" name="ProgramStartStop" value="Start" /> <!-- Set to Stop with js at Programmstart -->
-				<input type="button" class="button" onclick="/php/send_command.php" method="post" name="ProgramPause" value="Pause" />
+				<input type="hidden" name="command" value="ProgramStart" />
+				<label>Start-Block:
+				<input id="block" type="number" name="block" min="0" max="9999" value="0" autocomplete="off" required />
+				</label>
+				<input type="submit" id="ProgramStart" class="button" name="ProgramStart" value="Start" />
+				<input type="button" id="ProgramPause" class="button" name="ProgramPause" value="Pause" />
+				<input type="button" id="ProgramStop" class="button button_red" name="ProgramStop" value="Stop" />
 			</fieldset>
 		</form>
 		
-        <table id="code"><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></table>
+        <table id="code"><thead><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+		
+		<p></p>
+		
+		<form id="CncCode">
+			<label for="CncCodeTxt">CNC-Code:</label><br />
+			<textarea id="CncCodeTxt" name="CncCodeTxt" cols="120" rows="50" wrap="soft"></textarea>
+		</form>
     </article>
 	
 	<article class="emco clearfix">
@@ -214,6 +225,11 @@ if(!$_SESSION['logged_in'])
 		<!-- Stream Video of old Emco Control
         <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
 		-->
+    </article>
+	
+	<article class="help clearfix">
+        <h2>Help</h2>
+		<iframe id="helpwiki" src="/dokuwiki/index.php"></iframe> 
     </article>
 </section>
 
@@ -274,6 +290,10 @@ if(!$_SESSION['logged_in'])
 	<div class="state clearfix">
 				<p>Tool:</p>
 				<div id="ToolDisplaybox" class="Displaybox"></div>	
+	</div>
+	<div class="state clearfix">
+				<p>N:</p>
+				<div id="NDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
 				<div id="SpiErrorLED" class="led-grey"></div>
@@ -345,6 +365,10 @@ if(!$_SESSION['logged_in'])
 			<label>Tool:<br />
 			<input type="text" name="t_actual" id="t_actual" />
 			</label>
+			<br />
+			<label>N:<br />
+			<input type="text" name="n_actual" id="n_actual" />
+			</label>
 			<br /><br />
 			<label>SPI-Error:<br />
 			<input type="text" name="spi_error" id="spi_error" />
@@ -360,13 +384,16 @@ if(!$_SESSION['logged_in'])
 			<br />
 	</form>
 -->
-	
 	<form>
-	<input type="button" name="ResetErrors" id="ResetErrors" class="button" onclick="alert('Reset Errors')" value="Reset Errors" />
+	<input type="button" name="LoadOldParameter" id="LoadOldParameter" class="button" value="Load Parameter" />
 	</form>
 	
 	<form>
-	<input type="button" name="shutdown" id="shutdown" class="button" onclick="alert('Shutdown Pi')" value="Shutdown Pi" />
+	<input type="button" name="ResetErrors" id="ResetErrors" class="button" value="Reset Errors" />
+	</form>
+	
+	<form>
+	<input type="button" name="shutdown" id="shutdown" class="button button_red" value="Shutdown Pi" />
 	</form>
 </aside>
 
@@ -377,7 +404,6 @@ if(!$_SESSION['logged_in'])
         at the University of Applied Sciences Kiel, Germany
 	</p>
 	<p><a href="/impressum.html">Impressum</a></p>
-	<p id="credits">Upload-Icon made by <a href="http://www.flaticon.com/authors/daniel-bruce" title="Daniel Bruce">Daniel Bruce</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></p>
 </footer>
 
 <script src="/js/jquery.custom-file-input.js"></script>
