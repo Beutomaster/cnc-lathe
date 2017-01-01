@@ -147,7 +147,7 @@ void signal_callback_handler(int signum)
 	exit(signum);
 }
 
-/*The Driver supports following speeds:
+/*The SPI-Driver supports following speeds:
 
   cdiv     speed          cdiv     speed
     2    125.0 MHz          4     62.5 MHz
@@ -248,7 +248,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
   return crc_8;
 }
 
-static void transfer(int spi_fd)
+static void spi_transfer(int spi_fd)
 {
 	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
@@ -750,13 +750,16 @@ static void parse_opts(int argc, char *argv[])
 	}
 }
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {	
 	parse_opts(argc, argv);
 
 	if (setup_spi() == 0){
 		while(1) {
-			transfer(spi_fd);
+			spi_transfer(spi_fd);
 		}
 	}
+	else exit(EXIT_FAILURE);
+	
+	return EXIT_SUCCESS;
 }
