@@ -34,8 +34,8 @@ p {
     font-size: 0.875em;
 }
 
-form {
-    margin-bottom: 15px;
+form, table {
+    margin: 0 15px 15px 15px;
 }
 
 input {
@@ -43,6 +43,20 @@ input {
     margin-bottom: 15px;
 	font-size: 1em;
 	background-color: gold;
+}
+
+input:out-of-range {
+	background-color: red;
+}
+
+fieldset {
+	border-color: #999;
+}
+
+label {
+	display: inline-block;
+	margin-top: 3px;
+	margin-bottom: 3px;
 }
 
 .button {
@@ -76,15 +90,17 @@ input {
     cursor: not-allowed;
 }
 
-#shutdown, #SpindleOff, #StepperOff {
+
+/* #shutdown, #SpindleOff, #StepperOff, #ProgramStop */
+.button_red {
 	background-color: #d3394c; /* red */
 }
 
-#shutdown:hover, #SpindleOff:hover, #StepperOff:hover {
+.button_red:hover {
     background-color: #722040;
 }
 
-#shutdown:active, #SpindleOff:active, #StepperOff:active {
+.button_red:active {
     background-color: #722040;
 }
 
@@ -216,12 +232,11 @@ nav ul li>a:active  {color:red; background-color:transparent; text-decoration:un
 
 table {
 	display:block;
-    margin: 2px;
     background-color: #f1f1c1;
 }
 
 table.impressum {
-	table-layout: auto;
+	table-layout: fixed;
 }
 
 table, th, td {
@@ -229,9 +244,13 @@ table, th, td {
     border-collapse: collapse;
 }
 
+thead, tbody {
+	width:100%
+}
+
 th, td {
     padding: 15px;
-	width:15%
+	width:10%
 }
 
 th {
@@ -247,10 +266,10 @@ td {
 }
 
 #controls input {
-	height: 125px;
-	width: 125px;
+	height: 100px;
+	width: 100px;
 	padding: auto;
-    margin: 5px 100px;
+    margin: 10px 60px;
 	background-color:gold;
 	font-size: 1.5em;
 	font-weight: bold;
@@ -376,10 +395,6 @@ aside h2 {
 	margin-top: 10px;
 }
 
-aside input {
-	text-align: right;
-}
-
 footer {
     clear:both;
     text-align:center;
@@ -416,8 +431,9 @@ aside form {
 	margin: 15px 0;
 }
 
-aside input {
+.Displaybox {
 	width: 150px;
+	text-align: right;
 }
 
 .state {
@@ -510,4 +526,14 @@ aside p {
 .top_nav li, .top_login li {
     float: left;
     position: relative;
+}
+
+#helpwiki {
+	width: 100%;
+	height: 100vh;
+}
+
+#CncCodeTxt {
+	width: 100%;
+    background-color: #f1f1c1;
 }

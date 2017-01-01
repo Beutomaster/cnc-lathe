@@ -37,6 +37,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var spi_error=xmlDoc.getElementsByTagName("spi_error")[0].textContent;
 	var cnc_code_error=xmlDoc.getElementsByTagName("cnc_code_error")[0].textContent;
 	var spindel_error=xmlDoc.getElementsByTagName("spindel_error")[0].textContent;
+	var n_actual=xmlDoc.getElementsByTagName("n_actual")[0].textContent;
 
 	/*
 	document.getElementById("active").setAttribute("value", active);
@@ -56,8 +57,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	document.getElementById("spi_error").setAttribute("value", spi_error);
 	document.getElementById("cnc_code_error").setAttribute("value", cnc_code_error);
 	document.getElementById("spindel_error").setAttribute("value", spindel_error);
+	document.getElementById("n_actual").setAttribute("value", n_actual);
 	*/
-
+	
+	document.getElementById("NDisplaybox").innerHTML = n_actual;
 	document.getElementById("RPMDisplaybox").innerHTML = rpm_measure;
 	document.getElementById("XDisplaybox").innerHTML = x_actual;
 	document.getElementById("ZDisplaybox").innerHTML = z_actual;
@@ -68,10 +71,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	if (active == 1) {
 	  document.getElementById("activeLED").className = "led-red";
 	  if (!debug) HideClass("emco");
-	  ShowId("cncbutton");
+	  ShowId("CncButton");
 	  if (manual == 1) {
 		  //if (!debug) HideClass("cnc"); //should be shown while pause
-		  ShowId("manbutton");
+		  ShowId("ManButton");
 		  if (active_last != active) {
 			  if (!debug) HideClass("cnc");
 			  ShowClass("manual");
@@ -102,10 +105,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	  else {
 		  if (!pause && !debug) {
 			  HideClass("manual");
-			  HideId("manbutton"); //should not be shown while program is running
+			  HideId("ManButton"); //should not be shown while program is running
 		  }
 		  else {
-			  ShowId("manbutton"); //should be shown while pause
+			  ShowId("ManButton"); //should be shown while pause
 		  }
 		  if (active_last != active) {
 			  if (!debug) HideClass("manual");
@@ -118,8 +121,8 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	  if (!debug) {
 		  HideClass("manual");
 		  HideClass("cnc");
-		  HideId("manbutton");
-		  HideId("cncbutton");
+		  HideId("ManButton");
+		  HideId("CncButton");
 	  }
 	  ShowClass("emco");
 	}
@@ -128,9 +131,11 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
   
 	if (init == 1) {
 		document.getElementById("initLED").className = "led-red";
+		document.getElementById("LoadOldParameter").style.display='none';
 	} 
 	else {
 		document.getElementById("initLED").className = "led-grey";
+		document.getElementById("LoadOldParameter").style.display='';
 	}
 	
 	if (manual == 1) {
@@ -142,9 +147,15 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	
 	if (pause == 1) {
 		document.getElementById("pauseLED").className = "led-red";
+		document.getElementById("ProgramPause").style.display='none';
+		document.getElementById("ProgramStart").style.display='';
+		//document.getElementById("ProgramStartPause").value = "Start";
 	} 
 	else {
 		document.getElementById("pauseLED").className = "led-grey";
+		document.getElementById("ProgramPause").style.display='';
+		document.getElementById("ProgramStart").style.display='none';
+		//document.getElementById("ProgramStartPause").value = "Pause";
 	}
 	
 	if (inch == 1) {
@@ -197,6 +208,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	}
 }
 
+/*
 //send command
 function sendCommand(str) {
     if (str.length == 0) {
@@ -241,12 +253,13 @@ function testekennwortqualitaet(inhalt)
     xmlhttp.open("GET","kennworttesten.php?q="+inhalt,true);
     xmlhttp.send();
 }
+*/
 
 //Show CNC Code from cnc_code.xml
 function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
   var i;
   var xmlDoc = xml.responseXML;
-  var table="<tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr>";
+  var table="<thead><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></thead><tbody>";
   var x = xmlDoc.getElementsByTagName("block");
   for (i = 0; i <x.length; i++) {
     table += "<tr><td>" +
@@ -265,5 +278,30 @@ function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
     x[i].getElementsByTagName("HSValue")[0].childNodes[0].nodeValue +
     "</td></tr>";
   }
+  table += "</tbody>";
   document.getElementById("code").innerHTML = table;
 } 
+
+//Save as File
+function saveTextAsFile()
+{
+    var textToSave = document.getElementById("CncCodeTxt").value;
+    var textToSaveAsBlob = new Blob([textToSave], {type:"text/plain"});
+    var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
+    var fileNameToSaveAs = "cnc_code.txt"; //document.getElementById("inputFileNameToSaveAs").value;
+ 
+    var downloadLink = document.createElement("a");
+    downloadLink.download = fileNameToSaveAs;
+    downloadLink.innerHTML = "Download File";
+    downloadLink.href = textToSaveAsURL;
+    downloadLink.onclick = destroyClickedElement;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+ 
+    downloadLink.click();
+}
+
+function destroyClickedElement(event)
+{
+    document.body.removeChild(event.target);
+}
