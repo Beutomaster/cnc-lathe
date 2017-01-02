@@ -310,6 +310,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=0;
 	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	//uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	
 	if (!update_machine_state) {
 		if (pipe_msg_buffer == NULL) { //command-line-mode
@@ -387,7 +388,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 		case 3:   	//Programm Pause
 					break;
 		case 4:   	//Spindle on with RPM and Direction
-					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &rpm, &spindle_direction);
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d", client_sid, &msg_type, &rpm, &spindle_direction);
 					
 					printf("RPM (460 to 3220): ");
 					if ((rpm>=REVOLUTIONS_MIN) && (rpm<=REVOLUTIONS_MAX)) printf("%i\n",rpm);
@@ -458,7 +459,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = negativ_direction;
 					break;
 		case 10:   	//Set Tool-Position (and INIT)
-					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &XX, &ZZ, &tool);
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n%d", client_sid, &msg_type, &XX, &ZZ, &tool);
 					
 					printf("X-Offset (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
@@ -558,7 +559,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = inch;
 					break;
 		case 14:  	//New CNC-Programm wit N Blocks in metric or inch
-					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &block, &inch);
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d", client_sid, &msg_type, &block, &inch);
 					
 					printf("Blocks (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
@@ -590,7 +591,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = inch;
 					break;
 		case 15:  	//CNC-Code-Block
-					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%c\n%d\n%d\n%d\n%d\n%d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 					
 					printf("Block-No (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
