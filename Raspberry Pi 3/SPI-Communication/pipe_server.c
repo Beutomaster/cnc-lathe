@@ -15,20 +15,25 @@
 #define MSG_SUCCESS "Sending your message to Arduino!\0"
 #define MSG_ERROR_STATE "Could not send message to Arduino at this Machine State!\0"
 #define MSG_ERROR_CLIENT "Could not send message to Arduino, because it is in exclusively use by another Client!\0"
+#define CLIENT_SESSION_ID_ARRAY_LENGTH 27
+//example-sid: 15a1rgdq662cms5m9qe3f55n74
 
-char state=0;
+char state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], pid;
 int exclusive = 0;
 
 //static void send_to_arduino (const char *text, const char *client_sid) {
 void send_to_arduino (const char *text) {
+	sscanf(text,"%s\n%d", client_sid, &pid);
 	//output message
-	//printf ("Message from Client-SESSION: %i\n", client_sid);
-	printf ("Message from Client-SESSION: %s\n", text);
+	printf ("Message from Client-SESSION: %s\n", client_sid);
+	printf ("Message-PID: %i\n", pid);
+	printf ("Complete Message from Client-SESSION: %s\n", text);
 }
 
 int main (void) {
-	char buffer[BUF], answer_to_client[BUF], answer_fifo_name[BUF], client_sid[27];
+	char buffer[BUF], answer_to_client[BUF], answer_fifo_name[BUF];
 	int r_fd, w_fd, i;
+	//FILE *r_fz, *w_fz;
 
 	//allow all rights for new created files
 	umask(0);
@@ -51,11 +56,12 @@ int main (void) {
 	To avoid this open that FIFO for both reading and writing (O_RDWR). This ensures that you have at least one writer on the FIFO thus there wont be an EOF and as a result select won't return unless someone writes to that FIFO.
 	*/
 	//Server opens arduino_pipe.tx
-	r_fd = open ("arduino_pipe.tx", O_RDWR);
+	r_fd = open ("arduino_pipe.tx", O_RDWR); //create an Filedescriptor for Low-Level I/O-Functions like read/write
 	if (r_fd == -1) {
 	  perror ("open(1)");
 	  exit (EXIT_FAILURE);
 	}
+	//r_fz = fdopen(r_fd, "r"); //create an Filepointer for High-Level I/O-Functions like fscanf
 	
 	//set parameter for select
 	fd_set r_fd_set;
@@ -93,6 +99,7 @@ int main (void) {
 		else //there was activity on the file descripor
 		{
 			//printf("select says pipe is readable\n");
+			//fscanf(r_fz,"%s\n%d", client_sid, &pid);
 			
 			if (read (r_fd, buffer, BUF) != 0) {
 				/*
