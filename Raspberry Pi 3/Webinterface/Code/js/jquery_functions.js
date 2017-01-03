@@ -230,6 +230,96 @@
 		sendCommand(data);
 	});
 	
+	//Polling Stepper while Button is pressed
+	var StepperTimeout = 400; //400 ms
+	var StepperButtonPressed=false;
+
+	function StepperPoll() {
+		var StepperButtonPressed_local = StepperButtonPressed;
+		setTimeout(function() {
+			var feedvalue = document.getElementById("feed").value;
+			var stepper_direction_local = "0";
+			if (StepperButtonPressed_local == "XStepperNegativ" || StepperButtonPressed_local == "ZStepperNegativ") stepper_direction_local = "1";
+			var stepper = "XStepper";
+			if (StepperButtonPressed_local == "ZStepperPositiv" || StepperButtonPressed_local == "ZStepperNegativ") stepper = "ZStepper";
+			// AJAX-Call
+			$.ajax({
+				url : '/php/send_command.php',
+				type : 'POST',
+				data : {command: stepper, stepper_direction: stepper_direction_local, feed: feedvalue},
+				success: function(response) {
+					$("#manual_responses").html("Response:<br />" +  JSON.stringify(response));
+				},
+				error: function(xhr){
+					//alert("An error occured: " + xhr.status + " " + xhr.statusText);
+					$("#manual_responses").html("Request-Error: Submitting Command failed!<br />" + xhr.status + ": " + xhr.statusText);
+				},
+				complete: function () {
+					if (StepperButtonPressed != StepperButtonPressed_local) {
+						clearTimeout(StepperPoll);
+					} else {
+						StepperPoll();
+					}
+				}
+			});
+		}, StepperTimeout);
+	}
+	
+	$("#XStepperPositiv").on({
+		mousedown: function(event) {
+			/*
+			console.log( "XStepperPositiv pressed" );
+			console.log( "event object:" );
+			console.dir( event );
+			console.log( "event.target.id" );
+			console.dir( event.target.id );
+			*/
+			StepperButtonPressed = "XStepperPositiv";
+			StepperPoll();
+		},
+		"mouseleave mouseup": function(event) {
+			/*
+			console.log( "XStepperPositiv released" );
+			console.log( "event object:" );
+			console.dir( event );
+			console.log( "event.target.id" );
+			console.dir( event.target.id );
+			*/
+			StepperButtonPressed = false;
+		}
+	});
+	
+	$("#ZStepperPositiv").on({
+		mousedown: function() {
+			StepperButtonPressed = "ZStepperPositiv";
+			StepperPoll();
+		},
+		"mouseleave mouseup": function() {
+			StepperButtonPressed = false;
+		}
+	});
+	
+	$("#XStepperNegativ").on({
+		mousedown: function() {
+			StepperButtonPressed = "XStepperNegativ";
+			StepperPoll();
+		},
+		"mouseleave mouseup": function() {
+			StepperButtonPressed = false;
+		}
+	});
+	
+	$("#ZStepperNegativ").on({
+		mousedown: function() {
+			StepperButtonPressed = "ZStepperNegativ";
+			StepperPoll();
+		},
+		"mouseleave mouseup": function() {
+			StepperButtonPressed = false;
+		}
+	});
+	
+	/*
 	$("#XStepperPositiv").click(function(){ //needs to be sent every 400ms, while button is pressed
 		var feedvalue = document.getElementById("feed").value;
 		var data = {command: "XStepper", stepper_direction: "0", feed: feedvalue};
@@ -253,6 +343,7 @@
 		var data = {command: "ZStepper", stepper_direction: "1", feed: feedvalue};
 		sendCommand(data);
 	});
+	*/
 	
 	$("#ResetErrors").click(function(){
 		var data = {command: "ResetErrors"};
