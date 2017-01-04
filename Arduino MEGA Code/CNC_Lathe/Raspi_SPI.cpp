@@ -45,7 +45,7 @@ Praeambel 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_
 volatile char rx_buf [SPI_MSG_LENGTH]; //SPI receive-buffer
 volatile char rx_doublebuf [SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL]; //SPI receive-double-buffer
 volatile char tx_buf [SPI_MSG_LENGTH]; //SPI send-buffer
-volatile char tx_doublebuf [SPI_MSG_LENGTH]; //SPI send-double-buffer
+volatile char tx_doublebuf [SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL]; //SPI send-double-buffer
 volatile byte pos=0; // buffer empty
 volatile boolean byte_received=false; //first byte of transmission received)
 volatile boolean process_it=false; //not end of string (newline received)
@@ -319,11 +319,11 @@ void create_machine_state_msg() {
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_N_H] = STATE_N>>8;
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_N_L] = STATE_N;
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_ERROR_NO] = ERROR_NO; //bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI
-  tx_doublebuf [SPI_BYTE_ARDUINO_MSG_CRC8] = CRC8(tx_doublebuf, SPI_BYTE_LENGTH_PRAEAMBEL, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL-1, false, 0);
+  tx_doublebuf [SPI_BYTE_ARDUINO_MSG_CRC8] = CRC8(tx_doublebuf, 0, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL-1, false, 0);
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     //copy rx_buf to rx_doublebuf without praeambel
-    for (int i=SPI_BYTE_LENGTH_PRAEAMBEL; i<SPI_MSG_LENGTH; i++) {
-      tx_buf[i] = tx_doublebuf[i];
+    for (int i=0; i<SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL; i++) {
+      tx_buf[i+SPI_BYTE_LENGTH_PRAEAMBEL] = tx_doublebuf[i];
     }
   }
 }
@@ -331,10 +331,15 @@ void create_machine_state_msg() {
 void create_other_msg() { //maybee not needed
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_TYPE] = 101; //PID
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO] = lastsuccessful_msg;
-  for (int i=SPI_BYTE_LENGTH_PRAEAMBEL+2; i<(SPI_MSG_LENGTH-2); i++) {
+  for (int i=2; i<(SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL-2); i++) {
     tx_doublebuf [i] = 0;
   }
-  tx_doublebuf [SPI_MSG_LENGTH-1] = CRC8(tx_doublebuf, SPI_BYTE_LENGTH_PRAEAMBEL, 2, false, 0);
+  tx_doublebuf [SPI_MSG_LENGTH-1] = CRC8(tx_doublebuf, 0, 2, false, 0);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    for (int i=0; i<SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL; i++) {
+      tx_buf[i+SPI_BYTE_LENGTH_PRAEAMBEL] = tx_doublebuf[i];
+    }
+  }
 }
 
 // SPI interrupt routine
