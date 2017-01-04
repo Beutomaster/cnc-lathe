@@ -152,6 +152,7 @@ void setup() {
   //read_last_x_step();
   //read_last_z_step();
 
+  /*
   //debug Watchdog
   #ifndef DEBUG_SERIAL_CODE_OFF
     Serial.print("Watchdog WDTCSR: ");
@@ -159,6 +160,7 @@ void setup() {
     Serial.print("Watchdog MCUCSR: ");
     Serial.println(MCUSR, BIN);
   #endif
+  */
   //watchdogSetup();
 }
 
