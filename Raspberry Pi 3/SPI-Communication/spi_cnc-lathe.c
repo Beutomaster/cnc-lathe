@@ -40,6 +40,7 @@
 //defines
 
 //Pipe-Server
+#define SPI_TX_RINGBUFFERSIZE 500
 #define BUF 4096
 #define MSG_SUCCESS "Sending your message to Arduino!\0"
 #define MSG_ERROR_STATE "Could not send message to Arduino at this Machine State!\0"
@@ -154,13 +155,12 @@ int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
 
 //pipe-Server
-char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[BUF], answer_to_client[BUF], answer_fifo_name[BUF];
-int r_fd, w_fd, i;
+char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
+int r_fd, w_fd, i, ret, ringbufer_pos=0, messages_notreceived=0, ringbuffer_fill_status=0;
 //FILE *r_fz, *w_fz;
 //parameter for select
 fd_set r_fd_set;
 struct timeval timeout;
-int ret;
 
 static void pabort(const char *s)
 {
@@ -308,14 +308,14 @@ uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes)
   return crc_8;
 }
 
-static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char update_machine_state)
+static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char msg_type)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	int lostmessages=0, ret, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 	//uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	
-	if (!update_machine_state) {
+	if (!msg_type) {
 		if (pipe_msg_buffer == NULL) { //command-line-mode
 			//User Input for Message
 			printf("Message-Types:\n");
@@ -345,7 +345,6 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 			printf ("Message from Client-SESSION: %s\n", client_sid);
 		}
 	}
-	else msg_type=1;
 	
 	printf("Message-Type: ");
 	if ((msg_type>=1) && (msg_type<=19)) printf("%i\n",msg_type);
@@ -723,7 +722,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 		case 18:  	//Load last coordinates and tool position and init
 					break;
 		case 19:  	//Reset Errors
-					msg_number = lastsuccessful_msg+1; //Reset Msg-No
+					msg_number = (lastsuccessful_msg+1)%256; //Reset Msg-No
 					pos--;
 					tx[pos++] = msg_number; 
 					//With the next message, lost messages can be repeated, if they were important. (2D-Array needed for saving last messages)
@@ -777,7 +776,8 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 		//Byteorder: 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 		printf("Incomming Message:\n");
 		printf("------------------\n");
-		printf("PID: %i\n", rx[SPI_BYTE_ARDUINO_MSG_TYPE]);
+		char pid = rx[SPI_BYTE_ARDUINO_MSG_TYPE];
+		printf("PID: %i\n", pid);
 		lastsuccessful_msg = rx[SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO];
 		printf("Last Successful Message: %i\n", lastsuccessful_msg);
 		char active = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
@@ -819,10 +819,24 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 		char crc_in = rx[SPI_BYTE_ARDUINO_CRC8];
 		printf("CRC: %i\n\n", crc_in);
 		
-		if (CRC8(rx, SPI_BYTE_LENGTH_PRAEAMBEL, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL)) printf("CRC-Check of incomming message failed!!!\n\n");
+		if (CRC8(rx, SPI_BYTE_LENGTH_PRAEAMBEL, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL) || pid != 100) {
+			printf("CRC- or PID-Check of incomming message failed!!!\n\n");
+			/*
+			//should be implemented in another way
+			printf("Try to get Status Update!\n");
+			while (spi_transfer(spi_fd, NULL, 1)) {
+					usleep(500000); //0,5s
+			}
+			*/
+		}
 		else {
 			//Inform about lost messages
-			if (msg_number != (lastsuccessful_msg+1)%256) printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", msg_number-lastsuccessful_msg-1);
+			lostmessages = msg_number-lastsuccessful_msg-1;
+			if (lostmessages<0) lostmessages += 256;
+			//if (msg_number != (lastsuccessful_msg+1)%256) {
+			if (lostmessages>0) {
+				printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", lostmessages);
+			}
 			
 			//Ouptut to Machine-State-File
 			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
@@ -883,6 +897,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 	printf("\n");
 	
 	msg_number++; //for next message
+	return lostmessages;
 }
 
 static void print_usage(const char *prog)
@@ -1026,7 +1041,7 @@ int main(int argc, char *argv[])
 					//printf("select says pipe is readable\n");
 					//fscanf(r_fz,"%s\n%d", client_sid, &pid);
 					
-					if (read (r_fd, buffer, BUF) != 0) {
+					if (read (r_fd, buffer[ringbufer_pos], BUF) != 0) {
 						/*
 						//get SESSION-ID of calling client
 						i = 0;
@@ -1063,9 +1078,42 @@ int main(int argc, char *argv[])
 							close (w_fd);
 						}
 						*/
-
+						
+						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
+						
 						//process message
-						spi_transfer(spi_fd, buffer, 0);
+						messages_notreceived = spi_transfer(spi_fd, buffer[ringbufer_pos], 0); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						
+						/*
+						//Error-Handling not ready
+						do {
+							
+							
+							//Reset SPI-Error							
+							while (spi_transfer(spi_fd, NULL, 19)) {
+									usleep(500000); //0,5s
+							}
+							
+							//try to send lost messages again
+							if (messages_notreceived>SPI_TX_RINGBUFFERSIZE) {
+								//error handling needed!
+								printf("%i Messages lost!\n", messages_notreceived);
+							}
+							else {
+								//Update ringbufer_pos
+								if (messages_notreceived>ringbuffer_fill_status) ringbufer_pos -= ringbuffer_fill_status;
+								else ringbufer_pos -= messages_notreceived;
+								if (ringbufer_pos<0) ringbufer_pos += SPI_TX_RINGBUFFERSIZE;
+								
+								spi_transfer(spi_fd, buffer[ringbufer_pos], 0);
+							}
+							
+						} while (messages_notreceived);
+						*/
+						
+						//Update ringbufer_pos
+						if (ringbufer_pos<SPI_TX_RINGBUFFERSIZE-1) ringbufer_pos++;
+						else ringbufer_pos = 0;
 					}
 				}
 			}

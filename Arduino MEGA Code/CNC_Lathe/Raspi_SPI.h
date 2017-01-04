@@ -15,6 +15,7 @@
 //defines
 #define SPI_BYTE_LENGTH_PRAEAMBEL 4
 #define SPI_MSG_LENGTH (18+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_RX_RINGBUFFERSIZE 15
 
 //Byte Postions of Arduino-Answer without Praeambel
 #define SPI_BYTE_ARDUINO_MSG_TYPE 0
