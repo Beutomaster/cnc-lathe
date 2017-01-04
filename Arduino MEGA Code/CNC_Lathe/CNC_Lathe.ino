@@ -18,6 +18,25 @@ volatile int STATE_H=0;
 volatile byte STATE_T=0; //0 = uninitialized
 volatile int STATE_N=0;
 
+void watchdogSetup(void) {
+  cli(); // disable all interrupts
+  wdt_reset(); // reset the WDT timer
+  /*
+     WDTCSR conﬁguration:
+     WDIE  = 1: Interrupt Enable
+     WDE   = 1 :Reset Enable
+     WDP3 = 0 :For 2000ms Time-out
+     WDP2 = 1 :For 2000ms Time-out
+     WDP1 = 1 :For 2000ms Time-out
+     WDP0 = 1 :For 2000ms Time-out
+  */
+  // Enter Watchdog Conﬁguration mode:
+  WDTCSR |= (1<<WDCE) | (1<<WDE); 
+  // Set Watchdog settings:
+  WDTCSR = (1<<WDIE) | (1<<WDE) | (0<<WDP3)  | (1<<WDP2) | (1<<WDP1)  | (1<<WDP0);
+  sei();
+}
+
 void setup() {
   // put your setup code here, to run once:
     
@@ -73,6 +92,7 @@ void setup() {
   
   //SPI
   SPCR |= _BV(SPE);  // turn on SPI in slave mode
+  init_msg_praeambel();
   create_machine_state_msg(); //initialize machine_state_msg before turning on interrupt
   #ifndef DEBUG_SPI_CODE_OFF
     //#error SPI compilation activated!
@@ -131,6 +151,15 @@ void setup() {
   //read Last Steps
   //read_last_x_step();
   //read_last_z_step();
+
+  //debug Watchdog
+  #ifndef DEBUG_SERIAL_CODE_OFF
+    Serial.print("Watchdog WDTCSR: ");
+    Serial.println(WDTCSR, BIN);
+    Serial.print("Watchdog MCUCSR: ");
+    Serial.println(MCUSR, BIN);
+  #endif
+  //watchdogSetup();
 }
 
 void set_error(byte error_bit_position) {
@@ -147,7 +176,6 @@ void loop() {
   //SPI-Communication
   #ifndef DEBUG_SPI_CODE_OFF
     //#error SPI compilation activated!
-    //if (!byte_received && tx_buf[0]==100) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress and no other message has to be sent
     if (!byte_received) create_machine_state_msg(); //update machine_state_msg if no transfer is in progress
     spi_buffer_handling();
   #endif
@@ -175,4 +203,16 @@ void loop() {
     set_revolutions(get_SERVO_CONTROL_POTI());
     //set spindle-direction
   }
+  //wdt_reset(); // reset the WDT timer
 }
+
+/*
+ISR(WDT_vect) //Watchdog-ISR
+{
+  #ifndef DEBUG_SERIAL_CODE_OFF
+    Serial.println("Watchdog Interrupt - Restarting if WDE in WDTCSR enabled");
+  #endif
+  // you can include any code here. With the reset disabled you could perform an action here every time
+  // the watchdog times out...
+}
+*/
