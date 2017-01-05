@@ -185,7 +185,7 @@ void loop() {
   //CNC-Lathe State-Machine  
   if (get_control_active()) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
     if (initialized) {
-      if (!command_time && !i_tool && x_command_completed && z_command_completed) {
+      if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
           command_completed=1;
           STATE_F = 0;
           stepper_timeout();
