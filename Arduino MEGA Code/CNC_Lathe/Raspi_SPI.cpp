@@ -243,6 +243,7 @@ boolean process_incomming_msg() {
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
+                /*
                 #ifndef DEBUG_SERIAL_CODE_OFF
                   Serial.print("Z DEC: ");
                   Serial.print(((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), DEC);
@@ -253,6 +254,7 @@ boolean process_incomming_msg() {
                   Serial.print(", Z HEX: ");
                   Serial.println(((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
                 #endif
+                */
                 set_z_coordinate((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]);
               }
               break;
