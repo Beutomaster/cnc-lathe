@@ -338,21 +338,21 @@ void read_last_z_step() { //needed to switch on stepper without movement
 }
 
 ISR(TIMER1_OVF_vect) {
-  if (command_time) { //Dwell
-    if (i_command_time==1) {
+  if (i_command_time || command_time) { //Dwell
+    if (i_command_time==1 && command_time) {
       ICR1 = (62500L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*command_time/100)-1
       if (ICR1<TCNT1) {
         TCNT1=0; //Checks if Timer already overrun the compare value
         //set Interrupt flag???
       }
     }
-    else if (!i_command_time) {
+    else if ((!i_command_time && command_time) || (i_command_time==1 && !command_time)) {
         //If time is over
         TCCR1B = 0; //Disable Timer
         command_completed=1;
         command_time=0;
     }
-    i_command_time--;
+    if (i_command_time) i_command_time--;
   }
 
   else {  //X-Stepper
@@ -453,7 +453,7 @@ ISR(TIMER1_OVF_vect) {
         if (clk_xfeed) { //clock not zero
           ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/clk_xfeed)-1
           //Overflow possible!!!
-        } else ICR1 = 62499L;
+        } else ICR1 = 62499U;
       }
       
       else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
@@ -582,7 +582,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       if (clk_zfeed) { //clock not zero
         ICR3 = (3750000L/clk_zfeed)-1; //ICR3 = (16MHz*60(min/s)/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/clk_zfeed)-1
         //Overflow possible!!!
-      } else ICR3 = 62499L;
+      } else ICR3 = 62499U;
     }
 
     else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
