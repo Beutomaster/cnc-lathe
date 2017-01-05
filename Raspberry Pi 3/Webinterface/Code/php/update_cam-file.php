@@ -3,12 +3,7 @@
 	session_start();
 	if(!$_SESSION['logged_in']) header("Location: /login.html");
 	
-	function test_input($data) {
-		$data = trim($data);
-		$data = stripslashes($data);
-		$data = htmlspecialchars($data);
-		return $data;
-	}
+	include 'verify_cnc_code.php';
 	
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		/*
@@ -17,12 +12,20 @@
 			echo "value of it: $value <br />";
 		}
 		*/
-		$txt = test_input($_POST['CncCodeTxt']);
+		//$cnc_code = $_POST['CncCodeTxt'];
+		$cnc_code = test_input($_POST['CncCodeTxt']);
+		$cnc_code_array = preg_split("/\\r\\n|\\r|\\n/", $cnc_code);
+		
 	}
+	
+	//debug
+	//var_dump($cnc_code_array);
+	
+	verify_cnc_code($cnc_code_array) or die("File not updated because of CNC-Code-Error!");
    
 	$target_file = "/var/www/html/uploads/cnc_code.txt";
 	$myfile = fopen($target_file, "w") or die("Unable to open file!");
-	fwrite($myfile, $txt);
+	fwrite($myfile, $cnc_code);
 	fclose($myfile);
 	echo "CAM-File has been updated.";
 ?>
