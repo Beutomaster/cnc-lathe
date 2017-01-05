@@ -23,6 +23,7 @@ void initialize_tool_position(byte tool) {
 void reset_initialization() { 
   spindle_direction(false); //includes spindle_off()
   command_time = 0;
+  i_command_time = 0;
   stepper_off();
   
   //Tool Changer

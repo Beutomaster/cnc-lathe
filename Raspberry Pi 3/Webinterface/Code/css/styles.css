@@ -1,17 +1,29 @@
-* {
+﻿* {
     box-sizing: border-box;
 }
 
+html, body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-    background-color: lightgrey;
+    background-color: #333;
 	font-family: verdana;
-    font-size: 100%;
+    font-size: 110%;
+	border-collapse: collapse;
 }
 
 h1 {
-	color: deepskyblue;
-    font-size: 2.5em;
+	color: gold;
+    font-size: 2em;
 	font-weight: bold;
+	text-shadow: 2px 2px 5px black;
+}
+
+header h1 {
+	margin: 10px 0px;
 }
 
 h2 {
@@ -22,8 +34,29 @@ p {
     font-size: 0.875em;
 }
 
-form {
+form, table {
+    margin: 0 15px 15px 15px;
+}
+
+input {
+	margin-top: 8px;
     margin-bottom: 15px;
+	font-size: 1em;
+	background-color: gold;
+}
+
+input:out-of-range {
+	background-color: red;
+}
+
+fieldset {
+	border-color: #999;
+}
+
+label {
+	display: inline-block;
+	margin-top: 3px;
+	margin-bottom: 3px;
 }
 
 .button {
@@ -57,15 +90,17 @@ form {
     cursor: not-allowed;
 }
 
-#shutdown, #SpindleOff, #StepperOff {
+
+/* #shutdown, #SpindleOff, #StepperOff, #ProgramStop */
+.button_red {
 	background-color: #d3394c; /* red */
 }
 
-#shutdown:hover, #SpindleOff:hover, #StepperOff:hover {
+.button_red:hover {
     background-color: #722040;
 }
 
-#shutdown:active, #SpindleOff:active, #StepperOff:active {
+.button_red:active {
     background-color: #722040;
 }
 
@@ -189,16 +224,19 @@ a:visited {color:green; background-color:transparent; text-decoration:none}
 a:hover   {color:red; background-color:transparent; text-decoration:underline}
 a:active  {color:yellow; background-color:transparent; text-decoration:underline}
 
-nav ul li>a:link    {color:white; background-color:transparent; text-decoration:none}
-nav ul li>a:visited {color:white; background-color:transparent; text-decoration:none}
+nav ul li>a:link    {color:black; background-color:transparent; text-decoration:none}
+nav ul li>a:visited {color:black; background-color:transparent; text-decoration:none}
 nav ul li>a:hover   {color:red; background-color:transparent; text-decoration:underline}
-nav ul li>a:active  {color:yellow; background-color:transparent; text-decoration:underline}
+nav ul li>a:active  {color:red; background-color:transparent; text-decoration:underline}
 
 
 table {
 	display:block;
-    margin: 2px;
     background-color: #f1f1c1;
+}
+
+table.impressum {
+	table-layout: fixed;
 }
 
 table, th, td {
@@ -206,9 +244,21 @@ table, th, td {
     border-collapse: collapse;
 }
 
+thead, tbody {
+	width:100%
+}
+
 th, td {
     padding: 15px;
-	width:15%
+	width:10%
+}
+
+th {
+    text-align: center;
+}
+
+td {
+    text-align: right;
 }
 
 #controls {
@@ -216,49 +266,62 @@ th, td {
 }
 
 #controls input {
-	padding: 20px;
-    margin: 5px;
-	margin-left: 30px;
-	margin-right: 30px;
-	background-color:silver;
+	height: 100px;
+	width: 100px;
+	padding: auto;
+    margin: 10px 60px;
+	background-color:gold;
+	font-size: 1.5em;
+	font-weight: bold;
 }
 
 header, section, footer, aside, nav, main, article, figure {
     display: block;
 }
 
-header,footer,nav,section,article {
-    /*border:1px solid grey;*/
+header,footer,section,article {
+	/*
 	margin:5px;
 	margin-bottom:15px;
+	*/
 	padding:8px;
 	/*background-color:white;*/
 }
 
 article {
-    border:1px solid grey;
-	background-color:snow;
+    border-bottom:1px solid #888;
+	background-color:#666;
 }
 
+/*
 header,footer,nav,section,aside {
 	 box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
+*/
 
-nav,aside {
-	background-color:snow;
+aside {
+	background-color:#666;
 }
 
 header,footer {
     color:white;
-	background-color:black;
-	margin-bottom:5px;
+	background-color:#222;
 }
 
 header {
     text-align:center;
-    padding:5px;
+    padding:0px;
 }
 
+
+header {
+    background: rgba(0, 0, 0, 0) linear-gradient(#56585d, #2f3034) repeat scroll 0 0;
+    border-bottom: 1px solid #000;
+    position: relative;
+    width: 100%;
+}
+
+/*
 nav {
     line-height:30px;
 	color: white;
@@ -268,6 +331,13 @@ nav {
     padding:5px;
 	text-align: center;
 }
+*/
+
+nav {
+	margin:0;
+	padding:0;
+	background-color: gold;
+}
 
 nav ul  {
     margin:0;
@@ -275,11 +345,10 @@ nav ul  {
 }
 
 nav ul li {
-	background-color: deepskyblue;
 	font-size: 1rem;
     font-weight: bold;
     padding: 10px;
-    margin: 30px;
+    margin: 0px;
 	list-style-type:none;
 	/*outline-color: lightgrey;
 	outline-style:outset;*/
@@ -297,10 +366,16 @@ nav ul li:active {
 }
 
 section {
-	width:65%;
-    background-color:gold;
+	background-color: gold;
+	width:80%;
     float:left;
-    padding:10px;
+    padding:0px;
+	border-right: 1px solid #000;
+}
+
+section.impressum {
+	width:100%;
+	padding:0 15%;
 }
 
 article {
@@ -310,24 +385,22 @@ article {
 aside {
 	display:inline;
 	float:right;
-	width: 17%;
-	margin:5px;
+	width: 20%;
     padding:20px;
 	text-align: left;
+	border-left: 1px solid #000;
 }
 
 aside h2 {
 	margin-top: 10px;
 }
 
-aside input {
-	text-align: right;
-}
-
 footer {
     clear:both;
     text-align:center;
     padding:5px;
+	background: rgba(0, 0, 0, 0) linear-gradient(#444444, #3e3e3e) repeat scroll 0 0;
+    border-top: 1px solid #676767;
 }
 
 #credits {
@@ -352,4 +425,115 @@ footer {
 
 .clearfix {
     overflow: auto;
+}
+
+aside form {
+	margin: 15px 0;
+}
+
+.Displaybox {
+	width: 150px;
+	text-align: right;
+}
+
+.state {
+    height: 32px;
+	line-height: 32px;
+}
+
+aside p {
+	margin: 0;
+	float: left;
+	font-size: 1em;
+}
+
+.led-grey {
+    margin: 10px;
+    width: 12px;
+    height: 12px;
+	float: left;
+    background-color: grey;
+    border-radius: 50%;
+    box-shadow: #000 0 -1px 7px 1px, inset lightgrey 0 -1px 9px, grey 0 2px 12px;
+}
+
+.led-red {
+    margin: 10px;
+    width: 12px;
+    height: 12px;
+	float: left;
+    background-color: red;
+    border-radius: 50%;
+    box-shadow: #000 0 -1px 7px 1px, inset #600 0 -1px 9px, #F00 0 2px 12px;
+}
+
+.led-yellow {
+    margin: 10px;
+    width: 12px;
+    height: 12px;
+	float: left;
+    background-color: #A90;
+    border-radius: 50%;
+    box-shadow: #000 0 -1px 7px 1px, inset #660 0 -1px 9px, #DD0 0 2px 12px;
+}
+
+.led-green {
+    margin: 10px;
+    width: 12px;
+    height: 12px;
+	float: left;
+    background-color: #690;
+    border-radius: 50%;
+    box-shadow: #000 0 -1px 7px 1px, inset #460 0 -1px 9px, #7D0 0 2px 12px;
+}
+
+.led-blue {
+    margin: 10px;
+    width: 12px;
+    height: 12px;
+	float: left;
+    background-color: #4AB;
+    border-radius: 50%;
+    box-shadow: #000 0 -1px 7px 1px, inset #006 0 -1px 9px, #06F 0 2px 14px;
+}
+
+.Displaybox {
+	float: right;
+	height: 32px;
+	line-height: 26px;
+	width: 150px;
+	margin: 0;
+	margin-left: 5px;
+	padding: 0 5px;
+	border: 3px inset grey;
+	text-align: right;
+	font-size: 1em;
+	color: red;
+	background-color: gold;
+}
+
+.top_nav, .top_login {
+    float: left;
+    list-style: none outside none;
+    margin: 0;
+    padding: 0;
+}
+
+.top_login {
+    float: right;
+}
+
+.top_nav li, .top_login li {
+    float: left;
+    position: relative;
+}
+
+#helpwiki {
+	width: 100%;
+	height: 100vh;
+}
+
+#CncCodeTxt {
+	width: 100%;
+    background-color: #f1f1c1;
 }

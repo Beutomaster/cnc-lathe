@@ -1,4 +1,7 @@
-/* SPI Communication Tool for an modified Emco Compact 5 CNC-Lathe
+/* spi_cnc-lathe.c
+ * SPI Communication Tool for an modified Emco Compact 5 CNC-Lathe
+ * including a pipe-Server (for a php-script of a Webinterface)
+ * test with second console: echo "test" >> /home/pi/spi_com/arduino_pipe.tx
  * written by Hannes Beuter
  * 
  * influenced by following Code Examples:
@@ -12,6 +15,7 @@
  * the Free Software Foundation; either version 2 of the License.
  *
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
+ * On Raspberry Pi compile with: gcc -o spi_cnc-lathe spi_cnc-lathe.c
  */
  
 #include <stdint.h>
@@ -26,9 +30,27 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <signal.h>
+#include <sys/select.h>
+//#include <sys/time.h>
+//#include <sys/types.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 
- //defines
-#define SPI_MSG_LENGTH 18
+//defines
+
+//Pipe-Server
+#define SPI_TX_RINGBUFFERSIZE 500
+#define BUF 4096
+#define MSG_SUCCESS "Sending your message to Arduino!\0"
+#define MSG_ERROR_STATE "Could not send message to Arduino at this Machine State!\0"
+#define MSG_ERROR_CLIENT "Could not send message to Arduino, because it is in exclusively use by another Client!\0"
+#define CLIENT_SESSION_ID_ARRAY_LENGTH 27
+//example-sid: 15a1rgdq662cms5m9qe3f55n74
+
+//SPI
+#define SPI_BYTE_LENGTH_PRAEAMBEL 4
+#define SPI_MSG_LENGTH (18+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 //Input Parameter Ranges
@@ -58,51 +80,55 @@
 #define REVOLUTIONS_MAX 3220 //rpm
 
 //Byte Postions of Arduino-Answer
-#define SPI_BYTE_PID 0
-#define SPI_BYTE_LASTSUCCESS_MSG_NO 1
-#define SPI_BYTE_STATE 2
-#define SPI_BYTE_RPM_H 3
-#define SPI_BYTE_RPM_L 4
-#define SPI_BYTE_X_H 5
-#define SPI_BYTE_X_L 6
-#define SPI_BYTE_Z_H 7
-#define SPI_BYTE_Z_L 8
-#define SPI_BYTE_F_H 9
-#define SPI_BYTE_F_L 10
-#define SPI_BYTE_H_H 11
-#define SPI_BYTE_H_L 12
-#define SPI_BYTE_T 13
-#define SPI_BYTE_N_H 14
-#define SPI_BYTE_N_L 15
-#define SPI_BYTE_ERROR_NO 16
-#define SPI_BYTE_CRC8 17
+#define SPI_BYTE_ARDUINO_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO (1+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_MSG_STATE (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_RPM_H (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_RPM_L (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_X_H (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_X_L (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_Z_H (7+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_Z_L (8+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_F_H (9+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_F_L (10+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_H_H (11+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_H_L (12+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_T (13+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_N_H (14+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_N_L (15+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_ERROR_NO (16+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
 
 //Byte Postions of RASPI-Msg
-#define SPI_BYTE_RASPI_MSG_NO 1
-#define SPI_BYTE_RASPI_MSG_N_H 2
-#define SPI_BYTE_RASPI_MSG_N_L 3
-#define SPI_BYTE_RASPI_MSG_GM 4
-#define SPI_BYTE_RASPI_MSG_GM_NO 5
-#define SPI_BYTE_RASPI_MSG_XI_H 6
-#define SPI_BYTE_RASPI_MSG_XI_L 7
-#define SPI_BYTE_RASPI_MSG_ZK_H 8
-#define SPI_BYTE_RASPI_MSG_ZK_L 9
-#define SPI_BYTE_RASPI_MSG_FTLK_H 10
-#define SPI_BYTE_RASPI_MSG_FTLK_L 11
-#define SPI_BYTE_RASPI_MSG_HS_H 12
-#define SPI_BYTE_RASPI_MSG_HS_L 13
-#define SPI_BYTE_RASPI_MSG_RPM_H 2
-#define SPI_BYTE_RASPI_MSG_RPM_L 3
-#define SPI_BYTE_RASPI_MSG_DIRECTION 4
-#define SPI_BYTE_RASPI_MSG_F_H 2
-#define SPI_BYTE_RASPI_MSG_F_L 3
-#define SPI_BYTE_RASPI_MSG_X_H 2
-#define SPI_BYTE_RASPI_MSG_X_L 3
-#define SPI_BYTE_RASPI_MSG_Z_H 4
-#define SPI_BYTE_RASPI_MSG_Z_L 5
-#define SPI_BYTE_RASPI_MSG_T 6
-#define SPI_BYTE_RASPI_MSG_INCH 2
-#define SPI_BYTE_RASPI_MSG_G_INCH 4
+#define SPI_BYTE_RASPI_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_NO (1+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_N_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_N_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_GM (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_GM_NO (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_XI_H (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_XI_L (7+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_ZK_H (8+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_ZK_L (9+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_FTLK_H (10+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_FTLK_L (11+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_HS_H (12+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_HS_L (13+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_RPM_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_RPM_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_DIRECTION (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_F_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_F_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_X_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_X_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_Z_H 2 (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_Z_L 3 (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_TOOL_Z_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_TOOL_Z_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
 
 //Bit Postions of STATE
 #define STATE_CONTROL_ACTIVE_BIT 0
@@ -123,9 +149,20 @@
 //#define MACHINE_STATE_FILE "~/machine_state.xml" //does not work
 //#define MACHINE_STATE_FILE "machine_state.xml"
 
+//global vars
+
+//spi-Master
 FILE *machinestatefile;
-int fd;
+int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
+
+//pipe-Server
+char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
+int r_fd, w_fd, i, ret, ringbufer_pos=0, messages_notreceived=0, ringbuffer_fill_status=0;
+//FILE *r_fz, *w_fz;
+//parameter for select
+fd_set r_fd_set;
+struct timeval timeout;
 
 static void pabort(const char *s)
 {
@@ -134,19 +171,45 @@ static void pabort(const char *s)
 }
 
 // Define the function to be called when ctrl-c (SIGINT) signal is sent to process
-void
-signal_callback_handler(int signum)
+void signal_callback_handler(int signum)
 {
 	printf("\nCaught signal %d\n",signum);
 	// Cleanup and close up stuff here
-	printf("close(fd)\n");
-	close(fd);
+	printf("close(spi_fd)\n");
+	close(spi_fd);
 		
 	// Terminate program
 	exit(signum);
 }
 
-/*The Driver supports following speeds:
+setup_pipe_server() {
+	//Server creates arduino_pipe.tx, if it does not exist
+	if (mkfifo ("arduino_pipe.tx", O_RDWR | 0666) < 0) {
+	  //arduino_pipe.tx exists
+	  if(errno == EEXIST)
+		 printf ("arduino_pipe.tx exists, trying to use it!\n");
+	  else {
+		 perror("mkfifio()");
+		 exit (EXIT_FAILURE);
+	  }
+	}
+
+	//Server opens arduino_pipe.tx readonly
+	/*r_fd = open ("arduino_pipe.tx", O_RDONLY);
+	You opened that FIFO as read only (O_RDONLY), whenever there is no writer to the FIFO, the read end will receive an EOF.
+	Select system call will return on EOF and for every EOF you handle there will be a new EOF. This is the reason for the observed behavior.
+	To avoid this open that FIFO for both reading and writing (O_RDWR). This ensures that you have at least one writer on the FIFO thus there wont be an EOF and as a result select won't return unless someone writes to that FIFO.
+	*/
+	//Server opens arduino_pipe.tx
+	r_fd = open ("arduino_pipe.tx", O_RDWR); //create an Filedescriptor for Low-Level I/O-Functions like read/write
+	if (r_fd == -1) {
+	  perror ("open(1)");
+	  exit (EXIT_FAILURE);
+	}
+	//r_fz = fdopen(r_fd, "r"); //create an Filepointer for High-Level I/O-Functions like fscanf
+}
+
+/*The SPI-Driver supports following speeds:
 
   cdiv     speed          cdiv     speed
     2    125.0 MHz          4     62.5 MHz
@@ -164,6 +227,57 @@ static uint8_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
 static uint16_t delay;
+
+int setup_spi()
+{
+	int ret = 0;
+
+	spi_fd = open(device, O_RDWR);
+	if (spi_fd < 0)
+		pabort("can't open SPI-device");
+	
+	// Register signal and signal handler
+	signal(SIGINT, signal_callback_handler);
+
+	/*
+	 * spi mode
+	 */
+	ret = ioctl(spi_fd, SPI_IOC_WR_MODE, &mode);
+	if (ret == -1)
+		pabort("can't set spi mode");
+
+	ret = ioctl(spi_fd, SPI_IOC_RD_MODE, &mode);
+	if (ret == -1)
+		pabort("can't get spi mode");
+
+	/*
+	 * bits per word
+	 */
+	ret = ioctl(spi_fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't set bits per word");
+
+	ret = ioctl(spi_fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't get bits per word");
+
+	/*
+	 * max speed hz
+	 */
+	ret = ioctl(spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't set max speed hz");
+
+	ret = ioctl(spi_fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't get max speed hz");
+
+	printf("spi mode: %d\n", mode);
+	printf("bits per word: %d\n", bits);
+	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
+
+	return ret;
+}
 
 uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
 	uint8_t i;
@@ -183,12 +297,12 @@ uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
 	return data;
 }
 
-uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
+uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes) {
   //get the crc_8-value of the msg returned
   //If the last byte of the message is the correct crc-value of the bytes before, CRC8 returns 0.
   uint8_t bytecount, data, crc_8=0;
   
-  for (bytecount=0;bytecount<used_message_bytes;bytecount++) {
+  for (bytecount=message_offset;bytecount<(used_message_bytes+message_offset);bytecount++) {
     data = buf[bytecount];
     crc_8 = _crc8_ccitt_update (crc_8,data);
   }
@@ -196,41 +310,56 @@ uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
   return crc_8;
 }
 
-static void transfer(int fd)
+static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char msg_type)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
-	uint8_t used_length=0, pos=0;
-	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	int lostmessages=0, ret, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
+	//uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	
-	//User Input for Message
-	printf("Message-Types:\n");
-	printf("--------------\n");
-	printf("000 Update Machine State\n");
-	printf("001 Programm Start at Block\n");
-	printf("002 Programm Stop\n");
-	printf("003 Programm Pause\n");
-	printf("004 Spindle on with RPM and Direction\n");
-	printf("005 Spindle off\n");
-	printf("006 Stepper on\n");
-	printf("007 Stepper off\n");
-	printf("008 X-Stepper move with feed\n");
-	printf("009 Z-Stepper move with feed\n");
-	printf("010 Set Tool-Position (and INIT)\n");
-	printf("011 Origin-X-Offset\n");
-	printf("012 Origin-Z-Offset\n");
-	printf("013 metric or inch (maybe not needed)\n");
-	printf("014 New CNC-Programm wit NN Blocks in metric or inch\n");
-	printf("015 CNC-Code-Block\n");
-	printf("016 shutdown\n");
-	printf("017 Load last coordinates and tool position and init\n");
-	printf("018 Reset Errors\n\n");
+	if (!msg_type) {
+		if (pipe_msg_buffer == NULL) { //command-line-mode
+			//User Input for Message
+			printf("Message-Types:\n");
+			printf("--------------\n");
+			printf("001 Update Machine State\n");
+			printf("002 Programm Start at Block\n");
+			printf("003 Programm Stop\n");
+			printf("004 Programm Pause\n");
+			printf("005 Spindle on with RPM and Direction\n");
+			printf("006 Spindle off\n");
+			printf("007 Stepper on\n");
+			printf("008 Stepper off\n");
+			printf("009 X-Stepper move with feed\n");
+			printf("010 Z-Stepper move with feed\n");
+			printf("011 Set Tool-Position (and INIT)\n");
+			printf("012 Origin-X-Offset\n");
+			printf("013 Origin-Z-Offset\n");
+			printf("014 metric or inch (maybe not needed)\n");
+			printf("015 New CNC-Programm wit NN Blocks in metric or inch\n");
+			printf("016 CNC-Code-Block\n");
+			printf("017 shutdown\n");
+			printf("018 Load last coordinates and tool position and init\n");
+			printf("019 Reset Errors\n\n");
+		}
+		else {
+			sscanf(pipe_msg_buffer,"%s\n%d", client_sid, &msg_type);
+			printf ("Message from Client-SESSION: %s\n", client_sid);
+		}
+	}
 	
 	printf("Message-Type: ");
-	if ((msg_type>=0) && (msg_type<=18)) printf("%i\n",msg_type);
-	else do {
-		scanf("%d",&msg_type);
-		getchar();
-	} while ((msg_type<0) || (msg_type>18));
+	if ((msg_type>=1) && (msg_type<=19)) printf("%i\n",msg_type);
+	else if (pipe_msg_buffer == NULL) {
+		do {
+			scanf("%d",&msg_type);
+			getchar();
+		} while ((msg_type<1) || (msg_type>19));
+	}
+	else {
+		printf("out of Range!");
+		exit(EXIT_FAILURE);
+	}
 	tx[pos++] = msg_type;
 		
 	//Message-Number
@@ -238,181 +367,307 @@ static void transfer(int fd)
 	tx[pos++] = msg_number;
 	
 	switch (msg_type) {
-		case 0:   	//Update Machine State
+		case 1:   	//Update Machine State
 					break;
-		case 1:   	//Programm Start at Block
+		case 2:   	//Programm Start at Block
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &block);
+					
 					printf("Block-No (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
-					else do {
-						scanf("%d",&block);
-						getchar();
-					} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&block);
+							getchar();
+						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					break;
-		case 2: 	//Programm Stop
+		case 3: 	//Programm Stop
 					break;
-		case 3:   	//Programm Pause
+		case 4:   	//Programm Pause
 					break;
-		case 4:   	//Spindle on with RPM and Direction
+		case 5:   	//Spindle on with RPM and Direction
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d", client_sid, &msg_type, &rpm, &spindle_direction);
+					
 					printf("RPM (460 to 3220): ");
 					if ((rpm>=REVOLUTIONS_MIN) && (rpm<=REVOLUTIONS_MAX)) printf("%i\n",rpm);
-					else do {
-						scanf("%d",&rpm);
-						getchar();
-					} while ((rpm<REVOLUTIONS_MIN) || (rpm>REVOLUTIONS_MAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&rpm);
+							getchar();
+						} while ((rpm<REVOLUTIONS_MIN) || (rpm>REVOLUTIONS_MAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = rpm>>8;
 					tx[pos++] = rpm;
 					
 					printf("Spindel direction invers (0 or 1): ");
 					if ((spindle_direction>=0) && (spindle_direction<=1)) printf("%i\n",spindle_direction);
-					else do {
-						scanf("%d",&spindle_direction);
-						getchar();
-					} while ((spindle_direction<0) || (spindle_direction>1));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&spindle_direction);
+							getchar();
+						} while ((spindle_direction<0) || (spindle_direction>1));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = spindle_direction;
 					break;
-		case 5:  	//Spindle off
+		case 6:  	//Spindle off
 					break;
-		case 6:   	//Stepper on
+		case 7:   	//Stepper on
 					break;
-		case 7:   	//Stepper off
+		case 8:   	//Stepper off
 					break;
-		case 8:   	//X-Stepper move with feed
-		case 9:   	//Z-Stepper move with feed
+		case 9:   	//X-Stepper move with feed
+		case 10:   	//Z-Stepper move with feed
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &feed, &negativ_direction);
+					
 					printf("Feed (2 to 499): ");
 					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
-					else do {
-						scanf("%d",&feed);
-						getchar();
-					} while ((feed<F_MIN) || (feed>F_MAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&feed);
+							getchar();
+						} while ((feed<F_MIN) || (feed>F_MAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
 					
 					printf("negativ direction (0 or 1): ");
 					if ((negativ_direction>=0) && (negativ_direction<=1)) printf("%i\n",negativ_direction);
-					else do {
-						scanf("%d",&negativ_direction);
-						getchar();
-					} while ((negativ_direction<0) || (negativ_direction>1));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&negativ_direction);
+							getchar();
+						} while ((negativ_direction<0) || (negativ_direction>1));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = negativ_direction;
 					break;
-		case 10:   	//Set Tool-Position (and INIT)
+		case 11:   	//Set Tool-Position (and INIT)
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n%d", client_sid, &msg_type, &XX, &ZZ, &tool);
+					
 					printf("X-Offset (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
-					else do {
-						scanf("%d",&XX);
-						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&XX);
+							getchar();
+						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
 					printf("Z-Offset (+-32700): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
-					else do {
-						scanf("%d",&ZZ);
-						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&ZZ);
+							getchar();
+						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
 					printf("Tool (1 to 6): ");
 					if ((tool>=T_MIN) && (tool<=T_MAX)) printf("%i\n",tool);
-					else do {
-						scanf("%d",&tool);
-						getchar();
-					} while ((tool<T_MIN) || (tool>T_MAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&tool);
+							getchar();
+						} while ((tool<T_MIN) || (tool>T_MAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = tool;
 					break;
-		case 11:   	//Origin-X-Offset
+		case 12:   	//Origin-X-Offset
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &XX);
+					
 					printf("X-Offset (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
-					else do {
-						scanf("%d",&XX);
-						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&XX);
+							getchar();
+						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					break;
-		case 12:   	//Origin-Z-Offset
-					printf("Z-Offset (+-32700): ");
+		case 13:   	//Origin-Z-Offset
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &ZZ);
+					
+					printf("Z-Offset (+-32760): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
-					else do {
-						scanf("%d",&ZZ);
-						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&ZZ);
+							getchar();
+						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					break;
-		case 13:  	//metric or inch (maybe not needed)
+		case 14:  	//metric or inch (maybe not needed)
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &inch);
+					
 					printf("metric or inch (0 or 1): ");
 					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
-					else do {
-						scanf("%d",&inch);
-						getchar();
-					} while ((inch<0) || (inch>1));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&inch);
+							getchar();
+						} while ((inch<0) || (inch>1));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = inch;
 					break;
-		case 14:  	//New CNC-Programm wit N Blocks in metric or inch
+		case 15:  	//New CNC-Programm wit N Blocks in metric or inch
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d", client_sid, &msg_type, &block, &inch);
+					
 					printf("Blocks (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
-					else do {
-						scanf("%d",&block);
-						getchar();
-					} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&block);
+							getchar();
+						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					
 					printf("metric or inch (0 or 1): ");
 					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
-					else do {
-						scanf("%d",&inch);
-						getchar();
-					} while ((inch<0) || (inch>1));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&inch);
+							getchar();
+						} while ((inch<0) || (inch>1));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = inch;
 					break;
-		case 15:  	//CNC-Code-Block
+		case 16:  	//CNC-Code-Block
+					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%c\n%d\n%d\n%d\n%d\n%d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
+					
 					printf("Block-No (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
-					else do {
-						scanf("%d",&block);
-						getchar();
-					} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&block);
+							getchar();
+						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					
 					printf("G- or M-Code (G or M): ");
 					if ((code_type == 'G') || (code_type == 'M')) printf("%c\n",code_type);
-					{
-						scanf("%c",&code_type);
-						getchar();
-					} while ((code_type != 'G') && (code_type != 'M'));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%c",&code_type);
+							getchar();
+						} while ((code_type != 'G') && (code_type != 'M'));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = code_type;
 					
 					if (code_type == 'G') {
 						printf("G-Code (0 to 196): ");
 						if ((gmcode>=GM_CODE_MIN) && (gmcode<=G_CODE_MAX)) printf("%i\n",gmcode);
-						else do {
-							scanf("%d",&gmcode);
-							getchar();
-						} while ((gmcode<GM_CODE_MIN) || (gmcode>G_CODE_MAX));
+						else if (pipe_msg_buffer == NULL) {
+							do {
+								scanf("%d",&gmcode);
+								getchar();
+							} while ((gmcode<GM_CODE_MIN) || (gmcode>G_CODE_MAX));
+						}
+						else {
+							printf("out of Range!");
+							exit(EXIT_FAILURE);
+						}
 					}
 					else {
 						printf("M-Code (0 to 99): ");
 						if ((gmcode>=GM_CODE_MIN) && (gmcode<=M_CODE_MAX)) printf("%i\n",gmcode);
-						else do {
-							scanf("%d",&gmcode);
-							getchar();
-						} while ((gmcode<GM_CODE_MIN) || (gmcode>M_CODE_MAX));
+						else if (pipe_msg_buffer == NULL) {
+							do {
+								scanf("%d",&gmcode);
+								getchar();
+							} while ((gmcode<GM_CODE_MIN) || (gmcode>M_CODE_MAX));
+						}
+						else {
+							printf("out of Range!");
+							exit(EXIT_FAILURE);
+						}
 					}
 					tx[pos++] = gmcode;
 					
 					printf("X (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
-					else do {
-						scanf("%d",&XX);
-						getchar();
-					} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&XX);
+							getchar();
+						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					scanf("%d",&XX);
 					getchar();
 					tx[pos++] = XX>>8;
@@ -420,38 +675,56 @@ static void transfer(int fd)
 					
 					printf("Z (+-32700): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
-					else do {
-						scanf("%d",&ZZ);
-						getchar();
-					} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&ZZ);
+							getchar();
+						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
 					printf("Feed (2 to 499): ");
 					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
-					else do {
-						scanf("%d",&feed);
-						getchar();
-					} while ((feed<F_MIN) || (feed>F_MAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&feed);
+							getchar();
+						} while ((feed<F_MIN) || (feed>F_MAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
 					
 					printf("H (0 to 999): ");
 					if ((HH>=H_MIN) && (HH<=H_MAX)) printf("%i\n",HH);
-					else do {
-						scanf("%d",&HH);
-						getchar();
-					} while ((HH<H_MIN) || (HH>H_MAX));
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&HH);
+							getchar();
+						} while ((HH<H_MIN) || (HH>H_MAX));
+					}
+					else {
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
+					}
 					tx[pos++] = HH>>8;
 					tx[pos++] = HH;
 					
 					break;
-		case 16:  	//Shutdown
+		case 17:  	//Shutdown
 					break;
-		case 17:  	//Load last coordinates and tool position and init
+		case 18:  	//Load last coordinates and tool position and init
 					break;
-		case 18:  	//Reset Errors
-					msg_number = lastsuccessful_msg+1; //Reset Msg-No
+		case 19:  	//Reset Errors
+					msg_number = (lastsuccessful_msg+1)%256; //Reset Msg-No
 					pos--;
 					tx[pos++] = msg_number; 
 					//With the next message, lost messages can be repeated, if they were important. (2D-Array needed for saving last messages)
@@ -462,7 +735,7 @@ static void transfer(int fd)
 	
 	printf("\n");
 	
-	used_length = pos;
+	used_length = pos-SPI_BYTE_LENGTH_PRAEAMBEL;
 	
 	//zero unused bytes
 	for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
@@ -470,7 +743,7 @@ static void transfer(int fd)
 	}
 	
 	//CRC
-	tx[pos] = CRC8(tx, used_length);
+	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
 	
 	printf("tx-Buffer (HEX):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
@@ -498,63 +771,78 @@ static void transfer(int fd)
 		.bits_per_word = bits,
 	};
 
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+	ret = ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 1)
 		pabort("can't send spi message"); //has to be replaced
 	else { //output received Message
 		//Byteorder: 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 		printf("Incomming Message:\n");
 		printf("------------------\n");
-		printf("PID: %i\n", rx[SPI_BYTE_PID]);
-		lastsuccessful_msg = rx[SPI_BYTE_LASTSUCCESS_MSG_NO];
+		char pid = rx[SPI_BYTE_ARDUINO_MSG_TYPE];
+		printf("PID: %i\n", pid);
+		lastsuccessful_msg = rx[SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO];
 		printf("Last Successful Message: %i\n", lastsuccessful_msg);
-		char active = (rx[SPI_BYTE_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
+		char active = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
 		printf("Control active: %i\n", active);
-		char init = (rx[SPI_BYTE_STATE]>>STATE_INIT_BIT)&1;
+		char init = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INIT_BIT)&1;
 		printf("init: %i\n", init);
-		char manual = (rx[SPI_BYTE_STATE]>>STATE_MANUAL_BIT)&1;
+		char manual = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_MANUAL_BIT)&1;
 		printf("manual: %i\n", manual);
-		char pause = (rx[SPI_BYTE_STATE]>>STATE_PAUSE_BIT)&1;
+		char pause = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_PAUSE_BIT)&1;
 		printf("Pause: %i\n", pause);
-		char inch = (rx[SPI_BYTE_STATE]>>STATE_INCH_BIT)&1;
+		char inch = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INCH_BIT)&1;
 		printf("inch: %i\n", inch);
-		char spindel_on = (rx[SPI_BYTE_STATE]>>STATE_SPINDLE_BIT)&1;
+		char spindel_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_BIT)&1;
 		printf("Spindel on: %i\n", spindel_on);
-		char spindel_direction = (rx[SPI_BYTE_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
+		char spindel_direction = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
 		printf("Spindel direction: %i\n", spindel_direction);
-		char stepper_on = (rx[SPI_BYTE_STATE]>>STATE_STEPPER_BIT)&1;
+		char stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_STEPPER_BIT)&1;
 		printf("Stepper on: %i\n", stepper_on);
-		rpm = (((int)rx[SPI_BYTE_RPM_H]<<8)|(rx[SPI_BYTE_RPM_L]));
+		rpm = (((int)rx[SPI_BYTE_ARDUINO_RPM_H]<<8)|(rx[SPI_BYTE_ARDUINO_RPM_L]));
 		printf("RPM: %i\n", rpm);
-		XX = (((int)rx[SPI_BYTE_X_H]<<8)|(rx[SPI_BYTE_X_L]));
+		XX = (((int)rx[SPI_BYTE_ARDUINO_X_H]<<8)|(rx[SPI_BYTE_ARDUINO_X_L]));
 		printf("X: %i\n", XX);
-		ZZ = (((int)rx[SPI_BYTE_Z_H]<<8)|(rx[SPI_BYTE_Z_L]));
+		ZZ = (((int)rx[SPI_BYTE_ARDUINO_Z_H]<<8)|(rx[SPI_BYTE_ARDUINO_Z_L]));
 		printf("Z: %i\n", ZZ);
-		feed = (((int)rx[SPI_BYTE_F_H]<<8)|(rx[SPI_BYTE_F_L]));
+		feed = (((int)rx[SPI_BYTE_ARDUINO_F_H]<<8)|(rx[SPI_BYTE_ARDUINO_F_L]));
 		printf("F: %i\n", feed);
-		HH = (((int)rx[SPI_BYTE_H_H]<<8)|(rx[SPI_BYTE_H_L]));
+		HH = (((int)rx[SPI_BYTE_ARDUINO_H_H]<<8)|(rx[SPI_BYTE_ARDUINO_H_L]));
 		printf("H: %i\n", HH);
-		tool = rx[SPI_BYTE_T];
+		tool = rx[SPI_BYTE_ARDUINO_T];
 		printf("T: %i\n", tool);
-		block = (((int)rx[SPI_BYTE_N_H]<<8)|(rx[SPI_BYTE_N_L]));
+		block = (((int)rx[SPI_BYTE_ARDUINO_N_H]<<8)|(rx[SPI_BYTE_ARDUINO_N_L]));
 		printf("Block-No: %i\n", block);
-		char spi_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_SPI_BIT)&1;
+		char spi_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPI_BIT)&1;
 		printf("SPI-Error: %i\n", spi_error);
-		char cnc_code_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
+		char cnc_code_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
 		printf("CNC-Code-Error: %i\n", cnc_code_error);
-		char spindel_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
+		char spindel_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
 		printf("Spindel-Error: %i\n", spindel_error);
-		char crc_in = rx[SPI_BYTE_CRC8];
+		char crc_in = rx[SPI_BYTE_ARDUINO_CRC8];
 		printf("CRC: %i\n\n", crc_in);
 		
-		if (CRC8(rx, SPI_MSG_LENGTH)) printf("CRC-Check of incomming message failed!!!\n\n");
+		if (CRC8(rx, SPI_BYTE_LENGTH_PRAEAMBEL, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL) || pid != 100) {
+			printf("CRC- or PID-Check of incomming message failed!!!\n\n");
+			/*
+			//should be implemented in another way
+			printf("Try to get Status Update!\n");
+			while (spi_transfer(spi_fd, NULL, 1)) {
+					usleep(500000); //0,5s
+			}
+			*/
+		}
 		else {
 			//Inform about lost messages
-			if (msg_number != lastsuccessful_msg+1) printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", msg_number-lastsuccessful_msg-1);
+			lostmessages = msg_number-lastsuccessful_msg-1;
+			if (lostmessages<0) lostmessages += 256;
+			//if (msg_number != (lastsuccessful_msg+1)%256) {
+			if (lostmessages>0) {
+				printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", lostmessages);
+			}
 			
 			//Ouptut to Machine-State-File
 			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
-			if (fd < 0) printf("can't open Machine State file\n");
+			if (spi_fd < 0) printf("can't open Machine State file\n");
 			else {
 				fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 				fprintf(machinestatefile, "<machinestate>\n");
@@ -611,6 +899,7 @@ static void transfer(int fd)
 	printf("\n");
 	
 	msg_number++; //for next message
+	return lostmessages;
 }
 
 static void print_usage(const char *prog)
@@ -625,7 +914,10 @@ static void print_usage(const char *prog)
 	     "  -O --cpol     clock polarity\n"
 	     "  -L --lsb      least significant bit first\n"
 	     "  -C --cs-high  chip select active high\n"
-	     "  -3 --3wire    SI/SO signals shared\n");
+	     "  -3 --3wire    SI/SO signals shared\n"
+		 "  -N --no-cs    no chip select?\n"
+	     "  -R --ready    SPI_READY\n"
+		 "  -m --manual   manual input of msg (no pipe-server)\n");
 	exit(1);
 }
 
@@ -645,11 +937,13 @@ static void parse_opts(int argc, char *argv[])
 			{ "3wire",   0, 0, '3' },
 			{ "no-cs",   0, 0, 'N' },
 			{ "ready",   0, 0, 'R' },
+			{ "manual",  0, 0, 'm' },
+			{ "verbose", 0, 0, 'v' },
 			{ NULL, 0, 0, 0 },
 		};
 		int c;
 
-		c = getopt_long(argc, argv, "D:s:d:b:lHOLC3NR", lopts, NULL);
+		c = getopt_long(argc, argv, "D:s:d:b:lHOLC3NR:m:v", lopts, NULL);
 
 		if (c == -1)
 			break;
@@ -691,6 +985,12 @@ static void parse_opts(int argc, char *argv[])
 		case 'R':
 			mode |= SPI_READY;
 			break;
+		case 'm':
+			start_pipe_server = 0;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
 		default:
 			print_usage(argv[0]);
 			break;
@@ -699,61 +999,130 @@ static void parse_opts(int argc, char *argv[])
 }
 
 int main(int argc, char *argv[])
-{
-	int ret = 0;
-	
+{	
 	parse_opts(argc, argv);
-
-	fd = open(device, O_RDWR);
-	if (fd < 0)
-		pabort("can't open SPI-device");
 	
-	// Register signal and signal handler
-	signal(SIGINT, signal_callback_handler);
+	//allow all rights for new created files
+	umask(0);
+	
+	if (start_pipe_server) setup_pipe_server();
 
-	/*
-	 * spi mode
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
-	if (ret == -1)
-		pabort("can't set spi mode");
+	if (setup_spi() == 0){
+		while(1) { //Server-Loop
+			if (start_pipe_server) {
+				/* Initialize the file descriptor r_fd_set. */
+				// has to be done every iteration, but why?
+				FD_ZERO(&r_fd_set);
+				FD_SET(r_fd, &r_fd_set);
+			
+				/* Initialize the timeout data structure. */
+				// has to be done every iteration, because select may update the timeout argument to indicate how much time was left
+				timeout.tv_sec = 1; //seconds
+				timeout.tv_usec = 0; //microseconds
+			
+				/* In the interest of brevity, I'm using the constant FD_SETSIZE, but a more
+				   efficient implementation would use the highest fd + 1 instead. In this case
+				   with a single fd, you can replace FD_SETSIZE with
+				   r_fd+1 thereby limiting the number of fds the system has to
+				   iterate over. */
+				//ret = select(FD_SETSIZE, &r_fd_set, NULL, NULL, &timeout);
+				ret = select(r_fd+1, &r_fd_set, NULL, NULL, &timeout);
 
-	ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
-	if (ret == -1)
-		pabort("can't get spi mode");
+				if (ret == 0) //timeout
+				{
+					//printf("select timeout after 1s waiting for message on pipe!\n");
+					if (verbose) printf("Updating Machine-State after waiting for message on pipe for 1s!\n");
+					messages_notreceived = spi_transfer(spi_fd, NULL, 1);
+				}
+				else if (ret < 0) //error
+				{
+					printf("select returned with an error while waiting for message on pipe!\n");
+				}
+				else //there was activity on the file descripor
+				{
+					//printf("select says pipe is readable\n");
+					//fscanf(r_fz,"%s\n%d", client_sid, &pid);
+					
+					if (read (r_fd, buffer[ringbufer_pos], BUF) != 0) {
+						/*
+						//get SESSION-ID of calling client
+						i = 0;
+						while (buffer[i] != '\n') {
+							client_sid[i] = buffer[i];
+							i++;
+						}
+						
+						//get SESSION-ID of calling client
+						pid = ;
+						*/
 
-	/*
-	 * bits per word
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't set bits per word");
+						/*
+						//set answer_fifo_name
+						strcpy (answer_fifo_name, "client_session_pipe.");
+						strncat (answer_fifo_name, client_sid, i);
 
-	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't get bits per word");
-
-	/*
-	 * max speed hz
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't set max speed hz");
-
-	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't get max speed hz");
-
-	printf("spi mode: %d\n", mode);
-	printf("bits per word: %d\n", bits);
-	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
-
-	while(1) {
-		transfer(fd);
+						//set answer to client
+						answer_to_client[0] = '\0';
+						if ( exclusive != atoi(client_sid)) strcpy (answer_to_client, MSG_ERROR_CLIENT);
+						else {
+							if (!state) strcpy (answer_to_client, MSG_SUCCESS);
+							else strcpy (answer_to_client, MSG_ERROR_STATE);
+						}
+										
+						if (strlen(answer_to_client)) {
+							//open client_session_pipe send answer
+							w_fd = open (answer_fifo_name, O_WRONLY);
+							if (w_fd == -1) {
+								perror ("open(2)");
+								exit (EXIT_FAILURE);
+							}
+							write (w_fd, answer_to_client, strlen(answer_to_client));
+							close (w_fd);
+						}
+						*/
+						
+						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
+						
+						//process message
+						messages_notreceived = spi_transfer(spi_fd, buffer[ringbufer_pos], 0); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						
+						/*
+						//Error-Handling not ready
+						do {
+							
+							
+							//Reset SPI-Error							
+							while (spi_transfer(spi_fd, NULL, 19)) {
+									usleep(500000); //0,5s
+							}
+							
+							//try to send lost messages again
+							if (messages_notreceived>SPI_TX_RINGBUFFERSIZE) {
+								//error handling needed!
+								printf("%i Messages lost!\n", messages_notreceived);
+							}
+							else {
+								//Update ringbufer_pos
+								if (messages_notreceived>ringbuffer_fill_status) ringbufer_pos -= ringbuffer_fill_status;
+								else ringbufer_pos -= messages_notreceived;
+								if (ringbufer_pos<0) ringbufer_pos += SPI_TX_RINGBUFFERSIZE;
+								
+								spi_transfer(spi_fd, buffer[ringbufer_pos], 0);
+							}
+							
+						} while (messages_notreceived);
+						*/
+						
+						//Update ringbufer_pos
+						if (ringbufer_pos<SPI_TX_RINGBUFFERSIZE-1) ringbufer_pos++;
+						else ringbufer_pos = 0;
+					}
+				}
+			}
+			else spi_transfer(spi_fd, NULL, 0);
+		}
 	}
+	else exit(EXIT_FAILURE);
 	
-	//printf("close(fd)\n");
-	//close(fd);
-
-	return ret;
+	return EXIT_SUCCESS;
 }

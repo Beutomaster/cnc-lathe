@@ -18,37 +18,45 @@ void set_tool_position(byte tool) {
         //set new Tool Postion
         STATE_T=tool;
 
-        if (debug && debug_tool) {
+        #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_TOOL_ON
+          //#error Tool debug-msg compilation activated!
           Serial.print("Tool Changer starts moving to Position ");
           Serial.println(tool, DEC);
-        }
-      
-        //Step1 TOOL_CHANGER_CHANGE 2,9s
-        tool_step=1;
-        command_completed=0;
-        digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
-        digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
-  
-        //Step1 and 2 are setting PINS in Timerinterrupt
-        //set and start Timer1 for 2,9s
-        TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13, WGM12 =1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-        TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11, WGM10 =1 for Fast PWM
-        TCCR1C = 0; //no Force of Output Compare
-        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-          ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
-          TCNT1 = 0; //set Start Value
-        }
-        TIFR1 = _BV(ICF1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
-        //Input Compare Match Interrupt Enable
-        TIMSK1 |= _BV(ICIE1); //set 1
-        //Prescaler 1024 and Start Timer
-        TCCR1B |= (_BV(CS12)|_BV(CS10)); //set 1
+        #endif
+
+        #ifndef DEBUG_TOOL_CODE_OFF
+          //#error Tool compilation activated!
+          //Step1 TOOL_CHANGER_CHANGE 2,9s
+          tool_step=1;
+          command_completed=0;
+          digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+          digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
+    
+          //Step1 and 2 are setting PINS in Timerinterrupt
+          //set and start Timer1 for 2,9s
+          TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13, WGM12 =1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
+          TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11, WGM10 =1 for Fast PWM
+          TCCR1C = 0; //no Force of Output Compare
+          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+            ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
+            TCNT1 = 0; //set Start Value
+          }
+          TIFR1 = _BV(ICF1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+          //Input Compare Match Interrupt Enable
+          TIMSK1 |= _BV(ICIE1); //set 1
+          //Prescaler 1024 and Start Timer
+          TCCR1B |= (_BV(CS12)|_BV(CS10)); //set 1
+        #else
+          i_tool=0;
+        #endif
       }
     }
     else {
       //initialize
       STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
       initialized=1;
+      //set initial Tool Postion
+      STATE_T=tool;
     }
   }
 }
