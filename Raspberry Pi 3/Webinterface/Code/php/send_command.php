@@ -54,7 +54,7 @@
 		
 		switch (test_input($_POST["command"])) {
 			case "ProgramStart":
-				$msg_pid = "1";
+				$msg_pid = "2";
 				$parameter = array("block");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
@@ -62,15 +62,15 @@
 				$msg .= $msg_pid . "\n" . $Input_N . "\n";
 				break;
 			case "ProgramStop":
-				$msg_pid = "2";
-				$msg .= $msg_pid . "\n";
-				break;
-			case "ProgramPause":
 				$msg_pid = "3";
 				$msg .= $msg_pid . "\n";
 				break;
-			case "SpindleSetRPM":
+			case "ProgramPause":
 				$msg_pid = "4";
+				$msg .= $msg_pid . "\n";
+				break;
+			case "SpindleSetRPM":
+				$msg_pid = "5";
 				$parameter = array("spindle_direction", "rpm");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_DIRECTION = test_input($_POST["spindle_direction"]);
@@ -80,28 +80,18 @@
 				$msg .= $msg_pid . "\n" . $Input_RPM . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "SpindleOff":
-				$msg_pid = "5";
-				$msg .= $msg_pid . "\n";
-				break;
-			case "StepperOn":
 				$msg_pid = "6";
 				$msg .= $msg_pid . "\n";
 				break;
-			case "StepperOff":
+			case "StepperOn":
 				$msg_pid = "7";
 				$msg .= $msg_pid . "\n";
 				break;
-			case "XStepper":
+			case "StepperOff":
 				$msg_pid = "8";
-				$parameter = array("stepper_direction", "feed");
-				$success = test_keys_exist($parameter) or exit(1);
-				$Input_DIRECTION = test_input($_POST["stepper_direction"]);
-				$success = test_value_range($Input_DIRECTION, 0, 1);
-				$Input_FTLK = test_input($_POST["feed"]);
-				$success = test_value_range($Input_FTLK, 0, 499);
-				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
+				$msg .= $msg_pid . "\n";
 				break;
-			case "ZStepper":
+			case "XStepper":
 				$msg_pid = "9";
 				$parameter = array("stepper_direction", "feed");
 				$success = test_keys_exist($parameter) or exit(1);
@@ -111,8 +101,18 @@
 				$success = test_value_range($Input_FTLK, 0, 499);
 				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
 				break;
-			case "SetTool":
+			case "ZStepper":
 				$msg_pid = "10";
+				$parameter = array("stepper_direction", "feed");
+				$success = test_keys_exist($parameter) or exit(1);
+				$Input_DIRECTION = test_input($_POST["stepper_direction"]);
+				$success = test_value_range($Input_DIRECTION, 0, 1);
+				$Input_FTLK = test_input($_POST["feed"]);
+				$success = test_value_range($Input_FTLK, 0, 499);
+				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
+				break;
+			case "SetTool":
+				$msg_pid = "11";
 				$parameter = array("tool_x-correction", "tool_z-correction", "tool");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["tool_x-correction"]);
@@ -124,7 +124,7 @@
 				$msg .= $msg_pid . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n";
 				break;
 			case "SetXOffset":
-				$msg_pid = "11";
+				$msg_pid = "12";
 				$parameter = array("xoffset");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["xoffset"]);
@@ -132,7 +132,7 @@
 				$msg .= $msg_pid . "\n" . $Input_XI . "\n";
 				break;
 			case "SetZOffset":
-				$msg_pid = "12";
+				$msg_pid = "13";
 				$parameter = array("zoffset");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_ZK = test_input($_POST["zoffset"]);
@@ -140,7 +140,7 @@
 				$msg .= $msg_pid . "\n" . $Input_ZK . "\n";
 				break;
 			case "SetMetricOrInch":
-				$msg_pid = "13";
+				$msg_pid = "14";
 				$parameter = array("metric_inch");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_INCH = test_input($_POST["metric_inch"]);
@@ -153,7 +153,7 @@
 				$msg .= $msg_pid . "\n" . $Input_INCH . "\n";
 				break;
 			case "LoadNewProgramm":
-				$msg_pid = "14";
+				$msg_pid = "15";
 				$parameter = array("block", "metric_inch");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
@@ -168,7 +168,7 @@
 				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_INCH . "\n";
 				break;
 			case "NewProgrammBlock":
-				$msg_pid = "15";
+				$msg_pid = "16";
 				$parameter = array("block", "gm_code", "gm_code_no", "cnc_xi", "cnc_zk", "cnc_ftlk", "cnc_hs");
 				$success = test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
@@ -196,15 +196,15 @@
 				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_GM . "\n" . $Input_GM_NO . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n" . $Input_HS . "\n";
 				break;
 			case "Shutdown":
-				$msg_pid = "16";
-				$msg .= $msg_pid . "\n";
-				break;
-			case "LoadOldParameter":
 				$msg_pid = "17";
 				$msg .= $msg_pid . "\n";
 				break;
-			case "ResetErrors":
+			case "LoadOldParameter":
 				$msg_pid = "18";
+				$msg .= $msg_pid . "\n";
+				break;
+			case "ResetErrors":
+				$msg_pid = "19";
 				$msg .= $msg_pid . "\n";
 				break;
 			default:

@@ -55,6 +55,8 @@ void set_tool_position(byte tool) {
       //initialize
       STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
       initialized=1;
+      //set initial Tool Postion
+      STATE_T=tool;
     }
   }
 }

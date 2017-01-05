@@ -40,6 +40,7 @@
 //defines
 
 //Pipe-Server
+#define SPI_TX_RINGBUFFERSIZE 500
 #define BUF 4096
 #define MSG_SUCCESS "Sending your message to Arduino!\0"
 #define MSG_ERROR_STATE "Could not send message to Arduino at this Machine State!\0"
@@ -48,7 +49,8 @@
 //example-sid: 15a1rgdq662cms5m9qe3f55n74
 
 //SPI
-#define SPI_MSG_LENGTH 18
+#define SPI_BYTE_LENGTH_PRAEAMBEL 4
+#define SPI_MSG_LENGTH (18+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 //Input Parameter Ranges
@@ -78,51 +80,53 @@
 #define REVOLUTIONS_MAX 3220 //rpm
 
 //Byte Postions of Arduino-Answer
-#define SPI_BYTE_PID 0
-#define SPI_BYTE_LASTSUCCESS_MSG_NO 1
-#define SPI_BYTE_STATE 2
-#define SPI_BYTE_RPM_H 3
-#define SPI_BYTE_RPM_L 4
-#define SPI_BYTE_X_H 5
-#define SPI_BYTE_X_L 6
-#define SPI_BYTE_Z_H 7
-#define SPI_BYTE_Z_L 8
-#define SPI_BYTE_F_H 9
-#define SPI_BYTE_F_L 10
-#define SPI_BYTE_H_H 11
-#define SPI_BYTE_H_L 12
-#define SPI_BYTE_T 13
-#define SPI_BYTE_N_H 14
-#define SPI_BYTE_N_L 15
-#define SPI_BYTE_ERROR_NO 16
-#define SPI_BYTE_CRC8 17
+#define SPI_BYTE_ARDUINO_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO (1+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_MSG_STATE (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_RPM_H (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_RPM_L (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_X_H (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_X_L (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_Z_H (7+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_Z_L (8+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_F_H (9+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_F_L (10+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_H_H (11+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_H_L (12+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_T (13+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_N_H (14+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_N_L (15+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_ERROR_NO (16+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
 
 //Byte Postions of RASPI-Msg
-#define SPI_BYTE_RASPI_MSG_NO 1
-#define SPI_BYTE_RASPI_MSG_N_H 2
-#define SPI_BYTE_RASPI_MSG_N_L 3
-#define SPI_BYTE_RASPI_MSG_GM 4
-#define SPI_BYTE_RASPI_MSG_GM_NO 5
-#define SPI_BYTE_RASPI_MSG_XI_H 6
-#define SPI_BYTE_RASPI_MSG_XI_L 7
-#define SPI_BYTE_RASPI_MSG_ZK_H 8
-#define SPI_BYTE_RASPI_MSG_ZK_L 9
-#define SPI_BYTE_RASPI_MSG_FTLK_H 10
-#define SPI_BYTE_RASPI_MSG_FTLK_L 11
-#define SPI_BYTE_RASPI_MSG_HS_H 12
-#define SPI_BYTE_RASPI_MSG_HS_L 13
-#define SPI_BYTE_RASPI_MSG_RPM_H 2
-#define SPI_BYTE_RASPI_MSG_RPM_L 3
-#define SPI_BYTE_RASPI_MSG_DIRECTION 4
-#define SPI_BYTE_RASPI_MSG_F_H 2
-#define SPI_BYTE_RASPI_MSG_F_L 3
-#define SPI_BYTE_RASPI_MSG_X_H 2
-#define SPI_BYTE_RASPI_MSG_X_L 3
-#define SPI_BYTE_RASPI_MSG_Z_H 4
-#define SPI_BYTE_RASPI_MSG_Z_L 5
-#define SPI_BYTE_RASPI_MSG_T 6
-#define SPI_BYTE_RASPI_MSG_INCH 2
-#define SPI_BYTE_RASPI_MSG_G_INCH 4
+#define SPI_BYTE_RASPI_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_NO (1+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_N_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_N_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_GM (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_GM_NO (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_XI_H (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_XI_L (7+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_ZK_H (8+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_ZK_L (9+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_FTLK_H (10+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_FTLK_L (11+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_HS_H (12+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_HS_L (13+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_RPM_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_RPM_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_DIRECTION (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_F_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_F_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_X_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_X_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_Z_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_Z_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
 
 //Bit Postions of STATE
 #define STATE_CONTROL_ACTIVE_BIT 0
@@ -151,13 +155,12 @@ int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
 
 //pipe-Server
-char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[BUF], answer_to_client[BUF], answer_fifo_name[BUF];
-int r_fd, w_fd, i;
+char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
+int r_fd, w_fd, i, ret, ringbufer_pos=0, messages_notreceived=0, ringbuffer_fill_status=0;
 //FILE *r_fz, *w_fz;
 //parameter for select
 fd_set r_fd_set;
 struct timeval timeout;
-int ret;
 
 static void pabort(const char *s)
 {
@@ -292,12 +295,12 @@ uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
 	return data;
 }
 
-uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
+uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes) {
   //get the crc_8-value of the msg returned
   //If the last byte of the message is the correct crc-value of the bytes before, CRC8 returns 0.
   uint8_t bytecount, data, crc_8=0;
   
-  for (bytecount=0;bytecount<used_message_bytes;bytecount++) {
+  for (bytecount=message_offset;bytecount<(used_message_bytes+message_offset);bytecount++) {
     data = buf[bytecount];
     crc_8 = _crc8_ccitt_update (crc_8,data);
   }
@@ -305,52 +308,51 @@ uint8_t CRC8 (uint8_t * buf, uint8_t used_message_bytes) {
   return crc_8;
 }
 
-static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char update_machine_state)
+static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char msg_type)
 {
-	int ret, block=-1, rpm=-1, msg_type=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
-	uint8_t used_length=0, pos=0;
-	uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
-	//uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	int lostmessages=0, ret, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
+	//uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	
-	if (!update_machine_state) {
+	if (!msg_type) {
 		if (pipe_msg_buffer == NULL) { //command-line-mode
 			//User Input for Message
 			printf("Message-Types:\n");
 			printf("--------------\n");
-			printf("000 Update Machine State\n");
-			printf("001 Programm Start at Block\n");
-			printf("002 Programm Stop\n");
-			printf("003 Programm Pause\n");
-			printf("004 Spindle on with RPM and Direction\n");
-			printf("005 Spindle off\n");
-			printf("006 Stepper on\n");
-			printf("007 Stepper off\n");
-			printf("008 X-Stepper move with feed\n");
-			printf("009 Z-Stepper move with feed\n");
-			printf("010 Set Tool-Position (and INIT)\n");
-			printf("011 Origin-X-Offset\n");
-			printf("012 Origin-Z-Offset\n");
-			printf("013 metric or inch (maybe not needed)\n");
-			printf("014 New CNC-Programm wit NN Blocks in metric or inch\n");
-			printf("015 CNC-Code-Block\n");
-			printf("016 shutdown\n");
-			printf("017 Load last coordinates and tool position and init\n");
-			printf("018 Reset Errors\n\n");
+			printf("001 Update Machine State\n");
+			printf("002 Programm Start at Block\n");
+			printf("003 Programm Stop\n");
+			printf("004 Programm Pause\n");
+			printf("005 Spindle on with RPM and Direction\n");
+			printf("006 Spindle off\n");
+			printf("007 Stepper on\n");
+			printf("008 Stepper off\n");
+			printf("009 X-Stepper move with feed\n");
+			printf("010 Z-Stepper move with feed\n");
+			printf("011 Set Tool-Position (and INIT)\n");
+			printf("012 Origin-X-Offset\n");
+			printf("013 Origin-Z-Offset\n");
+			printf("014 metric or inch (maybe not needed)\n");
+			printf("015 New CNC-Programm wit NN Blocks in metric or inch\n");
+			printf("016 CNC-Code-Block\n");
+			printf("017 shutdown\n");
+			printf("018 Load last coordinates and tool position and init\n");
+			printf("019 Reset Errors\n\n");
 		}
 		else {
 			sscanf(pipe_msg_buffer,"%s\n%d", client_sid, &msg_type);
 			printf ("Message from Client-SESSION: %s\n", client_sid);
 		}
 	}
-	else msg_type=0;
 	
 	printf("Message-Type: ");
-	if ((msg_type>=0) && (msg_type<=18)) printf("%i\n",msg_type);
+	if ((msg_type>=1) && (msg_type<=19)) printf("%i\n",msg_type);
 	else if (pipe_msg_buffer == NULL) {
 		do {
 			scanf("%d",&msg_type);
 			getchar();
-		} while ((msg_type<0) || (msg_type>18));
+		} while ((msg_type<1) || (msg_type>19));
 	}
 	else {
 		printf("out of Range!");
@@ -363,9 +365,9 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 	tx[pos++] = msg_number;
 	
 	switch (msg_type) {
-		case 0:   	//Update Machine State
+		case 1:   	//Update Machine State
 					break;
-		case 1:   	//Programm Start at Block
+		case 2:   	//Programm Start at Block
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &block);
 					
 					printf("Block-No (0 to 500): ");
@@ -383,11 +385,11 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					break;
-		case 2: 	//Programm Stop
+		case 3: 	//Programm Stop
 					break;
-		case 3:   	//Programm Pause
+		case 4:   	//Programm Pause
 					break;
-		case 4:   	//Spindle on with RPM and Direction
+		case 5:   	//Spindle on with RPM and Direction
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d", client_sid, &msg_type, &rpm, &spindle_direction);
 					
 					printf("RPM (460 to 3220): ");
@@ -419,14 +421,14 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					}
 					tx[pos++] = spindle_direction;
 					break;
-		case 5:  	//Spindle off
+		case 6:  	//Spindle off
 					break;
-		case 6:   	//Stepper on
+		case 7:   	//Stepper on
 					break;
-		case 7:   	//Stepper off
+		case 8:   	//Stepper off
 					break;
-		case 8:   	//X-Stepper move with feed
-		case 9:   	//Z-Stepper move with feed
+		case 9:   	//X-Stepper move with feed
+		case 10:   	//Z-Stepper move with feed
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &feed, &negativ_direction);
 					
 					printf("Feed (2 to 499): ");
@@ -458,7 +460,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					}
 					tx[pos++] = negativ_direction;
 					break;
-		case 10:   	//Set Tool-Position (and INIT)
+		case 11:   	//Set Tool-Position (and INIT)
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n%d", client_sid, &msg_type, &XX, &ZZ, &tool);
 					
 					printf("X-Offset (+-5999): ");
@@ -505,7 +507,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					}
 					tx[pos++] = tool;
 					break;
-		case 11:   	//Origin-X-Offset
+		case 12:   	//Origin-X-Offset
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &XX);
 					
 					printf("X-Offset (+-5999): ");
@@ -523,7 +525,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					break;
-		case 12:   	//Origin-Z-Offset
+		case 13:   	//Origin-Z-Offset
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &ZZ);
 					
 					printf("Z-Offset (+-32700): ");
@@ -541,7 +543,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					break;
-		case 13:  	//metric or inch (maybe not needed)
+		case 14:  	//metric or inch (maybe not needed)
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &inch);
 					
 					printf("metric or inch (0 or 1): ");
@@ -558,7 +560,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					}
 					tx[pos++] = inch;
 					break;
-		case 14:  	//New CNC-Programm wit N Blocks in metric or inch
+		case 15:  	//New CNC-Programm wit N Blocks in metric or inch
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d", client_sid, &msg_type, &block, &inch);
 					
 					printf("Blocks (0 to 500): ");
@@ -590,7 +592,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					}
 					tx[pos++] = inch;
 					break;
-		case 15:  	//CNC-Code-Block
+		case 16:  	//CNC-Code-Block
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%c\n%d\n%d\n%d\n%d\n%d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 					
 					printf("Block-No (0 to 500): ");
@@ -715,12 +717,12 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 					tx[pos++] = HH;
 					
 					break;
-		case 16:  	//Shutdown
+		case 17:  	//Shutdown
 					break;
-		case 17:  	//Load last coordinates and tool position and init
+		case 18:  	//Load last coordinates and tool position and init
 					break;
-		case 18:  	//Reset Errors
-					msg_number = lastsuccessful_msg+1; //Reset Msg-No
+		case 19:  	//Reset Errors
+					msg_number = (lastsuccessful_msg+1)%256; //Reset Msg-No
 					pos--;
 					tx[pos++] = msg_number; 
 					//With the next message, lost messages can be repeated, if they were important. (2D-Array needed for saving last messages)
@@ -731,7 +733,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 	
 	printf("\n");
 	
-	used_length = pos;
+	used_length = pos-SPI_BYTE_LENGTH_PRAEAMBEL;
 	
 	//zero unused bytes
 	for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
@@ -739,7 +741,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 	}
 	
 	//CRC
-	tx[pos] = CRC8(tx, used_length);
+	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
 	
 	printf("tx-Buffer (HEX):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
@@ -774,52 +776,67 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 		//Byteorder: 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 		printf("Incomming Message:\n");
 		printf("------------------\n");
-		printf("PID: %i\n", rx[SPI_BYTE_PID]);
-		lastsuccessful_msg = rx[SPI_BYTE_LASTSUCCESS_MSG_NO];
+		char pid = rx[SPI_BYTE_ARDUINO_MSG_TYPE];
+		printf("PID: %i\n", pid);
+		lastsuccessful_msg = rx[SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO];
 		printf("Last Successful Message: %i\n", lastsuccessful_msg);
-		char active = (rx[SPI_BYTE_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
+		char active = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
 		printf("Control active: %i\n", active);
-		char init = (rx[SPI_BYTE_STATE]>>STATE_INIT_BIT)&1;
+		char init = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INIT_BIT)&1;
 		printf("init: %i\n", init);
-		char manual = (rx[SPI_BYTE_STATE]>>STATE_MANUAL_BIT)&1;
+		char manual = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_MANUAL_BIT)&1;
 		printf("manual: %i\n", manual);
-		char pause = (rx[SPI_BYTE_STATE]>>STATE_PAUSE_BIT)&1;
+		char pause = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_PAUSE_BIT)&1;
 		printf("Pause: %i\n", pause);
-		char inch = (rx[SPI_BYTE_STATE]>>STATE_INCH_BIT)&1;
+		char inch = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INCH_BIT)&1;
 		printf("inch: %i\n", inch);
-		char spindel_on = (rx[SPI_BYTE_STATE]>>STATE_SPINDLE_BIT)&1;
+		char spindel_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_BIT)&1;
 		printf("Spindel on: %i\n", spindel_on);
-		char spindel_direction = (rx[SPI_BYTE_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
+		char spindel_direction = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
 		printf("Spindel direction: %i\n", spindel_direction);
-		char stepper_on = (rx[SPI_BYTE_STATE]>>STATE_STEPPER_BIT)&1;
+		char stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_STEPPER_BIT)&1;
 		printf("Stepper on: %i\n", stepper_on);
-		rpm = (((int)rx[SPI_BYTE_RPM_H]<<8)|(rx[SPI_BYTE_RPM_L]));
+		rpm = (((int)rx[SPI_BYTE_ARDUINO_RPM_H]<<8)|(rx[SPI_BYTE_ARDUINO_RPM_L]));
 		printf("RPM: %i\n", rpm);
-		XX = (((int)rx[SPI_BYTE_X_H]<<8)|(rx[SPI_BYTE_X_L]));
+		XX = (((int)rx[SPI_BYTE_ARDUINO_X_H]<<8)|(rx[SPI_BYTE_ARDUINO_X_L]));
 		printf("X: %i\n", XX);
-		ZZ = (((int)rx[SPI_BYTE_Z_H]<<8)|(rx[SPI_BYTE_Z_L]));
+		ZZ = (((int)rx[SPI_BYTE_ARDUINO_Z_H]<<8)|(rx[SPI_BYTE_ARDUINO_Z_L]));
 		printf("Z: %i\n", ZZ);
-		feed = (((int)rx[SPI_BYTE_F_H]<<8)|(rx[SPI_BYTE_F_L]));
+		feed = (((int)rx[SPI_BYTE_ARDUINO_F_H]<<8)|(rx[SPI_BYTE_ARDUINO_F_L]));
 		printf("F: %i\n", feed);
-		HH = (((int)rx[SPI_BYTE_H_H]<<8)|(rx[SPI_BYTE_H_L]));
+		HH = (((int)rx[SPI_BYTE_ARDUINO_H_H]<<8)|(rx[SPI_BYTE_ARDUINO_H_L]));
 		printf("H: %i\n", HH);
-		tool = rx[SPI_BYTE_T];
+		tool = rx[SPI_BYTE_ARDUINO_T];
 		printf("T: %i\n", tool);
-		block = (((int)rx[SPI_BYTE_N_H]<<8)|(rx[SPI_BYTE_N_L]));
+		block = (((int)rx[SPI_BYTE_ARDUINO_N_H]<<8)|(rx[SPI_BYTE_ARDUINO_N_L]));
 		printf("Block-No: %i\n", block);
-		char spi_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_SPI_BIT)&1;
+		char spi_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPI_BIT)&1;
 		printf("SPI-Error: %i\n", spi_error);
-		char cnc_code_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
+		char cnc_code_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
 		printf("CNC-Code-Error: %i\n", cnc_code_error);
-		char spindel_error = (rx[SPI_BYTE_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
+		char spindel_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
 		printf("Spindel-Error: %i\n", spindel_error);
-		char crc_in = rx[SPI_BYTE_CRC8];
+		char crc_in = rx[SPI_BYTE_ARDUINO_CRC8];
 		printf("CRC: %i\n\n", crc_in);
 		
-		if (CRC8(rx, SPI_MSG_LENGTH)) printf("CRC-Check of incomming message failed!!!\n\n");
+		if (CRC8(rx, SPI_BYTE_LENGTH_PRAEAMBEL, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL) || pid != 100) {
+			printf("CRC- or PID-Check of incomming message failed!!!\n\n");
+			/*
+			//should be implemented in another way
+			printf("Try to get Status Update!\n");
+			while (spi_transfer(spi_fd, NULL, 1)) {
+					usleep(500000); //0,5s
+			}
+			*/
+		}
 		else {
 			//Inform about lost messages
-			if (msg_number != lastsuccessful_msg+1) printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", msg_number-lastsuccessful_msg-1);
+			lostmessages = msg_number-lastsuccessful_msg-1;
+			if (lostmessages<0) lostmessages += 256;
+			//if (msg_number != (lastsuccessful_msg+1)%256) {
+			if (lostmessages>0) {
+				printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", lostmessages);
+			}
 			
 			//Ouptut to Machine-State-File
 			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
@@ -880,6 +897,7 @@ static void spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char upd
 	printf("\n");
 	
 	msg_number++; //for next message
+	return lostmessages;
 }
 
 static void print_usage(const char *prog)
@@ -985,7 +1003,7 @@ int main(int argc, char *argv[])
 	//allow all rights for new created files
 	umask(0);
 	
-	setup_pipe_server();
+	if (start_pipe_server) setup_pipe_server();
 
 	if (setup_spi() == 0){
 		while(1) { //Server-Loop
@@ -1012,7 +1030,7 @@ int main(int argc, char *argv[])
 				{
 					//printf("select timeout after 1s waiting for message on pipe!\n");
 					if (verbose) printf("Updating Machine-State after waiting for message on pipe for 1s!\n");
-					spi_transfer(spi_fd, NULL, 1);
+					messages_notreceived = spi_transfer(spi_fd, NULL, 1);
 				}
 				else if (ret < 0) //error
 				{
@@ -1023,7 +1041,7 @@ int main(int argc, char *argv[])
 					//printf("select says pipe is readable\n");
 					//fscanf(r_fz,"%s\n%d", client_sid, &pid);
 					
-					if (read (r_fd, buffer, BUF) != 0) {
+					if (read (r_fd, buffer[ringbufer_pos], BUF) != 0) {
 						/*
 						//get SESSION-ID of calling client
 						i = 0;
@@ -1060,9 +1078,42 @@ int main(int argc, char *argv[])
 							close (w_fd);
 						}
 						*/
-
+						
+						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
+						
 						//process message
-						spi_transfer(spi_fd, buffer, 0);
+						messages_notreceived = spi_transfer(spi_fd, buffer[ringbufer_pos], 0); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						
+						/*
+						//Error-Handling not ready
+						do {
+							
+							
+							//Reset SPI-Error							
+							while (spi_transfer(spi_fd, NULL, 19)) {
+									usleep(500000); //0,5s
+							}
+							
+							//try to send lost messages again
+							if (messages_notreceived>SPI_TX_RINGBUFFERSIZE) {
+								//error handling needed!
+								printf("%i Messages lost!\n", messages_notreceived);
+							}
+							else {
+								//Update ringbufer_pos
+								if (messages_notreceived>ringbuffer_fill_status) ringbufer_pos -= ringbuffer_fill_status;
+								else ringbufer_pos -= messages_notreceived;
+								if (ringbufer_pos<0) ringbufer_pos += SPI_TX_RINGBUFFERSIZE;
+								
+								spi_transfer(spi_fd, buffer[ringbufer_pos], 0);
+							}
+							
+						} while (messages_notreceived);
+						*/
+						
+						//Update ringbufer_pos
+						if (ringbufer_pos<SPI_TX_RINGBUFFERSIZE-1) ringbufer_pos++;
+						else ringbufer_pos = 0;
 					}
 				}
 			}
