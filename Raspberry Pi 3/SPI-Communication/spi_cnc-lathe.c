@@ -1030,7 +1030,7 @@ int main(int argc, char *argv[])
 				{
 					//printf("select timeout after 1s waiting for message on pipe!\n");
 					if (verbose) printf("Updating Machine-State after waiting for message on pipe for 1s!\n");
-					spi_transfer(spi_fd, NULL, 1);
+					messages_notreceived = spi_transfer(spi_fd, NULL, 1);
 				}
 				else if (ret < 0) //error
 				{
