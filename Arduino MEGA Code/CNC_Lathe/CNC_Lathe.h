@@ -5,6 +5,19 @@
 //many functions and vars should be private
 
 //defines
+
+//Debug-Switches
+//#define DEBUG_SERIAL_CODE_OFF
+//#define DEBUG_SPI_CODE_OFF
+//#define DEBUG_STEPPER_CODE_OFF
+//#define DEBUG_RPM_CODE_OFF
+//#define DEBUG_TOOL_CODE_OFF
+//#define DEBUG_MSG_SPI_ON
+//#define DEBUG_MSG_STEPPER_ON
+//#define DEBUG_MSG_ACTIVE_ON
+#define DEBUG_MSG_RPM_ON
+#define DEBUG_MSG_TOOL_ON
+
 //Input Parameter Ranges
 #define CNC_CODE_NMIN 0
 #define CNC_CODE_NMAX 500
@@ -98,6 +111,7 @@
 
 //includes
 #include <util/atomic.h>
+#include <avr/wdt.h>
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "CNC_Control.h"
@@ -110,7 +124,6 @@
 #include "Tool_Changer_Control.h"
 
 //global vars
-extern volatile boolean debug, debug_spi, debug_stepper, debug_active, debug_rpm, debug_tool;
 
 //Cosinus LookUp-Table for Quarter Circle in Q15
 extern const int lookup_cosinus[91];
