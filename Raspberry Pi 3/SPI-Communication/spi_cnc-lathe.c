@@ -121,8 +121,10 @@
 #define SPI_BYTE_RASPI_MSG_F_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_X_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_X_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_Z_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_Z_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_Z_H 2 (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_Z_L 3 (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_TOOL_Z_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_TOOL_Z_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
@@ -528,7 +530,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, const char msg_
 		case 13:   	//Origin-Z-Offset
 					if (pipe_msg_buffer != NULL) sscanf(pipe_msg_buffer,"%s\n%d\n%d", client_sid, &msg_type, &ZZ);
 					
-					printf("Z-Offset (+-32700): ");
+					printf("Z-Offset (+-32760): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
 					else if (pipe_msg_buffer == NULL) {
 						do {

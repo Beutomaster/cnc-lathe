@@ -223,7 +223,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
       }
     } else {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR1 = 62499L;
+        ICR1 = 62499U;
       }
     }
     if (clk_zfeed) { //clock not zero
@@ -233,7 +233,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
       }
     } else {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR3 = 62499L;   
+        ICR3 = 62499U;   
       }
     }
   }
@@ -291,9 +291,9 @@ int get_xz_feed_related_to_revolutions(int feed_per_revolution) { // for G95 - F
 void command_running(int local_command_time) { //command_time in 1/100s
   command_completed=0;
   
-  //handling durations over 4s
-  i_command_time = local_command_time/400;
-  command_time = local_command_time%400;
+  //handling durations over 1s
+  i_command_time = local_command_time/100;
+  command_time = local_command_time%100;
 
   //set and start Timer1 for command_time
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
@@ -302,7 +302,7 @@ void command_running(int local_command_time) { //command_time in 1/100s
     
   if (i_command_time) {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-      ICR1 = 62499; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*400s/100)-1
+      ICR1 = 62499U; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*100s/100)-1
     }
   }
   else {
@@ -310,6 +310,7 @@ void command_running(int local_command_time) { //command_time in 1/100s
       ICR1 = (62500L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*command_time/100)-1
     }
   }
+  if (i_command_time || command_time) {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
     }
@@ -317,5 +318,6 @@ void command_running(int local_command_time) { //command_time in 1/100s
     TIMSK1 |= _BV(OCIE1A); //set 1
     //Prescaler 256 and Start Timer
     TCCR1B |= _BV(CS12); //set 1
+  }
 }
 

@@ -42,10 +42,10 @@ Praeambel 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_
 (Praeambel 101 ERROR_Number 14xZero CRC-8 #Error) obsolete
 */
 
-volatile char rx_buf [SPI_MSG_LENGTH]; //SPI receive-buffer
-volatile char rx_doublebuf [SPI_RX_RINGBUFFERSIZE][SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL]; //SPI receive-double-buffer
-volatile char tx_buf [SPI_MSG_LENGTH]; //SPI send-buffer
-volatile char tx_doublebuf [SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL]; //SPI send-double-buffer
+volatile unsigned char rx_buf [SPI_MSG_LENGTH]; //SPI receive-buffer
+volatile unsigned char rx_doublebuf [SPI_RX_RINGBUFFERSIZE][SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL]; //SPI receive-double-buffer
+volatile unsigned char tx_buf [SPI_MSG_LENGTH]; //SPI send-buffer
+volatile unsigned char tx_doublebuf [SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL]; //SPI send-double-buffer
 volatile byte pos=0; // buffer empty
 volatile boolean byte_received=false; //first byte of transmission received)
 volatile boolean process_it=false; //not end of string (newline received)
@@ -113,7 +113,7 @@ void spi_buffer_handling() {
   }
 } //end of receive_spi
 
-unsigned char CRC8 (volatile char * buf, unsigned char message_offset, unsigned char used_message_bytes, boolean verify_with_extra_byte, unsigned char msg_crc_8) {
+unsigned char CRC8 (volatile unsigned char * buf, unsigned char message_offset, unsigned char used_message_bytes, boolean verify_with_extra_byte, unsigned char msg_crc_8) {
   //ATTENTION: if all bytes are zero, CRC8-Check is always correct!!! High possibility of incorrect detected message.
   //Set verify_with_extra_byte=false and msg_crc_8=0 (or whatever) to get the crc_8-value of the msg returned
   //If the last byte of the message is the correct crc-value of the bytes before, CRC8 returns 0.
@@ -132,7 +132,7 @@ unsigned char CRC8 (volatile char * buf, unsigned char message_offset, unsigned 
 
 boolean check_msg(char msg_length, boolean force_action) {
   //debug lastsuccessful_msg
-  #ifndef DEBUG_SERIAL_CODE_OFF
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
     Serial.print("lastsuccessful_msg DEC: ");
     Serial.print(lastsuccessful_msg, DEC);
     Serial.print(", lastsuccessful_msg HEX: ");
@@ -145,7 +145,7 @@ boolean check_msg(char msg_length, boolean force_action) {
     success=false; //msg-failure
     set_error(ERROR_SPI_BIT);
   }
-  else if ((unsigned char)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
+  else if (rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
     lastsuccessful_msg++;
   }
   else {
@@ -228,7 +228,7 @@ boolean process_incomming_msg() {
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (get_control_active() && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
                 get_Tool_X((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_X_L]);
-                get_Tool_Z((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]);
+                get_Tool_Z((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_L]);
                 set_tool_position(rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_T]);
               }
               break;
@@ -243,6 +243,18 @@ boolean process_incomming_msg() {
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
+                /*
+                #ifndef DEBUG_SERIAL_CODE_OFF
+                  Serial.print("Z DEC: ");
+                  Serial.print(((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), DEC);
+                  Serial.print(", ZH HEX: ");
+                  Serial.print((rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H]), HEX);
+                  Serial.print(", ZL HEX: ");
+                  Serial.print((rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
+                  Serial.print(", Z HEX: ");
+                  Serial.println(((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
+                #endif
+                */
                 set_z_coordinate((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]);
               }
               break;
