@@ -38,7 +38,8 @@
 		}
 		
 		//Parse Code-Lines
-		
+		//N>N_last, G/M-Codes with Parameter, Ranges
+		//Programm Start/Stop ...
 		
 		return $success;
 	}
