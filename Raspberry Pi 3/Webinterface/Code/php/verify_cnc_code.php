@@ -78,6 +78,8 @@
 				}
 				if (preg_match('/^([GM])([0-9]{1,3})[ ]?(.*$)/', $code_line[3], $code)) {
 					//Check if every Code-line has a correct G- or M-Code as next Parameter
+					//Check if the following Parameters are matching and are in range
+					//Check for extra characters
 					$GM = $code[1];
 					$GM_Code = $code[2];
 					$Parameter1 = $code[3];
@@ -394,10 +396,8 @@
 						}
 					}
 					//Check for metric-/inch-commands
-					//Check if the following Parameters are matching and are in range
 					//Programm Stop (needed?)
 					//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
-					//Check for extra characters
 				}
 				else {
 					echo "Line $line: no G- or M-Code or incorrect format<br />";
