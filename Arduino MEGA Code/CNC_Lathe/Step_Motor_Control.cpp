@@ -29,7 +29,7 @@ void stepper_on() {
 }
 
 void stepper_off() {
-  if (!command_time) {
+  if (!i_command_time && !command_time) {
     TCCR1B = 0; //Disable Timer 1
     TIMSK1 |= ~(_BV(OCIE1A)); //set 0 => Disable Output Compare A Match Interrupt Enable
   }
