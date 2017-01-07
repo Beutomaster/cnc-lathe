@@ -56,9 +56,9 @@
 			case "ProgramStart":
 				$msg_pid = "2";
 				$parameter = array("block");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success = test_value_range($Input_N, 0, 9999);
+				$success &= false_value_range($Input_N, 0, 9999);
 				$msg .= $msg_pid . "\n" . $Input_N . "\n";
 				break;
 			case "ProgramStop":
@@ -72,11 +72,11 @@
 			case "SpindleSetRPM":
 				$msg_pid = "5";
 				$parameter = array("spindle_direction", "rpm");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_DIRECTION = test_input($_POST["spindle_direction"]);
-				$success = test_value_range($Input_DIRECTION, 0, 1);
+				$success &= false_value_range($Input_DIRECTION, 0, 1);
 				$Input_RPM = test_input($_POST["rpm"]);
-				$success = test_value_range($Input_RPM, 460, 3220);
+				$success &= false_value_range($Input_RPM, 460, 3220);
 				$msg .= $msg_pid . "\n" . $Input_RPM . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "SpindleOff":
@@ -94,55 +94,55 @@
 			case "XStepper":
 				$msg_pid = "9";
 				$parameter = array("stepper_direction", "feed");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_DIRECTION = test_input($_POST["stepper_direction"]);
-				$success = test_value_range($Input_DIRECTION, 0, 1);
+				$success &= false_value_range($Input_DIRECTION, 0, 1);
 				$Input_FTLK = test_input($_POST["feed"]);
-				$success = test_value_range($Input_FTLK, 0, 499);
+				$success &= false_value_range($Input_FTLK, 0, 499);
 				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "ZStepper":
 				$msg_pid = "10";
 				$parameter = array("stepper_direction", "feed");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_DIRECTION = test_input($_POST["stepper_direction"]);
-				$success = test_value_range($Input_DIRECTION, 0, 1);
+				$success &= false_value_range($Input_DIRECTION, 0, 1);
 				$Input_FTLK = test_input($_POST["feed"]);
-				$success = test_value_range($Input_FTLK, 0, 499);
+				$success &= false_value_range($Input_FTLK, 0, 499);
 				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "SetTool":
 				$msg_pid = "11";
 				$parameter = array("tool_x-correction", "tool_z-correction", "tool");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["tool_x-correction"]);
-				$success = test_value_range($Input_XI, -5999, 5999);
+				$success &= false_value_range($Input_XI, -5999, 5999);
 				$Input_ZK = test_input($_POST["tool_z-correction"]);
-				$success = test_value_range($Input_ZK, -32760, 32760);
+				$success &= false_value_range($Input_ZK, -32760, 32760);
 				$Input_FTLK = test_input($_POST["tool"]);
-				$success = test_value_range($Input_FTLK, 1, 6);
+				$success &= false_value_range($Input_FTLK, 1, 6);
 				$msg .= $msg_pid . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n";
 				break;
 			case "SetXOffset":
 				$msg_pid = "12";
 				$parameter = array("xoffset");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["xoffset"]);
-				$success = test_value_range($Input_XI, -5999, 5999);
+				$success &= false_value_range($Input_XI, -5999, 5999);
 				$msg .= $msg_pid . "\n" . $Input_XI . "\n";
 				break;
 			case "SetZOffset":
 				$msg_pid = "13";
 				$parameter = array("zoffset");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_ZK = test_input($_POST["zoffset"]);
-				$success = test_value_range($Input_ZK, "-32760", "32760");
+				$success &= false_value_range($Input_ZK, "-32760", "32760");
 				$msg .= $msg_pid . "\n" . $Input_ZK . "\n";
 				break;
 			case "SetMetricOrInch":
 				$msg_pid = "14";
 				$parameter = array("metric_inch");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_INCH = test_input($_POST["metric_inch"]);
 				if ($Input_INCH == "metric") $Input_INCH = "0";
 				elseif ($Input_INCH == "inch") $Input_INCH = "1";
@@ -155,9 +155,9 @@
 			case "LoadNewProgramm":
 				$msg_pid = "15";
 				$parameter = array("block", "metric_inch");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success = test_value_range($Input_N, 0, 9999);
+				$success &= false_value_range($Input_N, 0, 9999);
 				$Input_INCH = test_input($_POST["metric_inch"]);
 				if ($Input_INCH == "metric") $Input_INCH = "0";
 				elseif ($Input_INCH == "inch") $Input_INCH = "1";
@@ -170,29 +170,29 @@
 			case "NewProgrammBlock":
 				$msg_pid = "16";
 				$parameter = array("block", "gm_code", "gm_code_no", "cnc_xi", "cnc_zk", "cnc_ftlk", "cnc_hs");
-				$success = test_keys_exist($parameter) or exit(1);
+				$success &= false_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success = test_value_range($Input_N, 0, 9999);
+				$success &= false_value_range($Input_N, 0, 9999);
 				$Input_GM = test_input($_POST["gm_code"]);
 				$Input_GM_NO = test_input($_POST["gm_code_no"]);
 				if ($Input_GM == "G") {
-					$success = test_value_range($Input_GM_NO, 0, 196); //should be a check against an array of known codes!!!
+					$success &= false_value_range($Input_GM_NO, 0, 196); //should be a check against an array of known codes!!!
 				}
 				elseif ($Input_GM == "M") {
-					$success = test_value_range($Input_GM_NO, 0, 99); //should be a check against an array of known codes!!!
+					$success &= false_value_range($Input_GM_NO, 0, 99); //should be a check against an array of known codes!!!
 				}
 				else {
 					echo "Value of gm_code out of range!";
 					$success = false;
 				}
 				$Input_XI = test_input($_POST["cnc_xi"]);
-				$success = test_value_range($Input_XI, -5999, 5999);
+				$success &= false_value_range($Input_XI, -5999, 5999);
 				$Input_ZK = test_input($_POST["cnc_zk"]);
-				$success = test_value_range($Input_ZK, -32760, 32760);
+				$success &= false_value_range($Input_ZK, -32760, 32760);
 				$Input_FTLK = test_input($_POST["cnc_ftlk"]);
-				$success = test_value_range($Input_FTLK, -32760, 32760); //not right!!! Many cases!!!
+				$success &= false_value_range($Input_FTLK, -32760, 32760); //not right!!! Many cases!!!
 				$Input_HS = test_input($_POST["cnc_hs"]);
-				$success = test_value_range($Input_HS, -32760, 32760); //not right!!! Many cases!!!
+				$success &= false_value_range($Input_HS, -32760, 32760); //not right!!! Many cases!!!
 				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_GM . "\n" . $Input_GM_NO . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n" . $Input_HS . "\n";
 				break;
 			case "Shutdown":
