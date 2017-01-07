@@ -32,21 +32,24 @@
 		echo "File has $lines lines.<br />";
 		
 		//get CNC-Code-Start- and -Stop-Line
+		$code_start_line ="";
 		$code_stop_line = $lines+1; //if no Stop-Sign is found
 		$i=0;
 		foreach ($cnc_code_reference as $line => $linevalue) {
 			if (preg_match('/^%/', $linevalue)) {
 				if ($i == 0) {
-					$code_start_line = $line;
-					echo "Line $line: CNC-Code-Start<br />";
+					$code_start_line = $line+1;
+					echo "Line $code_start_line: CNC-Code-Start<br />";
 				}
 				elseif ($i == 1) {
-					$code_stop_line = $line;
-					echo "Line $line: CNC-Code-Stop<br />";
+					$code_stop_line = $line+1;
+					echo "Line $code_stop_line: CNC-Code-Stop<br />";
 				}
 				$i++;
 			}
 		}
+		unset($line);
+		
 		//$code_start_line = array_search("%\r\n", $cnc_code_reference);
 		if (!$code_start_line) {
 			echo "CNC-Code-Error: No CNC-Code-Startline % found!<br />";
@@ -57,6 +60,7 @@
 		$N=0;
 		$N_last=0;
 		$M30=""; //should be an array
+		//line-numbers should be $code_start_line+1 (does not work!!! why???)
 		for ($line = $code_start_line+1; $line < $code_stop_line; $line++) {
 			//check if every Code-line has a Blocknumber at the beginning and that they are increasing per line (N>N_last)
 			if (preg_match('/^([N])([0-9]{4})[ ](.*$)/', $cnc_code_reference[$line], $code_line)) {
@@ -310,7 +314,6 @@
 					//Programm Stop (needed?)
 					//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
 					//Check for extra characters
-			
 				}
 				else {
 					echo "Line $line: has no G- or M-Code<br />";
