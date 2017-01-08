@@ -118,7 +118,7 @@ void setup() {
   //Timer1
   //Toolchanger + set command_completed
   //+X-Stepper
-  //command_complete isr
+  //command_running isr (conflict with stepper!!! => must be changed to another timer)
   
   //Timer2 
   //tone() function uses Timer2
