@@ -160,7 +160,7 @@ uint8_t msg_number=1, lastsuccessful_msg =0;
 
 //pipe-Server
 char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
-int r_fd, w_fd, i, ret, ringbuffer_pos=0, messages_notreceived=0, ringbuffer_fill_status=0;
+int r_fd, w_fd, i, ret, ringbuffer_pos=0, messages_notreceived=0, ringbuffer_fill_status=0, msg_type_test;
 //FILE *r_fz, *w_fz;
 //parameter for select
 fd_set r_fd_set;
@@ -312,22 +312,15 @@ uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes)
   return crc_8;
 }
 
-static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
+static int spi_transfer(int spi_fd, char msg_type, const char manual)
 {
 	int lostmessages=0, ret, n, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 	//uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 	uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
-	const char *pipe_msg_buffer_temp = pipe_msg_buffer;
-	/*
-	//debug
-	printf("pipe_msg_buffer %p, length %i\n", pipe_msg_buffer, sizeof(pipe_msg_buffer));
-	printf("client_sid %p, length %i\n", client_sid, sizeof(client_sid));
-	printf("msg_type %p, length %i\n", &msg_type, sizeof(msg_type));
-	*/
 	
 	if (!msg_type) {
-		if (pipe_msg_buffer == NULL) { //command-line-mode
+		if (manual) { //command-line-mode
 			//User Input for Message
 			printf("Message-Types:\n");
 			printf("--------------\n");
@@ -352,27 +345,19 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 			printf("019 Reset Errors\n\n");
 		}
 		else {
-			n = sscanf(pipe_msg_buffer,"%s\n%d\n", client_sid, &msg_type);
+			n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n", client_sid, &msg_type);
 			if (n != 2) {
 				if (errno != 0) perror("scanf");
 				else fprintf(stderr, "Parameter not matching\n");
 				return 0;
 			}
-			//printf ("n: %i\n", n);
-			pipe_msg_buffer = pipe_msg_buffer_temp;
 			printf ("Message from Client-SESSION: %s\n", client_sid);
 		}
 	}
 	
-	/*
-	//debug
-	printf("pipe_msg_buffer %p:\n", pipe_msg_buffer);
-	printf("client_sid %p, length %i\n", client_sid, sizeof(client_sid));
-	printf("msg_type %p, length %i\n", &msg_type, sizeof(msg_type));
-	*/
 	printf("Message-Type: ");
 	if ((msg_type>=1) && (msg_type<=19)) printf("%i\n",msg_type);
-	else if (pipe_msg_buffer == NULL) {
+	else if (manual) {
 		do {
 			scanf("%d",&msg_type);
 			getchar();
@@ -392,8 +377,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 		case 1:   	//Update Machine State
 					break;
 		case 2:   	//Programm Start at Block
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &block);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n", client_sid, &msg_type, &block);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -403,7 +388,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Block-No (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&block);
 							getchar();
@@ -421,8 +406,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 		case 4:   	//Programm Pause
 					break;
 		case 5:   	//Spindle on with RPM and Direction
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n", client_sid, &msg_type, &rpm, &spindle_direction);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n%d\n", client_sid, &msg_type, &rpm, &spindle_direction);
 						if (n != 4) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -432,7 +417,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("RPM (460 to 3220): ");
 					if ((rpm>=REVOLUTIONS_MIN) && (rpm<=REVOLUTIONS_MAX)) printf("%i\n",rpm);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&rpm);
 							getchar();
@@ -447,7 +432,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Spindel direction invers (0 or 1): ");
 					if ((spindle_direction>=0) && (spindle_direction<=1)) printf("%i\n",spindle_direction);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&spindle_direction);
 							getchar();
@@ -467,8 +452,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					break;
 		case 9:   	//X-Stepper move with feed
 		case 10:   	//Z-Stepper move with feed
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &feed, &negativ_direction);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n", client_sid, &msg_type, &feed, &negativ_direction);
 						if (n != 4) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -478,7 +463,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Feed (2 to 499): ");
 					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&feed);
 							getchar();
@@ -493,7 +478,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("negativ direction (0 or 1): ");
 					if ((negativ_direction>=0) && (negativ_direction<=1)) printf("%i\n",negativ_direction);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&negativ_direction);
 							getchar();
@@ -506,11 +491,10 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					tx[pos++] = negativ_direction;
 					break;
 		case 11:   	//Set Tool-Position (and INIT)
-					//debug
-					//printf("pipe_msg_buffer %p:\n", pipe_msg_buffer);
-					if (pipe_msg_buffer != NULL) {
+					if (!manual) {
 						printf("Parameter einlesen\n");
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &XX, &ZZ, &tool);
+						printf ("sizeof buffer[ringbuffer_pos]: %i\n", sizeof(buffer[ringbuffer_pos]));
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &XX, &ZZ, &tool);
 						if (n != 5) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -520,7 +504,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("X-Offset (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&XX);
 							getchar();
@@ -535,7 +519,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Z-Offset (+-32700): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&ZZ);
 							getchar();
@@ -550,7 +534,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Tool (1 to 6): ");
 					if ((tool>=T_MIN) && (tool<=T_MAX)) printf("%i\n",tool);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&tool);
 							getchar();
@@ -563,8 +547,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					tx[pos++] = tool;
 					break;
 		case 12:   	//Origin-X-Offset
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &XX);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n", client_sid, &msg_type, &XX);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -574,7 +558,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("X-Offset (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&XX);
 							getchar();
@@ -588,8 +572,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					tx[pos++] = XX;
 					break;
 		case 13:   	//Origin-Z-Offset
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &ZZ);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n", client_sid, &msg_type, &ZZ);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -599,7 +583,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Z-Offset (+-32760): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&ZZ);
 							getchar();
@@ -613,8 +597,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					tx[pos++] = ZZ;
 					break;
 		case 14:  	//metric or inch (maybe not needed)
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &inch);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n", client_sid, &msg_type, &inch);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -624,7 +608,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("metric or inch (0 or 1): ");
 					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&inch);
 							getchar();
@@ -637,8 +621,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					tx[pos++] = inch;
 					break;
 		case 15:  	//New CNC-Programm wit N Blocks in metric or inch
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n", client_sid, &msg_type, &block, &inch);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%d\n%d\n", client_sid, &msg_type, &block, &inch);
 						if (n != 4) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -648,7 +632,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Blocks (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&block);
 							getchar();
@@ -663,7 +647,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("metric or inch (0 or 1): ");
 					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&inch);
 							getchar();
@@ -676,8 +660,8 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					tx[pos++] = inch;
 					break;
 		case 16:  	//CNC-Code-Block
-					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%c\n%d\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
+					if (!manual) {
+						n = sscanf(buffer[ringbuffer_pos],"%s\n%d\n%c\n%d\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 						if (n != 9) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -687,7 +671,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Block-No (0 to 500): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&block);
 							getchar();
@@ -702,7 +686,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("G- or M-Code (G or M): ");
 					if ((code_type == 'G') || (code_type == 'M')) printf("%c\n",code_type);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%c",&code_type);
 							getchar();
@@ -717,7 +701,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					if (code_type == 'G') {
 						printf("G-Code (0 to 196): ");
 						if ((gmcode>=GM_CODE_MIN) && (gmcode<=G_CODE_MAX)) printf("%i\n",gmcode);
-						else if (pipe_msg_buffer == NULL) {
+						else if (manual) {
 							do {
 								scanf("%d",&gmcode);
 								getchar();
@@ -731,7 +715,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					else {
 						printf("M-Code (0 to 99): ");
 						if ((gmcode>=GM_CODE_MIN) && (gmcode<=M_CODE_MAX)) printf("%i\n",gmcode);
-						else if (pipe_msg_buffer == NULL) {
+						else if (manual) {
 							do {
 								scanf("%d",&gmcode);
 								getchar();
@@ -746,7 +730,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("X (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&XX);
 							getchar();
@@ -763,7 +747,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Z (+-32700): ");
 					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&ZZ);
 							getchar();
@@ -778,7 +762,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("Feed (2 to 499): ");
 					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&feed);
 							getchar();
@@ -793,7 +777,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					
 					printf("H (0 to 999): ");
 					if ((HH>=H_MIN) && (HH<=H_MAX)) printf("%i\n",HH);
-					else if (pipe_msg_buffer == NULL) {
+					else if (manual) {
 						do {
 							scanf("%d",&HH);
 							getchar();
@@ -1120,7 +1104,7 @@ int main(int argc, char *argv[])
 				{
 					//printf("select timeout after 1s waiting for message on pipe!\n");
 					if (verbose) printf("Updating Machine-State after waiting for message on pipe for 1s!\n");
-					messages_notreceived = spi_transfer(spi_fd, NULL, 1);
+					messages_notreceived = spi_transfer(spi_fd, 1, 0);
 				}
 				else if (ret < 0) //error
 				{
@@ -1132,14 +1116,14 @@ int main(int argc, char *argv[])
 					//fscanf(r_fz,"%s\n%d", client_sid, &pid);
 					
 					if (read (r_fd, buffer[ringbuffer_pos], BUF) != 0) {
-						/*
 						//debug
 						printf("buffer %p:\n", buffer[ringbuffer_pos]);
 						for (i=0; i<BUF; i++){
 							printf("%c 0x%x, ", buffer[ringbuffer_pos][i], buffer[ringbuffer_pos][i]);
 						}
 						printf("\n");
-						*/
+						printf ("sizeof buffer[ringbuffer_pos]: %i\n", sizeof(buffer[ringbuffer_pos]));
+						//buffer[ringbuffer_pos][BUF-1]=0; //set End of String for Security
 						/*
 						//get SESSION-ID of calling client
 						i = 0;
@@ -1180,7 +1164,7 @@ int main(int argc, char *argv[])
 						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
 						
 						//process message
-						messages_notreceived = spi_transfer(spi_fd, buffer[ringbuffer_pos], 0); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						messages_notreceived = spi_transfer(spi_fd, 0, 0); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
 						
 						/*
 						//Error-Handling not ready
@@ -1188,7 +1172,7 @@ int main(int argc, char *argv[])
 							
 							
 							//Reset SPI-Error							
-							while (spi_transfer(spi_fd, NULL, 19)) {
+							while (spi_transfer(spi_fd, 19, 0)) {
 									usleep(500000); //0,5s
 							}
 							
@@ -1215,7 +1199,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			else spi_transfer(spi_fd, NULL, 0);
+			else spi_transfer(spi_fd, 0, 1);
 		}
 	}
 	else exit(EXIT_FAILURE);

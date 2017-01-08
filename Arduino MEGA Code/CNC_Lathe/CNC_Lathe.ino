@@ -116,15 +116,15 @@ void setup() {
   //Stepper-Timeout
 
   //Timer1
-  //Toolchanger + set command_completed
+  //Toolchanger + set x_command_completed
   //+X-Stepper
-  //command_complete isr
+  //command_running isr (conflict with stepper!!! => must be changed to another timer)
   
   //Timer2 
   //tone() function uses Timer2
     
   //Timer3
-  //Z-Stepper output + set command_completed while in active mode and maybe observing Stepper in passive mode
+  //Z-Stepper output + set z_command_completed while in active mode and maybe observing Stepper in passive mode
 
   //Timer4
   //spindle PWM
@@ -205,6 +205,11 @@ void loop() {
     set_revolutions(get_SERVO_CONTROL_POTI());
     //set spindle-direction
   }
+
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("0");
+  #endif
+  
   //wdt_reset(); // reset the WDT timer
 }
 
