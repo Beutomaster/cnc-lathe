@@ -294,6 +294,8 @@ function saveTextAsFile()
     downloadLink.download = fileNameToSaveAs;
     downloadLink.innerHTML = "Download File";
     downloadLink.href = textToSaveAsURL;
+	//downloadLink.target="_blank";
+	downloadLink.setAttribute("target", "_blank");
     downloadLink.onclick = destroyClickedElement;
     downloadLink.style.display = "none";
     document.body.appendChild(downloadLink);
