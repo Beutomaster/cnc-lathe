@@ -6,7 +6,7 @@
 	// define variables and set to empty values
 	$Input_N = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $msg_pid = "";
 	
-	$success=false;
+	$success=0;
 	
 	$msg = session_id() . "\n";
 	echo "session_id: " . session_id() . " <br />";
@@ -19,10 +19,10 @@
 	}
 	
 	function test_keys_exist($keyArray) {
-		$success=true;
+		$success=1;
 		foreach($keyArray as $key) {
 			if (!array_key_exists($key, $_POST)) {
-				$success=false;
+				$success=0;
 				echo ("Key " . $key . " is missing!<br />");
 			}
 		}
@@ -31,15 +31,15 @@
 	}
 	
 	function test_value_range($value, $min, $max) {
-		$success=true;
+		$success=1;
 		//test if value has only numbers and a negativ sign needed
 		if (!is_numeric($value) || is_float($value)) {
-			$success=false;
+			$success=0;
 			echo "Value of " . $name . " is not numeric or float!<br />";
 		}
 		//test range of value matches
 		if ($value < $min || $value > $max) {
-			$success=false;
+			$success=0;
 			echo "Value of " . $name . " out of range!<br />";
 		}
 		return $success;
@@ -50,7 +50,7 @@
 			echo "HTML-Input name: $name, value: $value <br />";
 		}
 		
-		$success=true;
+		$success=1;
 		
 		switch (test_input($_POST["command"])) {
 			case "ProgramStart":
@@ -148,7 +148,7 @@
 				elseif ($Input_INCH == "inch") $Input_INCH = "1";
 				else {
 					echo "Value of metric_inch out of range!";
-					$success = false;
+					$success = 0;
 				}
 				$msg .= $msg_pid . "\n" . $Input_INCH . "\n";
 				break;
@@ -163,7 +163,7 @@
 				elseif ($Input_INCH == "inch") $Input_INCH = "1";
 				else {
 					echo "Value of metric_inch out of range!";
-					$success = false;
+					$success = 0;
 				}
 				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_INCH . "\n";
 				break;
@@ -183,7 +183,7 @@
 				}
 				else {
 					echo "Value of gm_code out of range!";
-					$success = false;
+					$success = 0;
 				}
 				$Input_XI = test_input($_POST["cnc_xi"]);
 				$success &= test_value_range($Input_XI, -5999, 5999);
@@ -209,20 +209,20 @@
 				break;
 			default:
 				echo ("Unknown Command!");
-				$success=false;
+				$success=0;
 		}
 	}
 	
 	if (!$success) exit(1);
 	
-	ignore_user_abort(true);
+	ignore_user_abort(1);
 
 	//create client-pipe
 	//$success = posix_mkfifo ("/home/pi/spi_com/client_session_pipe.".session_id(), int $mode ) or exit ("Could not create client-pipe!");
 	
 	//open server pipe writeonly (shorter timeout needed!!!)
 	$server_pipe = fopen("/home/pi/spi_com/arduino_pipe.tx", "w") or exit("Unable to open server-pipe!");
-	//stream_set_blocking($server_pipe, false); // prevent fread / fwrite blocking
+	//stream_set_blocking($server_pipe, 0); // prevent fread / fwrite blocking
 	stream_set_timeout($server_pipe, 2); //wait 2s for pipe (does not work)
 	fwrite($server_pipe, $msg);
 	$info = stream_get_meta_data($server_pipe);
@@ -237,7 +237,7 @@
 	
 	//non-blocking
 	//$fh=fopen($fifo, "r+"); // ensures at least one writer (us) so will be non-blocking
-	//stream_set_blocking($fh, false); // prevent fread / fwrite blocking
+	//stream_set_blocking($fh, 0); // prevent fread / fwrite blocking
 	
 	//open client pipe writeonly
 	//$answersize=87;

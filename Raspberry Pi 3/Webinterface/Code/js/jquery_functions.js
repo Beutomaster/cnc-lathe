@@ -89,10 +89,12 @@
 	}
 	
 	//load last CNC-Code-File from Server
+	$("#responses").html("CNC-Code from previous uploaded File.");
 	UpdateAndResizeTextarea();
 	
 	//Reload CNC-Code-File from Server
 	$("#ResetChanges").click(function(){
+		$("#responses").html("CNC-Code resetted to previous uploaded File.");
 		UpdateAndResizeTextarea();
 	}); 
 	
@@ -105,7 +107,7 @@
 			success: function(response) {
 				$("#responses").html("Response: " +  JSON.stringify(response));
 				//Load new CNC-Code-File from Server (for Security)
-				UpdateAndResizeTextarea(); //Error-Handling needed!!!
+				//UpdateAndResizeTextarea(); //Error-Handling needed!!!
 			},
 			error: function(xhr){
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
