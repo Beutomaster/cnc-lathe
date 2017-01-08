@@ -205,6 +205,11 @@ void loop() {
     set_revolutions(get_SERVO_CONTROL_POTI());
     //set spindle-direction
   }
+
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("0");
+  #endif
+  
   //wdt_reset(); // reset the WDT timer
 }
 

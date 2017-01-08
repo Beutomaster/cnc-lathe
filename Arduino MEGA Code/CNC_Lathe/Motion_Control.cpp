@@ -244,8 +244,9 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
     }
-    //Output Compare A Match Interrupt Enable
-    TIMSK1 |= _BV(OCIE1A); //set 1
+    TIFR1 = _BV(TOV1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+    //OVF1 Interrupt Enable
+    TIMSK1 |= _BV(TOIE1); //set 1
     //Prescaler 256 and Start Timer
     TCCR1B |= _BV(CS12); //set 1
   }
@@ -254,8 +255,9 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT3 = 0; //set Start Value
     }
-    //Output Compare A Match Interrupt Enable
-    TIMSK3 |= _BV(OCIE3A); //set 1
+    TIFR3 = _BV(TOV3); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+    //OVF3 Interrupt Enable
+    TIMSK3 |= _BV(TOIE3); //set 1
     //Prescaler 256 and Start Timer
     TCCR3B |= _BV(CS32); //set 1
   }
@@ -292,12 +294,12 @@ void command_running(int local_command_time) { //command_time in 1/100s
   command_completed=0;
   
   //handling durations over 1s
-  i_command_time = local_command_time/100;
+  i_command_time = 1+(local_command_time/100);
   command_time = local_command_time%100;
 
   //set and start Timer1 for command_time
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11=1, WGM10=1 for Fast PWM
+  TCCR1A = 0b00000010; //connect no Output-Compare-PINs and WGM11=1, WGM10=0 for Fast PWM with ICR1 as TOP
   TCCR1C = 0; //no Force of Output Compare
     
   if (i_command_time) {
@@ -314,8 +316,9 @@ void command_running(int local_command_time) { //command_time in 1/100s
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
     }
-    //Output Compare A Match Interrupt Enable
-    TIMSK1 |= _BV(OCIE1A); //set 1
+    TIFR1 = _BV(TOV1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+    //OVF Interrupt Enable
+    TIMSK1 |= _BV(TOIE1); //set 1
     //Prescaler 256 and Start Timer
     TCCR1B |= _BV(CS12); //set 1
   }

@@ -507,7 +507,7 @@ static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
 					break;
 		case 11:   	//Set Tool-Position (and INIT)
 					//debug
-					printf("pipe_msg_buffer %p:\n", pipe_msg_buffer);
+					//printf("pipe_msg_buffer %p:\n", pipe_msg_buffer);
 					if (pipe_msg_buffer != NULL) {
 						printf("Parameter einlesen\n");
 						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &XX, &ZZ, &tool);

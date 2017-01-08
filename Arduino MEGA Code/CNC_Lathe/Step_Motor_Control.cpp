@@ -31,10 +31,10 @@ void stepper_on() {
 void stepper_off() {
   if (!i_command_time && !command_time) {
     TCCR1B = 0; //Disable Timer 1
-    TIMSK1 |= ~(_BV(OCIE1A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+    TIMSK1 &= ~(_BV(TOIE1)); //set 0 => Disable OVF1 Interrupt Enable
   }
   TCCR3B = 0; //Disable Timer 3
-  TIMSK3 |= ~(_BV(OCIE3A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+  TIMSK3 &= ~(_BV(TOIE3)); //set 0 => Disable OVF3 Interrupt Enable
   phi_z=0;
   phi_x=0;
   x_step=0;
@@ -338,6 +338,10 @@ void read_last_z_step() { //needed to switch on stepper without movement
 }
 
 ISR(TIMER1_OVF_vect) {
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("2");
+  #endif
+
   if (i_command_time || command_time) { //Dwell
     if (i_command_time==1 && command_time) {
       ICR1 = (62500L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*command_time/100)-1
@@ -349,6 +353,8 @@ ISR(TIMER1_OVF_vect) {
     else if ((!i_command_time && command_time) || (i_command_time==1 && !command_time)) {
         //If time is over
         TCCR1B = 0; //Disable Timer
+        //Disable OVF1 Interrupt Enable
+        TIMSK1 &= ~(_BV(TOIE1)); //set 0
         command_completed=1;
         command_time=0;
     }
@@ -385,8 +391,8 @@ ISR(TIMER1_OVF_vect) {
       x_step=0;
       x_steps=0;
       x_command_completed=1;
-      //Disable Output Compare A Match Interrupt Enable
-      TIMSK1 |= ~(_BV(OCIE1A)); //set 0
+      //Disable OVF1 Interrupt Enable
+      TIMSK1 &= ~(_BV(TOIE1)); //set 0
       TCCR1B = 0; //Disable Timer
     }
     else { //next Timer-Compare-Value
@@ -485,6 +491,10 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
   //changing timer settings inside the ISR could replace some calculations and optimize CPU-time
   //Start-/Stop-Frequency
 
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("3");
+  #endif
+
   //next step in direction
   //Movement in -Z-Direction
   if (z_steps < 0) {
@@ -514,8 +524,8 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     z_step=0;
     z_steps=0;
     z_command_completed=1;
-    //Disable Output Compare A Match Interrupt Enable
-    TIMSK3 |= ~(_BV(OCIE3A)); //set 0
+    //Disable OVF3 Interrupt Enable
+    TIMSK3 &= ~(_BV(TOIE3)); //set 0
     TCCR3B = 0; //Disable Timer
   }
   else { //next Timer-Compare-Value

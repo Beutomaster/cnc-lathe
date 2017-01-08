@@ -64,6 +64,10 @@ void spi_buffer_handling() {
   if (messages_to_process>0){
     //rx_buf [pos] = 0; //set end of string
 
+    #ifdef DEBUG_PROGRAM_FLOW_ON
+      Serial.println("1");
+    #endif
+
     //debug
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
         Serial.print("Messages to process: ");
