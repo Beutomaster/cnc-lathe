@@ -45,7 +45,7 @@
 	//debug
 	//var_dump($cnc_code);
 	
-	verify_cnc_code($cnc_code) or die("File not uploaded because of CNC-Code-Error!");
+	verify_cnc_code($cnc_code, false, 0) or die("File not uploaded because of CNC-Code-Error!");
 	
 	/*
 	$tmpfile = fopen($_FILES["file-1"]["tmp_name"], "r") or die("Unable to open tmp file!");
