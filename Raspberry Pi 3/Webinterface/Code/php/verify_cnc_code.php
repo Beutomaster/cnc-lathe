@@ -158,13 +158,13 @@
 					//Check for extra characters
 					$GM = $code[1];
 					$GM_Code = $code[2];
-					$Parameter1 = $code[3];
+					$Parameter = $code[3];
 					$ret = 1;
 					if ($GM == 'G') {
 						switch ($GM_Code) {
 							case 0:
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 									if (!ret) {
 										echo "Line $line: no X- or Z-Parameter or incorrect format<br />";
 										$success = 0;
@@ -173,16 +173,16 @@
 							case 1:
 							case 2:
 							case 3:
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 									if (!ret) {
 										echo "Line $line: no X- or Z-Parameter or incorrect format<br />";
 										$success = 0;
 									}
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
 									break;
 							case 4:
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 0, 0, X_DWELL_MIN_MAX_CNC); //Ranges correct?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 0, 0, X_DWELL_MIN_MAX_CNC); //Ranges correct?
 									break;
 							case 20:
 							case 21:
@@ -193,77 +193,77 @@
 									break;
 							case 25: //G25(L);
 									//test if Block L exists needed
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
 									break;
 							case 26: //G26(X,Z,T);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "T", $T, 0, T_MIN, T_MAX);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "T", $T, 0, T_MIN, T_MAX);
 									break;
 							case 27: //G27(L);
 									//test if Block L exists needed
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
 									break;
 							case 33: //G33(Z,K);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "K", $K, 0, IK_MIN, K_MAX); //Ranges correct?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "K", $K, 0, IK_MIN, K_MAX); //Ranges correct?
 									break;
 							case 64:
 									break;
 							case 73: //G73(Z,F);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
 									break;
 							case 78: //G78(X,Z,K,H);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
 									break;
 							case 81: //G81(Z,F);
 							case 82: //G82(Z,F);
 							case 83: //G83(Z,F);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
 									//Ranges correct?
 									break;
 							case 84: //G84(X,Z,F,H);
 									break;
 							case 85: //G85(Z,F);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
 									//Ranges correct?
 									break;
 							case 86: //G86(X,Z,F,H);
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
 									if (!ret) {
 										echo "Line $line: no X- or Z-Parameter or incorrect format<br />";
 										$success = 0;
 									}
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "H", $H, 0, H_G86_MIN, H_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "H", $H, 0, H_G86_MIN, H_MAX); //optional?
 									//Ranges correct?
 									break;
 							case 88: //G88(X,Z,F,H);
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
 									if (!ret) {
 										echo "Line $line: no X- or Z-Parameter or incorrect format<br />";
 										$success = 0;
 									}
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "H", $H, 0, H_MIN, H_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "H", $H, 0, H_MIN, H_MAX); //optional?
 									//Ranges correct?
 									break;
 							case 89: //G89(Z,F);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "F", $F, 0, F_MIN, F_MAX); //optional?
 									//Ranges correct?
 									break;
 							case 90:
 							case 91:
 									break;
 							case 92: //G92(X,Z);
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
 									if (!ret) {
 										echo "Line $line: no X- or Z-Parameter or incorrect format<br />";
 										$success = 0;
@@ -275,7 +275,7 @@
 									break;
 							case 97: //G97(S);
 							case 196: //G196(S);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "S", $S, 0, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "S", $S, 0, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
 									break;
 							default:
 									echo "Line $line: G-Code is not supported<br />";
@@ -290,9 +290,9 @@
 							case 5:
 									break;
 							case 6: //M06(X,Z,T);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "T", $T, 0, T_MIN, T_MAX);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "T", $T, 0, T_MIN, T_MAX);
 									break;
 							case 17:
 							case 30:
@@ -303,23 +303,23 @@
 									*/
 									break;
 							case 98: //M98(X,Z);
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
-									$ret &= get_next_cnc_code_parameter($Parameter1, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
 									if (!ret) {
 										echo "Line $line: no X- or Z-Parameter or incorrect format<br />";
 										$success = 0;
 									}
 									break;
 							case 99: //M99(I,K);
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "I", $I, 0, IK_MIN, I_MAX); //Ranges correct?, optional?
-									$success &= get_next_cnc_code_parameter($Parameter1, $line, "K", $K, 0, IK_MIN, K_MAX); //Ranges correct?, optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "I", $I, 0, IK_MIN, I_MAX); //Ranges correct?, optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, "K", $K, 0, IK_MIN, K_MAX); //Ranges correct?, optional?
 									break;
 							default:
 									echo "Line $line: M-Code is not supported<br />";
 									$success = 0;
 						}
 					}
-					if ($Parameter1 != "") echo "Line $line: extra characters<br />";
+					if ($Parameter != "") echo "Line $line: extra characters<br />";
 					//Check for metric-/inch-commands
 					//Programm Stop (needed?)
 					//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
