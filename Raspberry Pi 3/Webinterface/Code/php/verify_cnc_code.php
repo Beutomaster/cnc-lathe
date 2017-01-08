@@ -1,13 +1,13 @@
 <?php
 	//Input Parameter Ranges
 	define("CNC_CODE_NMIN", 0);
-	define("CNC_CODE_NMAX", 9999); //higher Range, not supported in Arduino Code yet
+	define("CNC_CODE_NMAX", 9999); //Attention!!! Range, not supported in Arduino-Code yet (only up to 499)
 	define("GM_CODE_MIN", 0);
 	define("G_CODE_MAX", 196);
 	define("M_CODE_MAX", 99);
 	define("X_MIN_MAX_CNC", 5999);
 	define("Z_MIN_MAX_CNC", 32760);
-	define("XZ_MIN_MAX_HAND", 89999);
+	define("XZ_MIN_MAX_HAND", 89999); //not supported in Arduino-Code yet
 	define("X_DWELL_MIN_MAX_CNC", 5999);
 	define("F_MIN", 2);
 	define("F_MAX", 499);
@@ -31,6 +31,33 @@
 		$data = stripslashes($data);
 		$data = htmlspecialchars($data);
 		return $data;
+	}
+	
+	function test_keys_exist($keyArray) {
+		$success=1;
+		foreach($keyArray as $key) {
+			if (!array_key_exists($key, $_POST)) {
+				$success=0;
+				echo ("Key " . $key . " is missing!<br />");
+			}
+		}
+		unset($key);
+		return $success;
+	}
+	
+	function test_value_range($value, $min, $max) {
+		$success=1;
+		//test if value has only numbers and a negativ sign needed
+		if (!is_numeric($value) || is_float($value)) {
+			$success=0;
+			echo "Value of " . $name . " is not numeric or float!<br />";
+		}
+		//test range of value matches
+		if ($value < $min || $value > $max) {
+			$success=0;
+			echo "Value of " . $name . " out of range!<br />";
+		}
+		return $success;
 	}
 	
 	function test_value_range_cnc_code($line, $name, $value, $min, $max) {

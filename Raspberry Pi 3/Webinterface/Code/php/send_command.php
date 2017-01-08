@@ -2,6 +2,8 @@
 	//Logged in?
 	session_start();
 	if(!$_SESSION['logged_in']) header("Location: /login.html");
+	
+	include 'verify_cnc_code.php';
 
 	// define variables and set to empty values
 	$Input_N = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $msg_pid = "";
@@ -10,40 +12,6 @@
 	
 	$msg = session_id() . "\n";
 	echo "session_id: " . session_id() . " <br />";
-	
-	function test_input($data) {
-		$data = trim($data);
-		$data = stripslashes($data);
-		$data = htmlspecialchars($data);
-		return $data;
-	}
-	
-	function test_keys_exist($keyArray) {
-		$success=1;
-		foreach($keyArray as $key) {
-			if (!array_key_exists($key, $_POST)) {
-				$success=0;
-				echo ("Key " . $key . " is missing!<br />");
-			}
-		}
-		unset($key);
-		return $success;
-	}
-	
-	function test_value_range($value, $min, $max) {
-		$success=1;
-		//test if value has only numbers and a negativ sign needed
-		if (!is_numeric($value) || is_float($value)) {
-			$success=0;
-			echo "Value of " . $name . " is not numeric or float!<br />";
-		}
-		//test range of value matches
-		if ($value < $min || $value > $max) {
-			$success=0;
-			echo "Value of " . $name . " out of range!<br />";
-		}
-		return $success;
-	}
 	
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		foreach($_POST as $name => $value) { // Most people refer to $key => $value
@@ -58,7 +26,7 @@
 				$parameter = array("block");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, 0, 9999);
+				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
 				$msg .= $msg_pid . "\n" . $Input_N . "\n";
 				break;
 			case "ProgramStop":
@@ -76,7 +44,7 @@
 				$Input_DIRECTION = test_input($_POST["spindle_direction"]);
 				$success &= test_value_range($Input_DIRECTION, 0, 1);
 				$Input_RPM = test_input($_POST["rpm"]);
-				$success &= test_value_range($Input_RPM, 460, 3220);
+				$success &= test_value_range($Input_RPM, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
 				$msg .= $msg_pid . "\n" . $Input_RPM . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "SpindleOff":
@@ -98,7 +66,7 @@
 				$Input_DIRECTION = test_input($_POST["stepper_direction"]);
 				$success &= test_value_range($Input_DIRECTION, 0, 1);
 				$Input_FTLK = test_input($_POST["feed"]);
-				$success &= test_value_range($Input_FTLK, 0, 499);
+				$success &= test_value_range($Input_FTLK, F_MIN, F_MAX);
 				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "ZStepper":
@@ -108,7 +76,7 @@
 				$Input_DIRECTION = test_input($_POST["stepper_direction"]);
 				$success &= test_value_range($Input_DIRECTION, 0, 1);
 				$Input_FTLK = test_input($_POST["feed"]);
-				$success &= test_value_range($Input_FTLK, 0, 499);
+				$success &= test_value_range($Input_FTLK, F_MIN, F_MAX);
 				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
 				break;
 			case "SetTool":
@@ -116,9 +84,9 @@
 				$parameter = array("tool_x-correction", "tool_z-correction", "tool");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["tool_x-correction"]);
-				$success &= test_value_range($Input_XI, -5999, 5999);
+				$success &= test_value_range($Input_XI, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //XZ_MIN_MAX_HAND should be used, when Arduino-Code supports it
 				$Input_ZK = test_input($_POST["tool_z-correction"]);
-				$success &= test_value_range($Input_ZK, -32760, 32760);
+				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 				$Input_FTLK = test_input($_POST["tool"]);
 				$success &= test_value_range($Input_FTLK, 1, 6);
 				$msg .= $msg_pid . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n";
@@ -128,7 +96,7 @@
 				$parameter = array("xoffset");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["xoffset"]);
-				$success &= test_value_range($Input_XI, -5999, 5999);
+				$success &= test_value_range($Input_XI, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //XZ_MIN_MAX_HAND should be used, when Arduino-Code supports it
 				$msg .= $msg_pid . "\n" . $Input_XI . "\n";
 				break;
 			case "SetZOffset":
@@ -136,7 +104,7 @@
 				$parameter = array("zoffset");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_ZK = test_input($_POST["zoffset"]);
-				$success &= test_value_range($Input_ZK, "-32760", "32760");
+				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //XZ_MIN_MAX_HAND should be used, when Arduino-Code supports it
 				$msg .= $msg_pid . "\n" . $Input_ZK . "\n";
 				break;
 			case "SetMetricOrInch":
@@ -157,7 +125,7 @@
 				$parameter = array("block", "metric_inch");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, 0, 9999);
+				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
 				$Input_INCH = test_input($_POST["metric_inch"]);
 				if ($Input_INCH == "metric") $Input_INCH = "0";
 				elseif ($Input_INCH == "inch") $Input_INCH = "1";
@@ -167,12 +135,12 @@
 				}
 				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_INCH . "\n";
 				break;
-			case "NewProgrammBlock":
+			case "NewProgrammBlock": //maybe not used, instead Textarea is uploaded
 				$msg_pid = "16";
 				$parameter = array("block", "gm_code", "gm_code_no", "cnc_xi", "cnc_zk", "cnc_ftlk", "cnc_hs");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, 0, 9999);
+				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
 				$Input_GM = test_input($_POST["gm_code"]);
 				$Input_GM_NO = test_input($_POST["gm_code_no"]);
 				if ($Input_GM == "G") {
@@ -186,9 +154,9 @@
 					$success = 0;
 				}
 				$Input_XI = test_input($_POST["cnc_xi"]);
-				$success &= test_value_range($Input_XI, -5999, 5999);
+				$success &= test_value_range($Input_XI, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
 				$Input_ZK = test_input($_POST["cnc_zk"]);
-				$success &= test_value_range($Input_ZK, -32760, 32760);
+				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 				$Input_FTLK = test_input($_POST["cnc_ftlk"]);
 				$success &= test_value_range($Input_FTLK, -32760, 32760); //not right!!! Many cases!!!
 				$Input_HS = test_input($_POST["cnc_hs"]);
