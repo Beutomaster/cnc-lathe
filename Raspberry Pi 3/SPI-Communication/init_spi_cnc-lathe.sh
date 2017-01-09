@@ -29,8 +29,9 @@
 case "$1" in
     start)
 		#action for start
+		#DISPLAY=:0.0
 		echo "Start CNC-Lathe Webinterface Backend"
-		/home/pi/spi_com/spi_cnc-lathe
+		su -c "/home/pi/spi_com/spi_cnc-lathe" - pi
 		;;
  
     stop)
@@ -41,9 +42,10 @@ case "$1" in
  
     restart)
 		#action for restart
+		#DISPLAY=:0.0
 		echo "Restart CNC-Lathe Webinterface Backend"
 		killall -e -w spi_cnc-lathe
-		/home/pi/spi_com/spi_cnc-lathe
+		su -c "/home/pi/spi_com/spi_cnc-lathe" - pi
 		;;
 		
 	*)
