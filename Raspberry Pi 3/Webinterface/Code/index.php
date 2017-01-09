@@ -30,7 +30,8 @@ if(!$_SESSION['logged_in'])
     <script>(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);</script>
 </head>
 
-<body onload="{loadDoc('/xml/cnc_code.xml', cnc_code_table);}">
+<!-- <body onload="{loadDoc('/xml/cnc_code.xml', cnc_code_table);}"> -->
+<body>
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
@@ -210,9 +211,11 @@ if(!$_SESSION['logged_in'])
 			</fieldset>
 		</form>
 		
+		<!--
         <table id="code"><thead><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
 		
 		<p></p>
+		-->
 		
 		<form id="CncCode">
 			<label for="CncCodeTxt">CNC-Code:</label><br />

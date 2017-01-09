@@ -67,25 +67,6 @@
 				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
 			}
 		});
-		
-		/*
-		$("#CncCodeTxt").load("/uploads/cnc_code.txt", function(responseTxt, statusTxt, xhr){  //load does not work sometimes ... why???
-			if(statusTxt == "success") {
-				//alert("External content loaded successfully!");
-				$("#responses").append("<br />Textarea Updated!");
-				var txt = $("#CncCodeTxt").val();
-				//console.log(txt);
-				var lines = txt.split(/\r|\r\n|\n/);
-				var count = lines.length;
-				//console.log(count);
-				document.getElementById("CncCodeTxt").rows=count;
-			}
-			if(statusTxt == "error") {
-				//alert("Error: " + xhr.status + ": " + xhr.statusText);
-				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
-			}
-		});
-		*/
 	}
 	
 	//load last CNC-Code-File from Server
@@ -114,76 +95,7 @@
 				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
 			}
 		});
-		
-		/*
-		$.ajax({type:'POST', url: '/php/update_cam-file.php', data:$('#CncCode').serialize(), success: function(response) {
-				//$('#ContactForm').find('.form_result').html(response);
-				//$("#responses").html("Response: " +  JSON.stringify(data));
-			}
-		}).done(function (data) {
-			// Bei Erfolg
-			//alert("Erfolgreich:" + data);
-			$("#responses").html("Response: " +  JSON.stringify(data));
-		}).fail(function() {
-			// Bei Fehler
-			$("#responses").html("Request-Error: Upload failed!");
-			//alert("Fehler!");
-		}).always(function() {
-			// Immer
-			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
-			//alert("Beendet!");
-			//Load new CNC-Code-File from Server (for Security)
-			//$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
-			UpdateAndResizeTextarea(); //Error-Handling needed!!!
-		});
-		*/
 	}); 
-
-	/*
-	//Ajax Form Submit for form #tool
-	$(function() {
-    //hang on event of form with id=myform
-		$("#tool").submit(function(e) {
-
-			//prevent Default functionality
-			e.preventDefault();
-
-			//get the action-url of the form
-			var actionurl = e.currentTarget.action;
-
-			//do your own request and handle the results
-			$.ajax({
-					url: actionurl,
-					type: 'post',
-					dataType: 'json',
-					data: $("#tool").serialize(),
-					success: function(data) {
-						//... do something with the data...
-					}
-			});
-
-		});
-
-	});
-	*/
-	
-	/*
-	//Ajax Form Submit with name and value of Submit-Button (does not work)
-	var form = $("form");
-	$(":submit",form).click(function(){
-			if($(this).attr('name')) {
-				$(form).append(
-					$("<input type='hidden'>").attr( { 
-						name: $(this).attr('name'), 
-						value: $(this).attr('value') })
-				);
-			}
-		});
-
-	$(form).submit(function(){
-	 console.log($(this).serializeArray());
-	});
-	*/
 	
 	function sendCommand(data) {
 		// AJAX-Call
@@ -406,6 +318,24 @@
 		*/
 		});
 	});
+	
+	/*
+	//Ajax Form Submit with name and value of Submit-Button (does not work)
+	var form = $("form");
+	$(":submit",form).click(function(){
+			if($(this).attr('name')) {
+				$(form).append(
+					$("<input type='hidden'>").attr( { 
+						name: $(this).attr('name'), 
+						value: $(this).attr('value') })
+				);
+			}
+		});
+
+	$(form).submit(function(){
+	 console.log($(this).serializeArray());
+	});
+	*/
 	
 	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
 	// wenn es sich ändert
