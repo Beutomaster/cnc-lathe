@@ -134,18 +134,22 @@
 		//Parse Code-Lines
 		$N=0;
 		$N_last=0;
-		$M30=""; //should be an array
+		$blocks = array();
+		$M30 = array();
+		$jumps = array();
+		//$M30=""; //should be an array
 		for ($line = $code_start_line+1; $line < $code_stop_line; $line++) {
 			//echo "Line $line: ". $cnc_code_reference[$line-1]."<br />";
 			//check if every Code-line has a Blocknumber at the beginning and that they are increasing per line (N>N_last)
 			if (preg_match('/^([N])([0-9]{4})[ ]?(.*$)/', $cnc_code_reference[$line-1], $code_line)) {
 				$N = $code_line[2];
 				if (test_value_range_cnc_code($line, $N, "N", $N, 0, 9999)) { //CNC_CODE_NMIN, CNC_CODE_NMAX)) {
-					if ($N<$N_last) {
+					if ($N<=$N_last) {
 						echo "Line $line: N".$N." not greater as a previous one<br />";
 						$success = 0;
 					}
 					else {
+						$blocks[$line] = $N;
 						$N_last=$N;
 					}
 				}
@@ -187,13 +191,15 @@
 							case 20:
 							case 21:
 									break;
-							case 22: $M30="$line"; //last End of Programm for check of jump instructions
+							case 22:
+									//$M30="$line"; //last End of Programm for check of jump instructions
+									$M30[$line] = $N;
 									break;
 							case 24:
 									break;
 							case 25: //G25(L);
-									//test if Block L exists needed
-									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
+									if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $jumps[$N] = $L;
+									else $success = 0;
 									break;
 							case 26: //G26(X,Z,T);
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
@@ -201,8 +207,8 @@
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "T", $T, 0, T_MIN, T_MAX);
 									break;
 							case 27: //G27(L);
-									//test if Block L exists needed
-									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
+									if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $jumps[$N] = $L;
+									else $success = 0;
 									break;
 							case 33: //G33(Z,K);
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
@@ -296,11 +302,8 @@
 									break;
 							case 17:
 							case 30:
-									$M30="$line"; //last End of Programm for check of jump instructions
-									/*
-									if ($M30=="") $M30="$line";
-									else "Line $line, N".$N.": extra End of Programm<br />"; //maybe usefull with jump instructions
-									*/
+									//$M30="$line"; //last End of Programm for check of jump instructions
+									$M30[$line] = $N;
 									break;
 							case 98: //M98(X,Z);
 									$ret &= get_next_cnc_code_parameter($Parameter, $line, $N, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
@@ -321,8 +324,6 @@
 					}
 					if ($Parameter != "") echo "Line $line, N".$N.": extra characters<br />";
 					//Check for metric-/inch-commands
-					//Programm Stop (needed?)
-					//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
 				}
 				else {
 					echo "Line $line, N".$N.": no G- or M-Code or incorrect format<br />";
@@ -332,6 +333,33 @@
 				echo "Line $line: no Blocknumber or incorrect format<br />";
 			}
 		}
+		//Check for Program Stop
+		//if ($M30=="") {
+		if (empty($M30)) {
+			echo "No Program Stop M30 or G22<br />";
+			$success = 0;
+		}
+		
+		//test if all jump-targets exist
+		foreach ($jumps as $block => $L) {
+			if (!in_array($L, $blocks)) {
+				echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." not an existing block<br />";
+				$success = 0;
+			}
+			else {
+				//check for jumps after last M30 or G22
+				end($M30);
+				$last = (current($M30)!==false) ? current($M30) : null;
+				if ($L>$last) {
+					echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." not ending with M30 or G22<br />";
+					$success = 0;
+				}
+			}
+		}
+		
+		//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
+		//Don't allow jumps before are a change of inch or metric, otherwise parameter-ranges have to be checked again!
+		
 		return $success;
 	}
 ?>
