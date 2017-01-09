@@ -344,6 +344,24 @@
 			$success = 0;
 		}
 		
+		//check if all Subroutine Call-Up-targets exist
+		foreach ($G25 as $block => $L) {
+			if (!in_array($L, $blocks)) {
+				echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." not an existing block<br />";
+				$success = 0;
+			}
+			else {
+				//check if all Subroutine Call-Ups end with M17 (not finished)
+				end($M17);
+				$lastM17 = (current($M17)!==false) ? current($M17) : null;
+				if ($L>$lastM17) {
+					echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." G25 (Subroutine Call-Up) not ending with M17<br />";
+					$success = 0;
+				}
+			}
+		}
+		unset($block);
+		
 		//test if all jump-targets exist
 		foreach ($jumps as $block => $L) {
 			if (!in_array($L, $blocks)) {
@@ -353,28 +371,10 @@
 			else {
 				//check for jumps after last M30 or G22 (not finished, jumps inside Subroutines are allowed after M30 or G22)
 				end($M30);
-				$last = (current($M30)!==false) ? current($M30) : null;
-				if ($L>$last) {
+				$lastM30 = (current($M30)!==false) ? current($M30) : null;
+				if ($L>$lastM30) {
 					echo "Line " . array_search($block, $blocks) . ", N".$block.": Warning!!! L".$L." G27 (Jump) not ending with M30 or G22. Check for G25,G27 or M17 after L by yourself!!!<br />";
 					//$success = 0; //only a Warning at the moment
-				}
-			}
-		}
-		unset($block);
-		
-		//check if all Subroutine Call-Up-targets exist
-		foreach ($G25 as $block => $L) {
-			if (!in_array($L, $blocks)) {
-				echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." not an existing block<br />";
-				$success = 0;
-			}
-			else {
-				//check if all Subroutine Call-Ups end with M17 (not finished)
-				end($G25);
-				$last = (current($G25)!==false) ? current($G25) : null;
-				if ($L>$last) {
-					echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." G25 (Subroutine Call-Up) not ending with M17<br />";
-					$success = 0;
 				}
 			}
 		}
