@@ -136,7 +136,9 @@
 		$N_last=0;
 		$blocks = array();
 		$M30 = array();
+		$M17 = array(); //
 		$jumps = array();
+		$G25 = array();
 		//$M30=""; //should be an array
 		for ($line = $code_start_line+1; $line < $code_stop_line; $line++) {
 			//echo "Line $line: ". $cnc_code_reference[$line-1]."<br />";
@@ -197,8 +199,8 @@
 									break;
 							case 24:
 									break;
-							case 25: //G25(L);
-									if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $jumps[$N] = $L;
+							case 25: //G25(L); //Subroutine Call-Up (returns to next block)
+									if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $G25[$N] = $L;
 									else $success = 0;
 									break;
 							case 26: //G26(X,Z,T);
@@ -206,7 +208,7 @@
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "T", $T, 0, T_MIN, T_MAX);
 									break;
-							case 27: //G27(L);
+							case 27: //G27(L); //Jump
 									if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $jumps[$N] = $L;
 									else $success = 0;
 									break;
@@ -300,8 +302,10 @@
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "T", $T, 0, T_MIN, T_MAX);
 									break;
-							case 17:
-							case 30:
+							case 17://Return from Subroutine
+									$M17[$line] = $N;
+									break;
+							case 30://End of Programm
 									//$M30="$line"; //last End of Programm for check of jump instructions
 									$M30[$line] = $N;
 									break;
@@ -347,18 +351,37 @@
 				$success = 0;
 			}
 			else {
-				//check for jumps after last M30 or G22
+				//check for jumps after last M30 or G22 (not finished, jumps inside Subroutines are allowed after M30 or G22)
 				end($M30);
 				$last = (current($M30)!==false) ? current($M30) : null;
 				if ($L>$last) {
-					echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." not ending with M30 or G22<br />";
+					echo "Line " . array_search($block, $blocks) . ", N".$block.": Warning!!! L".$L." G27 (Jump) not ending with M30 or G22. Check for G25,G27 or M17 after L by yourself!!!<br />";
+					//$success = 0; //only a Warning at the moment
+				}
+			}
+		}
+		unset($block);
+		
+		//check if all Subroutine Call-Up-targets exist
+		foreach ($G25 as $block => $L) {
+			if (!in_array($L, $blocks)) {
+				echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." not an existing block<br />";
+				$success = 0;
+			}
+			else {
+				//check if all Subroutine Call-Ups end with M17 (not finished)
+				end($G25);
+				$last = (current($G25)!==false) ? current($G25) : null;
+				if ($L>$last) {
+					echo "Line " . array_search($block, $blocks) . ", N".$block.": L".$L." G25 (Subroutine Call-Up) not ending with M17<br />";
 					$success = 0;
 				}
 			}
 		}
+		unset($block);
 		
 		//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
-		//Don't allow jumps before are a change of inch or metric, otherwise parameter-ranges have to be checked again!
+		//Don't allow jumps before a change of inch or metric, otherwise parameter-ranges have to be checked again!
 		
 		return $success;
 	}
