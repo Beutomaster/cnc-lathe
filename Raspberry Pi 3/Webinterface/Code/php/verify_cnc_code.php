@@ -380,6 +380,7 @@
 		}
 		unset($block);
 		
+		//check if all Subroutine return-targets at M17 exist
 		//Check if Jump-Instructions are ending (No jump back before a jump instruction, when there is no programm end between. No jump after the last programm end?)
 		//Don't allow jumps before a change of inch or metric, otherwise parameter-ranges have to be checked again!
 		

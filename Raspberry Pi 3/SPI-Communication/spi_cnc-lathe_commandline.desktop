@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=CNC-Lathe-Control Commandline-Interface
+Exec=sh -c "/home/pi/spi_com/spi_cnc-lathe --manual"
+Type=Application
+Terminal=true
+Icon=/home/pi/spi_com/CNC-Icon-grau.png
