@@ -86,7 +86,7 @@
 			url: '/php/update_cam-file.php',
 			data:$('#CncCode').serialize(),
 			success: function(response) {
-				$("#responses").html("Response: " +  JSON.stringify(response));
+				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 				//Load new CNC-Code-File from Server (for Security)
 				//UpdateAndResizeTextarea(); //Error-Handling needed!!!
 			},
@@ -350,7 +350,7 @@
 			//contentType : 'multipart/form-data',
 			contentType: false,
 			success: function(response) {
-				$("#responses").html("Response: " +  JSON.stringify(response));
+				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 			},
 			error: function(xhr){
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
