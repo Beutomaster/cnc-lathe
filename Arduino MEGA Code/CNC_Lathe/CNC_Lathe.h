@@ -104,7 +104,9 @@
 //EEPROM-Adresses
 #define LAST_X_STEP_ADDRESS 0
 #define LAST_Z_STEP_ADDRESS 1
-#define LAST_TOOL_ADDRESS 3
+#define LAST_X_ADDRESS 2
+#define LAST_Z_ADDRESS 4
+#define LAST_TOOL_ADDRESS 6
 
 //TIMER
 #define CLK_TIMER1 3750000 //in 1/min
@@ -114,6 +116,7 @@
 #include <util/atomic.h>
 #include <avr/wdt.h>
 #include <Arduino.h>
+#include <avr/pgmspace.h>
 #include <EEPROM.h>
 #include "CNC_Control.h"
 #include "Control_Passiv.h"
@@ -126,8 +129,8 @@
 
 //global vars
 
-//Cosinus LookUp-Table for Quarter Circle in Q15
-extern const int lookup_cosinus[91];
+//Cosinus LookUp-Table for Quarter Circle in Q15 (saved in Flash-Memory)
+extern const int lookup_cosinus[91] PROGMEM;
 
 //ERROR-Numbers
 extern volatile byte ERROR_NO;
