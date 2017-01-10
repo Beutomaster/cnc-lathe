@@ -47,8 +47,12 @@ void get_stepper_on_off();
 void get_feed();
 void save_current_x_step();
 void save_current_z_step();
+void save_current_x_coordinate();
+void save_current_z_coordinate();
 void read_last_x_step();
 void read_last_z_step();
+void read_last_x_coordinate();
+void read_last_z_coordinate();
 
 #endif
 

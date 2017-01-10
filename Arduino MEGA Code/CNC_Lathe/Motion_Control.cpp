@@ -169,48 +169,32 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     
     if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
       //calculation of next x- and z-clk (Direction)
-      if (z_steps < 0) {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
+      if ((z_steps<0)==(x_steps<0)) {
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
       }
       else {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
       }
     }
     else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
       //calculation of next x- and z-clk (Direction)
-      if (z_steps < 0) {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
+      if ((z_steps<0)==(x_steps<0)) {
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
       }
       else {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
       }
     }
     

@@ -216,14 +216,14 @@ boolean process_incomming_msg() {
     case 9:   //X-Stepper move with feed
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
+              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && !command_time && !i_command_time) {
                 set_xz_stepper_manual((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION], 0);
               }
               break;
     case 10:   //Z-Stepper move with feed
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
+              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && !command_time && !i_command_time) {
                 set_xz_stepper_manual((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION], 1);
               }
               break;
@@ -313,6 +313,8 @@ boolean process_incomming_msg() {
                 spindle_off();
                 save_current_x_step();
                 save_current_z_step();
+                save_current_x_coordinate();
+                save_current_z_coordinate();
                 save_current_tool_position();
               }
               break;
@@ -321,6 +323,8 @@ boolean process_incomming_msg() {
               else if (get_control_active() && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
                 read_last_x_step();
                 read_last_z_step();
+                read_last_x_coordinate();
+                read_last_z_coordinate();
                 read_current_tool_position();
                 //initialize
                 STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT

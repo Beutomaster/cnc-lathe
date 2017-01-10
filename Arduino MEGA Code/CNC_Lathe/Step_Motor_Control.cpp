@@ -322,11 +322,21 @@ void get_feed() { //to observe EMCO Control
 // Write/Erase Cycles:10,000 Flash/100,000 EEPROM
 
 void save_current_x_step() { //needed to switch on stepper without movement, save in eeprom !!!
-	EEPROM.write(LAST_X_STEP_ADDRESS, current_x_step);
+	EEPROM.update(LAST_X_STEP_ADDRESS, current_x_step);
 }
 
 void save_current_z_step() { //needed to switch on stepper without movement, save in eeprom !!!
-	EEPROM.write(LAST_Z_STEP_ADDRESS, current_z_step);
+	EEPROM.update(LAST_Z_STEP_ADDRESS, current_z_step);
+}
+
+void save_current_x_coordinate() { //save in eeprom !!!
+  EEPROM.update(LAST_X_ADDRESS, STATE_X>>8);
+  EEPROM.update(LAST_X_ADDRESS+1, STATE_X+1);
+}
+
+void save_current_z_coordinate() { //save in eeprom !!!
+  EEPROM.update(LAST_Z_ADDRESS, STATE_Z>>8);
+  EEPROM.update(LAST_Z_ADDRESS+1, STATE_Z);
 }
 
 void read_last_x_step() { //needed to switch on stepper without movement
@@ -335,6 +345,14 @@ void read_last_x_step() { //needed to switch on stepper without movement
 
 void read_last_z_step() { //needed to switch on stepper without movement
   current_z_step = EEPROM.read(LAST_Z_STEP_ADDRESS);
+}
+
+void read_last_x_coordinate() {
+  STATE_X = ((EEPROM.read(LAST_X_ADDRESS))<<8) | EEPROM.read(LAST_X_ADDRESS+1);
+}
+
+void read_last_z_coordinate() {
+  STATE_Z = ((EEPROM.read(LAST_Z_ADDRESS))<<8) | EEPROM.read(LAST_Z_ADDRESS+1);
 }
 
 ISR(TIMER1_OVF_vect) {
@@ -417,40 +435,24 @@ ISR(TIMER1_OVF_vect) {
         
         if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
           //calculation of next x-clk (Direction)
-          if (z_steps < 0) {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
+          if ((z_steps<0)==(x_steps<0)) {
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
           }
           else {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
           }
         }
         else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
           //calculation of next x-clk (Direction)
-          if (z_steps < 0) {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
+          if ((z_steps<0)==(x_steps<0)) {
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
           }
           else {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
           }
         }
         
@@ -550,40 +552,24 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       
       if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
         //calculation of next z-clk (Direction)
-        if (z_steps < 0) {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
+        if ((z_steps<0)==(x_steps<0)) {
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
         }
         else {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
         }
       }
       else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
         //calculation of next z-clk (Direction)
-        if (z_steps < 0) {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
+        if ((z_steps<0)==(x_steps<0)) {
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
         }
         else {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
         }
       }
       

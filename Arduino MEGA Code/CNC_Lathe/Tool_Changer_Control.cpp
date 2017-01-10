@@ -62,7 +62,7 @@ void set_tool_position(byte tool) {
 }
 
 void save_current_tool_position() { //instead of initialization, save in eeprom !!!
-  EEPROM.write(LAST_TOOL_ADDRESS, STATE_T);
+  EEPROM.update(LAST_TOOL_ADDRESS, STATE_T);
 }
 
 void read_current_tool_position() {
