@@ -357,7 +357,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 			printf("019 Reset Errors\n\n");
 		}
 		else {
-			n = sscanf(pipe_msg_buffer,"%s\n%d\n", client_sid, &msg_type);
+			n = sscanf(pipe_msg_buffer,"%s %d", client_sid, &msg_type);
 			if (n != 2) {
 				if (errno != 0) perror("scanf");
 				else fprintf(stderr, "Parameter not matching\n");
@@ -398,7 +398,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 2:   	//Programm Start at Block
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &block);
+						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &block);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -427,7 +427,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 5:   	//Spindle on with RPM and Direction
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n", client_sid, &msg_type, &rpm, &spindle_direction);
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &rpm, &spindle_direction);
 						if (n != 4) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -473,7 +473,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 		case 9:   	//X-Stepper move with feed
 		case 10:   	//Z-Stepper move with feed
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &feed, &negativ_direction);
+						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &feed, &negativ_direction);
 						if (n != 4) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -515,7 +515,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					//printf("pipe_msg_buffer %p:\n", pipe_msg_buffer);
 					if (pipe_msg_buffer != NULL) {
 						printf("Parameter einlesen\n");
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &XX, &ZZ, &tool);
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d %d", client_sid, &msg_type, &XX, &ZZ, &tool);
 						if (n != 5) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -569,7 +569,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 12:   	//Origin-X-Offset
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &XX);
+						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &XX);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -594,7 +594,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 13:   	//Origin-Z-Offset
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &ZZ);
+						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &ZZ);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -619,7 +619,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 14:  	//metric or inch (maybe not needed)
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n", client_sid, &msg_type, &inch);
+						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &inch);
 						if (n != 3) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -643,7 +643,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 15:  	//New CNC-Programm wit N Blocks in metric or inch
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%d\n%d\n", client_sid, &msg_type, &block, &inch);
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block, &inch);
 						if (n != 4) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");
@@ -682,7 +682,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 16:  	//CNC-Code-Block
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s\n%d\n%c\n%d\n%d\n%d\n%d\n%d\n", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
+						n = sscanf(pipe_msg_buffer,"%s %d %c %d %d %d %d %d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 						if (n != 9) {
 							if (errno != 0) perror("scanf");
 							else fprintf(stderr, "Parameter not matching\n");

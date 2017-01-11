@@ -10,7 +10,7 @@
 	
 	$success=0;
 	
-	$msg = session_id() . "\n";
+	$msg = session_id() . " ";
 	echo "session_id: " . session_id() . " <br />";
 	
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -27,7 +27,7 @@
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
 				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
-				$msg .= $msg_pid . "\n" . $Input_N . "\n";
+				$msg .= $msg_pid . " " . $Input_N . "\n";
 				break;
 			case "ProgramStop":
 				$msg_pid = "3";
@@ -45,7 +45,7 @@
 				$success &= test_value_range($Input_DIRECTION, 0, 1);
 				$Input_RPM = test_input($_POST["rpm"]);
 				$success &= test_value_range($Input_RPM, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
-				$msg .= $msg_pid . "\n" . $Input_RPM . "\n" . $Input_DIRECTION . "\n";
+				$msg .= $msg_pid . " " . $Input_RPM . " " . $Input_DIRECTION . "\n";
 				break;
 			case "SpindleOff":
 				$msg_pid = "6";
@@ -67,7 +67,7 @@
 				$success &= test_value_range($Input_DIRECTION, 0, 1);
 				$Input_FTLK = test_input($_POST["feed"]);
 				$success &= test_value_range($Input_FTLK, F_MIN, F_MAX);
-				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
+				$msg .= $msg_pid . " " . $Input_FTLK . " " . $Input_DIRECTION . "\n";
 				break;
 			case "ZStepper":
 				$msg_pid = "10";
@@ -77,7 +77,7 @@
 				$success &= test_value_range($Input_DIRECTION, 0, 1);
 				$Input_FTLK = test_input($_POST["feed"]);
 				$success &= test_value_range($Input_FTLK, F_MIN, F_MAX);
-				$msg .= $msg_pid . "\n" . $Input_FTLK . "\n" . $Input_DIRECTION . "\n";
+				$msg .= $msg_pid . " " . $Input_FTLK . " " . $Input_DIRECTION . "\n";
 				break;
 			case "SetTool":
 				$msg_pid = "11";
@@ -89,7 +89,7 @@
 				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
 				$Input_FTLK = test_input($_POST["tool"]);
 				$success &= test_value_range($Input_FTLK, 1, 6);
-				$msg .= $msg_pid . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n";
+				$msg .= $msg_pid . " " . $Input_XI . " " . $Input_ZK . " " . $Input_FTLK . "\n";
 				break;
 			case "SetXOffset":
 				$msg_pid = "12";
@@ -97,7 +97,7 @@
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_XI = test_input($_POST["xoffset"]);
 				$success &= test_value_range($Input_XI, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //XZ_MIN_MAX_HAND should be used, when Arduino-Code supports it
-				$msg .= $msg_pid . "\n" . $Input_XI . "\n";
+				$msg .= $msg_pid . " " . $Input_XI . "\n";
 				break;
 			case "SetZOffset":
 				$msg_pid = "13";
@@ -105,7 +105,7 @@
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_ZK = test_input($_POST["zoffset"]);
 				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //XZ_MIN_MAX_HAND should be used, when Arduino-Code supports it
-				$msg .= $msg_pid . "\n" . $Input_ZK . "\n";
+				$msg .= $msg_pid . " " . $Input_ZK . "\n";
 				break;
 			case "SetMetricOrInch":
 				$msg_pid = "14";
@@ -118,7 +118,7 @@
 					echo "Value of metric_inch out of range!";
 					$success = 0;
 				}
-				$msg .= $msg_pid . "\n" . $Input_INCH . "\n";
+				$msg .= $msg_pid . " " . $Input_INCH . "\n";
 				break;
 			case "LoadNewProgramm":
 				$msg_pid = "15";
@@ -133,7 +133,7 @@
 					echo "Value of metric_inch out of range!";
 					$success = 0;
 				}
-				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_INCH . "\n";
+				$msg .= $msg_pid . " " . $Input_N . " " . $Input_INCH . "\n";
 				break;
 			case "NewProgrammBlock": //maybe not used, instead Textarea is uploaded
 				$msg_pid = "16";
@@ -161,7 +161,7 @@
 				$success &= test_value_range($Input_FTLK, -32760, 32760); //not right!!! Many cases!!!
 				$Input_HS = test_input($_POST["cnc_hs"]);
 				$success &= test_value_range($Input_HS, -32760, 32760); //not right!!! Many cases!!!
-				$msg .= $msg_pid . "\n" . $Input_N . "\n" . $Input_GM . "\n" . $Input_GM_NO . "\n" . $Input_XI . "\n" . $Input_ZK . "\n" . $Input_FTLK . "\n" . $Input_HS . "\n";
+				$msg .= $msg_pid . " " . $Input_N . " " . $Input_GM . " " . $Input_GM_NO . " " . $Input_XI . " " . $Input_ZK . " " . $Input_FTLK . " " . $Input_HS . "\n";
 				break;
 			case "Shutdown":
 				$msg_pid = "17";
