@@ -157,8 +157,6 @@
 FILE *machinestatefile;
 int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
-//uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
-uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 
 //pipe-Server
 char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
@@ -181,10 +179,6 @@ void signal_callback_handler(int signum)
 	// Cleanup and close up stuff here
 	printf("close(spi_fd)\n");
 	close(spi_fd);
-	printf("close(r_fd)\n");
-	close(r_fd);
-	//printf("fclose(machinestatefile)\n");
-	//fclose(machinestatefile)
 		
 	// Terminate program
 	exit(signum);
@@ -318,12 +312,13 @@ uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes)
   return crc_8;
 }
 
-static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
-	int n, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+static int spi_transfer(int spi_fd, const char *pipe_msg_buffer, char msg_type)
+{
+	int lostmessages=0, ret, n, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
-	
-	const char *pipe_msg_buffer_temp = pipe_msg_buffer; //hotfix
-	
+	//uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+	const char *pipe_msg_buffer_temp = pipe_msg_buffer;
 	/*
 	//debug
 	printf("pipe_msg_buffer %p, length %i\n", pipe_msg_buffer, sizeof(pipe_msg_buffer));
@@ -384,8 +379,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 		} while ((msg_type<1) || (msg_type>19));
 	}
 	else {
-		perror("out of Range!");
-		return(EXIT_FAILURE);
+		printf("out of Range!");
+		exit(EXIT_FAILURE);
 	}
 	tx[pos++] = msg_type;
 		
@@ -415,8 +410,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
@@ -444,8 +439,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((rpm<REVOLUTIONS_MIN) || (rpm>REVOLUTIONS_MAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = rpm>>8;
 					tx[pos++] = rpm;
@@ -459,8 +454,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((spindle_direction<0) || (spindle_direction>1));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = spindle_direction;
 					break;
@@ -490,8 +485,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((feed<F_MIN) || (feed>F_MAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
@@ -505,8 +500,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((negativ_direction<0) || (negativ_direction>1));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = negativ_direction;
 					break;
@@ -532,8 +527,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
@@ -547,8 +542,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
@@ -562,8 +557,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((tool<T_MIN) || (tool>T_MAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = tool;
 					break;
@@ -586,8 +581,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
@@ -611,8 +606,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
@@ -636,8 +631,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((inch<0) || (inch>1));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = inch;
 					break;
@@ -660,8 +655,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
@@ -675,8 +670,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((inch<0) || (inch>1));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = inch;
 					break;
@@ -699,8 +694,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
@@ -714,8 +709,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((code_type != 'G') && (code_type != 'M'));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = code_type;
 					
@@ -729,8 +724,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 							} while ((gmcode<GM_CODE_MIN) || (gmcode>G_CODE_MAX));
 						}
 						else {
-							perror("out of Range!");
-							return(EXIT_FAILURE);
+							printf("out of Range!");
+							exit(EXIT_FAILURE);
 						}
 					}
 					else {
@@ -743,8 +738,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 							} while ((gmcode<GM_CODE_MIN) || (gmcode>M_CODE_MAX));
 						}
 						else {
-							perror("out of Range!");
-							return(EXIT_FAILURE);
+							printf("out of Range!");
+							exit(EXIT_FAILURE);
 						}
 					}
 					tx[pos++] = gmcode;
@@ -758,8 +753,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					scanf("%d",&XX);
 					getchar();
@@ -775,8 +770,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
@@ -790,8 +785,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((feed<F_MIN) || (feed>F_MAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
@@ -805,8 +800,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((HH<H_MIN) || (HH>H_MAX));
 					}
 					else {
-						perror("out of Range!");
-						return(EXIT_FAILURE);
+						printf("out of Range!");
+						exit(EXIT_FAILURE);
 					}
 					tx[pos++] = HH>>8;
 					tx[pos++] = HH;
@@ -837,12 +832,6 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 	
 	//CRC
 	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
-	
-	return EXIT_SUCCESS;
-}
-
-static int spi_transfer(int spi_fd) {
-	int lostmessages=0, ret, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, HH=-1;
 	
 	printf("tx-Buffer (HEX):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
@@ -1131,7 +1120,7 @@ int main(int argc, char *argv[])
 				{
 					//printf("select timeout after 1s waiting for message on pipe!\n");
 					if (verbose) printf("Updating Machine-State after waiting for message on pipe for 1s!\n");
-					if (!spi_create_command_msg(NULL, 1)) messages_notreceived = spi_transfer(spi_fd);
+					messages_notreceived = spi_transfer(spi_fd, NULL, 1);
 				}
 				else if (ret < 0) //error
 				{
@@ -1191,37 +1180,33 @@ int main(int argc, char *argv[])
 						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
 						
 						//process message
-						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						messages_notreceived = spi_transfer(spi_fd, buffer[ringbuffer_pos], 0); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
 						
 						/*
 						//Error-Handling not ready
-						if (messages_notreceived) {
-							messages_to_repeat += messages_notreceived; //not finished
+						do {
 							
-							while(messages_to_repeat) {
-								//Reset SPI-Error
-								while (messages_notreceived) {	
-										if (!spi_create_command_msg(NULL, 19)) messages_notreceived = spi_transfer(spi_fd);
-										usleep(200000); //0,2s
-										if (!spi_create_command_msg(NULL, 1)) messages_notreceived = spi_transfer(spi_fd);
-										
-								}
-								
-								//try to send lost messages again
-								if (messages_notreceived>SPI_TX_RINGBUFFERSIZE) {
-									//error handling needed!
-									printf("%i Messages lost!\n", messages_notreceived);
-								}
-								else {
-									//Update ringbuffer_pos
-									if (messages_notreceived>ringbuffer_fill_status) ringbuffer_pos -= ringbuffer_fill_status;
-									else ringbuffer_pos -= messages_notreceived;
-									if (ringbuffer_pos<0) ringbuffer_pos += SPI_TX_RINGBUFFERSIZE;
-									
-									if (!spi_create_command_msg(buffer[ringbuffer_pos], 0))	messages_notreceived = spi_transfer(spi_fd);
-								}
+							
+							//Reset SPI-Error							
+							while (spi_transfer(spi_fd, NULL, 19)) {
+									usleep(500000); //0,5s
 							}
-						} 
+							
+							//try to send lost messages again
+							if (messages_notreceived>SPI_TX_RINGBUFFERSIZE) {
+								//error handling needed!
+								printf("%i Messages lost!\n", messages_notreceived);
+							}
+							else {
+								//Update ringbuffer_pos
+								if (messages_notreceived>ringbuffer_fill_status) ringbuffer_pos -= ringbuffer_fill_status;
+								else ringbuffer_pos -= messages_notreceived;
+								if (ringbuffer_pos<0) ringbuffer_pos += SPI_TX_RINGBUFFERSIZE;
+								
+								spi_transfer(spi_fd, buffer[ringbuffer_pos], 0);
+							}
+							
+						} while (messages_notreceived);
 						*/
 						
 						//Update ringbuffer_pos
@@ -1230,7 +1215,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			else if (!spi_create_command_msg(NULL, 0)) messages_notreceived = spi_transfer(spi_fd); //commandline-mode
+			else spi_transfer(spi_fd, NULL, 0);
 		}
 	}
 	else exit(EXIT_FAILURE);
