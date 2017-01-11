@@ -48,18 +48,19 @@ int file_parser() {
 	
 	char c = 0, success=0;
 	char line[LINELENGTH] = {};
-	int i = 0, j = 0, StartSignLine = 0, StopSignLine = 0;
+	int n = 0, i = 0, j = 0, StartSignLine = 0, StopSignLine = 0;
 	fpos_t startpos;
 	
 	cnc_code_array_length =0;
 	
 	//find start- and stop-signs '%'
-	while (c != 'EOF'){
+	while (c != EOF){
 		StopSignLine++; //stopsign not needed
 		fgets(line, LINELENGTH, cnc_code_file);
 		n = sscanf(line,"%c", &c);
 		if (n < 1) {
-			if (errno != 0) perror("scanf") {
+			if (errno != 0) {
+				perror("scanf");
 				fclose(cnc_code_file);
 				return EXIT_FAILURE;
 			}
@@ -89,7 +90,7 @@ int file_parser() {
 		n = fscanf(line,"N%d %c%d %c%d %c%d %c%d %c%d", &cnc_code_block_raw.N, &cnc_code_block_raw.GM, &cnc_code_block_raw.GM_NO, &cnc_code_block_raw.c1, &cnc_code_block_raw.p1, &cnc_code_block_raw.c2, &cnc_code_block_raw.p2, &cnc_code_block_raw.c3, &cnc_code_block_raw.p3, &cnc_code_block_raw.c4, &cnc_code_block_raw.p4);
 		if (n < 3) {
 			if (errno != 0) perror("scanf");
-			else fprintf(stderr, "Parameter not matching\n");
+			else perror("Parameter not matching");
 			fclose(cnc_code_file);
 			return EXIT_FAILURE;
 		}
@@ -99,7 +100,7 @@ int file_parser() {
 				case 0:
 						break;
 				default:
-						fprintf(stderr, "G-Code unkown"\n");
+						perror("G-Code unkown");
 						fclose(cnc_code_file);
 						return EXIT_FAILURE;
 			}
@@ -109,13 +110,13 @@ int file_parser() {
 				case 0:
 						break;
 				default:
-						fprintf(stderr, "M-Code unkown"\n");
+						perror("M-Code unkown");
 						fclose(cnc_code_file);
 						return EXIT_FAILURE;
 			}
 		}
 		else {
-			fprintf(stderr, "Parameter not matching\n");
+			perror("Parameter not matching");
 			fclose(cnc_code_file);
 			return EXIT_FAILURE;
 		}
@@ -136,7 +137,7 @@ int file_parser() {
 			}
 			if (success) success=0;
 			else {
-				fprintf(stderr, "L-Parameter target block does not exist"\n");
+				perror("L-Parameter target block does not exist");
 				fclose(cnc_code_file);
 				return EXIT_FAILURE;
 			}
