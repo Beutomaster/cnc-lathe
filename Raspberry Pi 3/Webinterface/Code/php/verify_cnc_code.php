@@ -133,7 +133,7 @@
 		
 		//Parse Code-Lines
 		$N=0;
-		$N_last=0;
+		$N_last=-1;
 		$blocks = array();
 		$M30 = array();
 		$M17 = array(); //
@@ -223,7 +223,15 @@
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "F", $F, 0, F_MIN, F_MAX); //optional?
 									break;
 							case 78: //G78(X,Z,K,H);
-									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, $N, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									if (!ret) {
+										echo "Line $line, N".$N.": no X- or Z-Parameter or incorrect format. At least one of them is required.<br />";
+										$success = 0;
+									}
+									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "K", $K, 0, IK_MIN, K_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "H", $H, 0, H_MIN, H_MAX); //optional?
+									//Ranges correct?
 									break;
 							case 81: //G81(Z,F);
 							case 82: //G82(Z,F);
@@ -233,6 +241,15 @@
 									//Ranges correct?
 									break;
 							case 84: //G84(X,Z,F,H);
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, $N, "X", $X, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+									$ret &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+									if (!ret) {
+										echo "Line $line, N".$N.": no X- or Z-Parameter or incorrect format. At least one of them is required.<br />";
+										$success = 0;
+									}
+									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "F", $F, 0, F_MIN, F_MAX); //optional?
+									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "H", $H, 0, H_MIN, H_MAX); //optional?
+									//Ranges correct?
 									break;
 							case 85: //G85(Z,F);
 									$success &= get_next_cnc_code_parameter($Parameter, $line, $N, "Z", $Z, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
