@@ -7,6 +7,8 @@
 
 	// define variables and set to empty values
 	$Input_N = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $msg_pid = "";
+	$G_Code_Numbers = array(0, 1, 2, 3, 4, 20, 21 ,22, 24, 25, 26, 27, 33, 64, 73, 78, 81, 82, 83, 84, 85, 86, 88, 89, 90, 91, 92, 94, 95, 96, 97, 196);
+	$M_Code_Numbers = array(0, 3, 4, 5, 6, 17, 30, 98, 99);
 	
 	$success=0;
 	
@@ -144,10 +146,18 @@
 				$Input_GM = test_input($_POST["gm_code"]);
 				$Input_GM_NO = test_input($_POST["gm_code_no"]);
 				if ($Input_GM == "G") {
-					$success &= test_value_range($Input_GM_NO, 0, 196); //should be a check against an array of known codes!!!
+					//$success &= test_value_range($Input_GM_NO, 0, 196); //should be a check against an array of known codes!!!
+					if (!in_array($Input_GM_NO, $G_Code_Numbers)) {
+						$success = 0;
+						echo "G-Code out of range!<br />";
+					}
 				}
 				elseif ($Input_GM == "M") {
-					$success &= test_value_range($Input_GM_NO, 0, 99); //should be a check against an array of known codes!!!
+					//$success &= test_value_range($Input_GM_NO, 0, 99); //should be a check against an array of known codes!!!
+					if (!in_array($Input_GM_NO, $M_Code_Numbers)) {
+						$success = 0;
+						echo "M-Code out of range!<br />";
+					}
 				}
 				else {
 					echo "Value of gm_code out of range!";

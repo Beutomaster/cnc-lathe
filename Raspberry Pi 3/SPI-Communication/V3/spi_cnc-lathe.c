@@ -40,7 +40,6 @@
 //defines
 
 //Pipe-Server
-#define COMMAND_PIPE "/home/pi/spi_com/arduino_pipe.tx"
 #define SPI_TX_RINGBUFFERSIZE 500
 #define BUF 100
 //#define BUF 4096
@@ -169,9 +168,6 @@ int r_fd, w_fd, i, ret, ringbuffer_pos=0, messages_notreceived=0, ringbuffer_fil
 fd_set r_fd_set;
 struct timeval timeout;
 
-//File-Parser
-char process_file = 0;
-
 static void pabort(const char *s)
 {
 	perror(s);
@@ -196,12 +192,12 @@ void signal_callback_handler(int signum)
 
 setup_pipe_server() {
 	//Server creates arduino_pipe.tx, if it does not exist
-	if (mkfifo (COMMAND_PIPE, O_RDWR | 0666) < 0) {
+	if (mkfifo ("arduino_pipe.tx", O_RDWR | 0666) < 0) {
 	  //arduino_pipe.tx exists
 	  if(errno == EEXIST)
-		 printf ("Backend Pipe-Server: arduino_pipe.tx exists, trying to use it!\n");
+		 printf ("arduino_pipe.tx exists, trying to use it!\n");
 	  else {
-		 perror("Backend Pipe-Server: mkfifio()");
+		 perror("mkfifio()");
 		 exit (EXIT_FAILURE);
 	  }
 	}
@@ -213,9 +209,9 @@ setup_pipe_server() {
 	To avoid this open that FIFO for both reading and writing (O_RDWR). This ensures that you have at least one writer on the FIFO thus there wont be an EOF and as a result select won't return unless someone writes to that FIFO.
 	*/
 	//Server opens arduino_pipe.tx
-	r_fd = open (COMMAND_PIPE, O_RDWR); //create an Filedescriptor for Low-Level I/O-Functions like read/write
+	r_fd = open ("arduino_pipe.tx", O_RDWR); //create an Filedescriptor for Low-Level I/O-Functions like read/write
 	if (r_fd == -1) {
-	  perror("Backend File-Parser: open(1)");
+	  perror ("open(1)");
 	  exit (EXIT_FAILURE);
 	}
 	//r_fz = fdopen(r_fd, "r"); //create an Filepointer for High-Level I/O-Functions like fscanf
@@ -363,8 +359,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 		else {
 			n = sscanf(pipe_msg_buffer,"%s %d", client_sid, &msg_type);
 			if (n != 2) {
-				if (errno != 0) perror("Backend Command-Interpreter: scanf");
-				else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+				if (errno != 0) perror("scanf");
+				else fprintf(stderr, "Parameter not matching\n");
 				return 0;
 			}
 			//printf ("n: %i\n", n);
@@ -388,7 +384,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 		} while ((msg_type<1) || (msg_type>19));
 	}
 	else {
-		fprintf(stderr, "Backend Command-Interpreter: Command out of Range\n");
+		perror("out of Range!");
 		return(EXIT_FAILURE);
 	}
 	tx[pos++] = msg_type;
@@ -404,8 +400,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &block);
 						if (n != 3) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -419,7 +415,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = block>>8;
@@ -433,8 +429,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &rpm, &spindle_direction);
 						if (n != 4) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -448,7 +444,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((rpm<REVOLUTIONS_MIN) || (rpm>REVOLUTIONS_MAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: rpm out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = rpm>>8;
@@ -463,7 +459,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((spindle_direction<0) || (spindle_direction>1));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: spindle-direction out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = spindle_direction;
@@ -479,8 +475,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &feed, &negativ_direction);
 						if (n != 4) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -494,7 +490,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((feed<F_MIN) || (feed>F_MAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: F out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = feed>>8;
@@ -509,7 +505,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((negativ_direction<0) || (negativ_direction>1));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: Stepper direction out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = negativ_direction;
@@ -521,8 +517,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						printf("Parameter einlesen\n");
 						n = sscanf(pipe_msg_buffer,"%s %d %d %d %d", client_sid, &msg_type, &XX, &ZZ, &tool);
 						if (n != 5) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -536,7 +532,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: X out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = XX>>8;
@@ -551,7 +547,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: Z out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
@@ -566,7 +562,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((tool<T_MIN) || (tool>T_MAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: T out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = tool;
@@ -575,8 +571,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &XX);
 						if (n != 3) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -590,7 +586,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: X out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = XX>>8;
@@ -600,8 +596,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &ZZ);
 						if (n != 3) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -615,7 +611,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: Z out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
@@ -625,8 +621,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &inch);
 						if (n != 3) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -640,7 +636,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((inch<0) || (inch>1));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: metric or inch out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = inch;
@@ -649,8 +645,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block, &inch);
 						if (n != 4) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -664,7 +660,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = block>>8;
@@ -679,19 +675,17 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((inch<0) || (inch>1));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: metric or inch out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = inch;
-					
-					process_file = 1;
 					break;
 		case 16:  	//CNC-Code-Block
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %c %d %d %d %d %d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 						if (n != 9) {
-							if (errno != 0) perror("Backend Command-Interpreter: scanf");
-							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							if (errno != 0) perror("scanf");
+							else fprintf(stderr, "Parameter not matching\n");
 							return 0;
 						}
 					}
@@ -705,7 +699,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = block>>8;
@@ -720,13 +714,13 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((code_type != 'G') && (code_type != 'M'));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: G or M out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = code_type;
 					
 					if (code_type == 'G') {
-						printf("G-Code (0 to 196): "); //not a real check
+						printf("G-Code (0 to 196): ");
 						if ((gmcode>=GM_CODE_MIN) && (gmcode<=G_CODE_MAX)) printf("%i\n",gmcode);
 						else if (pipe_msg_buffer == NULL) {
 							do {
@@ -735,12 +729,12 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 							} while ((gmcode<GM_CODE_MIN) || (gmcode>G_CODE_MAX));
 						}
 						else {
-							fprintf(stderr, "Backend Command-Interpreter: G- or M-Code out of Range\n");
+							perror("out of Range!");
 							return(EXIT_FAILURE);
 						}
 					}
 					else {
-						printf("M-Code (0 to 99): "); //not a real check
+						printf("M-Code (0 to 99): ");
 						if ((gmcode>=GM_CODE_MIN) && (gmcode<=M_CODE_MAX)) printf("%i\n",gmcode);
 						else if (pipe_msg_buffer == NULL) {
 							do {
@@ -749,7 +743,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 							} while ((gmcode<GM_CODE_MIN) || (gmcode>M_CODE_MAX));
 						}
 						else {
-							fprintf(stderr, "Backend Command-Interpreter: G- or M-Code out of Range\n");
+							perror("out of Range!");
 							return(EXIT_FAILURE);
 						}
 					}
@@ -764,7 +758,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: X out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					scanf("%d",&XX);
@@ -781,7 +775,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: Z out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
@@ -796,7 +790,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((feed<F_MIN) || (feed>F_MAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: F out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = feed>>8;
@@ -811,7 +805,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((HH<H_MIN) || (HH>H_MAX));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: H out of Range\n");
+						perror("out of Range!");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = HH>>8;
@@ -1186,7 +1180,7 @@ int main(int argc, char *argv[])
 							//open client_session_pipe send answer
 							w_fd = open (answer_fifo_name, O_WRONLY);
 							if (w_fd == -1) {
-								perror("Backend Answer-Pipe: open(2)");
+								perror ("open(2)");
 								exit (EXIT_FAILURE);
 							}
 							write (w_fd, answer_to_client, strlen(answer_to_client));
@@ -1198,11 +1192,7 @@ int main(int argc, char *argv[])
 						
 						//process message
 						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
-						if (process_file) {
-							usleep(200000); //0,2s
-							//if(!file_parser()) spi_create_cnc_code_messages(); //create and send messages from file
-							process_file = 0;
-						}
+						
 						/*
 						//Error-Handling not ready
 						if (messages_notreceived) {
