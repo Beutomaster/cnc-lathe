@@ -684,7 +684,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					tx[pos++] = inch;
 					
-					process_file = 0;
+					process_file = 1;
 					break;
 		case 16:  	//CNC-Code-Block
 					if (pipe_msg_buffer != NULL) {
