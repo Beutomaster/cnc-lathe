@@ -147,14 +147,14 @@ boolean check_msg(char msg_length, boolean force_action) {
   boolean success = true;
   if (CRC8(rx_doublebuf[rx_ringbuffer_read_pos], 0, msg_length, true, rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_CRC8])) {
     success=false; //msg-failure
-    set_error(ERROR_SPI_BIT);
+    ERROR_NO |= _BV(ERROR_SPI_BIT);
   }
   else if (rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
     lastsuccessful_msg++;
   }
   else {
     if (force_action) success=false; //message lost
-    set_error(ERROR_SPI_BIT);
+    ERROR_NO |= _BV(ERROR_SPI_BIT);
   }
   return success;
 }
@@ -461,7 +461,7 @@ ISR (SPI_STC_vect) {
       else rx_ringbuffer_write_pos = 0;
       update_messages_to_process();
     }
-    else set_error(ERROR_SPI_BIT);
+    else ERROR_NO |= _BV(ERROR_SPI_BIT);
     pos = 0;
     SPDR = tx_buf [0]; //first byte for sending at next interrupt
     //process_it = true;

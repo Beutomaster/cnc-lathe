@@ -145,9 +145,5 @@ extern volatile int STATE_H;
 extern volatile byte STATE_T; //0 = uninitialized
 extern volatile int STATE_N;
 
-//functions
-void set_error(byte);
-void reset_error(byte);
-
 #endif
 

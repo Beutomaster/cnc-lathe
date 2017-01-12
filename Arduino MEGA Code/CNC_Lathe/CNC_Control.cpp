@@ -37,16 +37,6 @@ void programm_abort() {
   //disable all Timer
 }
 
-void set_cnc_code_error(boolean cnc_code_error) {
-  if (cnc_code_error) {
-    ERROR_NO |= _BV(ERROR_CNC_CODE_BIT); //set ERROR_bit1
-  }
-  else {
-    ERROR_NO &= ~(_BV(ERROR_CNC_CODE_BIT)); //delete ERROR_bit1
-  }
-}
-
-
 boolean process_cnc_listing() {
 	boolean success=0; //0=success, 1=failure    
     //next_cnc_code
@@ -143,7 +133,7 @@ boolean process_cnc_listing() {
                   success=1;       
       }
     } else success=1; //Error "Code Type unkown" 
-    if (command_completed) STATE_N++;
+    //if (command_completed) STATE_N++; //else STATE_N++ in ISRs
 	return success;
 }
 
@@ -188,14 +178,14 @@ void G24() {} //Radius programing
 
 //Sub-routine call-up (L = Jump address)
 void G25(int L) {
-  jumpback_N = STATE_N;
+  jumpback_N = STATE_N+1; //next block
   STATE_N = L-1;
 }
 
 void G26(int X, int Z, byte T) { M06(X, Z, T);} //Tool correction and tool call-up (obsolete, backward compatibility for M06)
 
 //Jump instruction
-void G27(int L) {STATE_N = L;}
+void G27(int L) {STATE_N = L-1;}
 
 void G33(int Z, char K) {} //Threading with constant pitch (K = Thread Pitch)
 void G64() {stepper_off();} //Feed motors currentless
@@ -222,7 +212,7 @@ void G97(int S) {set_revolutions(S);} //new: set const. revolutions in 1/min
 //new: set max. rev. in 1/min for G96
 void G196(int S) {
   if (S>=0 && S<=REVOLUTIONS_MAX) max_revolutions=S;
-  else set_cnc_code_error(HIGH);
+  else ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
 }
 
 //Programmed stop
@@ -249,7 +239,7 @@ void M06(int X, int Z, byte T) {
   set_tool_position(T);
 }
   
-void M17() {STATE_N = jumpback_N;} //return command to the main program
+void M17() {STATE_N = jumpback_N-1;} //return command to the main program
 
 //End of Program
 void M30() {programm_stop();}

@@ -375,6 +375,7 @@ ISR(TIMER1_OVF_vect) {
         TIMSK1 &= ~(_BV(TOIE1)); //set 0
         command_completed=1;
         command_time=0;
+        //STATE_N++;
     }
     if (i_command_time) i_command_time--;
   }

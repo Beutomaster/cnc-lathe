@@ -27,7 +27,6 @@ void programm_start(int);
 void programm_pause();
 void programm_stop();
 void programm_abort();
-void set_cnc_code_error(boolean);
 boolean process_cnc_listing();
 
 //G-/M-/S-/T-Codes:
