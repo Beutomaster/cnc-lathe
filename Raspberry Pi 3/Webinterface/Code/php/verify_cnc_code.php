@@ -133,7 +133,7 @@
 		
 		//Parse Code-Lines
 		$N=0;
-		$N_last=0;
+		$N_last=-1;
 		$blocks = array();
 		$M30 = array();
 		$M17 = array(); //

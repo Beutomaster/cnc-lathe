@@ -71,7 +71,9 @@ struct cnc_code_block *cnc_code_array = NULL;
 
 //functions
 int test_value_range(int line_number, char name, int value, int min, int max) {
-	printf("Backend File-Parser debug: Line %i: Parameter %c: %i\n", line_number, name, value);
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser debug: Line %i: Parameter %c: %i\n", line_number, name, value);
+	#endif
 	//test if range of value matches
 	if (value < min || value > max) {
 		fprintf(stderr, "Backend File-Parser: Line %i: %c out of Range\n", line_number, name);
@@ -83,17 +85,19 @@ int test_value_range(int line_number, char name, int value, int min, int max) {
 int get_next_cnc_code_parameter(int line_number, int *InputParameterNumber, char *InputParameterName, int *InputParameter, char name, int *OutputValue, char optional, int min, int max) {
 	int success = 1;
 	//check Name of Parameter
-	printf("Backend File-Parser debug: Line %i: InputParameterName %c, Searching for %c, InputParameter %i\n", line_number, *InputParameterName, name, *InputParameter);
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser debug: Line %i: InputParameterName %c, Searching for %c, InputParameter %i\n", line_number, *InputParameterName, name, *InputParameter);
+	#endif
 	if (*InputParameterName == name) {
 		//test range of value matches
 		if (success = test_value_range(line_number, name, *InputParameter, min, max)) {
-			OutputValue=InputParameter;
+			*OutputValue=*InputParameter;
 			(*InputParameterNumber)++;
 		}
 		//else return 0;
 	}
 	else {
-		OutputValue=0; //set Default Value
+		*OutputValue=0; //set Default Value
 		if (!optional) {
 			fprintf(stderr, "Backend File-Parser: Line %i: no %c-Parameter or incorrect format\n", line_number, name);
 			//return 0;
@@ -180,7 +184,9 @@ int file_parser() {
 	
 	printf("Backend File-Parser: StartSignLine: %i\n", StartSignLine);
 	printf("Backend File-Parser: StopSignLine: %i\n", StopSignLine);
-	printf("Backend File-Parser debug: cnc_code_array_length: %i\n", cnc_code_array_length);
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser debug: cnc_code_array_length: %i\n", cnc_code_array_length);
+	#endif
 	
 	//read cnc-code
 	for (i=0; i<cnc_code_array_length; i++) {
@@ -192,7 +198,9 @@ int file_parser() {
 			return file_parser_abort();
 		}
 		
-		printf("Backend File-Parser debug: Line %i: N%04i %c%i %c%i %c%i %c%i %c%i\n", line_number, cnc_code_block_raw.N, cnc_code_block_raw.GM, cnc_code_block_raw.GM_NO, cnc_code_block_raw.c1, cnc_code_block_raw.p1, cnc_code_block_raw.c2, cnc_code_block_raw.p2, cnc_code_block_raw.c3, cnc_code_block_raw.p3, cnc_code_block_raw.c4, cnc_code_block_raw.p4);
+		#ifdef FILEPARSER_STANDALONE
+			printf("Backend File-Parser debug: Line %i: N%04i %c%i %c%i %c%i %c%i %c%i\n", line_number, cnc_code_block_raw.N, cnc_code_block_raw.GM, cnc_code_block_raw.GM_NO, cnc_code_block_raw.c1, cnc_code_block_raw.p1, cnc_code_block_raw.c2, cnc_code_block_raw.p2, cnc_code_block_raw.c3, cnc_code_block_raw.p3, cnc_code_block_raw.c4, cnc_code_block_raw.p4);
+		#endif
 		
 		j=0;
 		InputParameterName[0] = &cnc_code_block_raw.c1;
@@ -455,8 +463,10 @@ static int spi_create_cnc_code_messages() {
 	char msg_type = 16;
 	unsigned int i, pos, used_length;
 	
-	printf("Backend File-Parser: Create tx[SPI_BYTE_LENGTH_PRAEAMBEL-1] - tx[SPI_MSG_LENGTH-1] for Msg:\n");
-	printf("MT MN NH NL GM NO XIH XIL ZKH ZKL FLTK HSH HSL\n");
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser: Create tx[SPI_BYTE_LENGTH_PRAEAMBEL-1] - tx[SPI_MSG_LENGTH-1] for Msg:\n");
+		printf("MT MNO N_H  N_L  GM NO XI_H XI_L ZK_H ZK_L FLTK  HS_H HS_L\n");
+	#endif
 	
 	for (i=0; i<cnc_code_array_length; i++) {
 		pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
@@ -505,18 +515,18 @@ static int spi_create_cnc_code_messages() {
 			//Output
 			pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
 			printf("%i ", tx[pos++]); //msg_type
-			printf("%i ", tx[pos++]); //msg_number;
-			printf("0x%x ", tx[pos++]); //(i+1)>>8;
-			printf("0x%x ", tx[pos++]); //(i+1);
+			printf("%03i ", tx[pos++]); //msg_number;
+			printf("0x%02x ", tx[pos++]); //(i+1)>>8;
+			printf("0x%02x ", tx[pos++]); //(i+1);
 			printf("%c ", tx[pos++]); //cnc_code_array[i].GM;
 			printf("%03i ", tx[pos++]); //cnc_code_array[i].GM_NO;
-			printf("0x%x ", tx[pos++]); //cnc_code_array[i].XI >> 8;
-			printf("0x%x ", tx[pos++]); //cnc_code_array[i].XI;
-			printf("0x%x ", tx[pos++]); //cnc_code_array[i].ZK >> 8;
-			printf("0x%x ", tx[pos++]); //cnc_code_array[i].ZK;
-			printf("%i ", tx[pos++]); //cnc_code_array[i].FTLK; //Problem L is int
-			printf("0x%x ", tx[pos++]); //cnc_code_array[i].HS >> 8;
-			printf("0x%x \n", tx[pos++]); //cnc_code_array[i].HS;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].XI >> 8;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].XI;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].ZK >> 8;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].ZK;
+			printf("%05i ", tx[pos++]); //cnc_code_array[i].FTLK; //Problem L is int
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].HS >> 8;
+			printf("0x%02x \n", tx[pos++]); //cnc_code_array[i].HS;
 		#endif
 	}
 	return EXIT_SUCCESS;
