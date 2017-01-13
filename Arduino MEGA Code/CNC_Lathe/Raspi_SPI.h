@@ -74,7 +74,7 @@ extern volatile boolean byte_received;
 
 //Controlled by (Timer-) Interrupts:
 void spi_buffer_handling();
-unsigned char CRC8 (char *, unsigned char, unsigned char, boolean, unsigned char);
+unsigned char CRC8 (volatile unsigned char *, unsigned char, unsigned char, boolean, unsigned char);
 boolean process_incomming_msg();
 void init_msg_praeambel();
 void create_machine_state_msg();

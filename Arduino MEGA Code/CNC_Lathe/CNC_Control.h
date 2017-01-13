@@ -43,12 +43,12 @@ void G24(); //Radius programing
 void G25(int); //Sub-routine call-up (L = Jump address)
 void G26(int, int Z, byte T); //Tool correction and tool call-up (obsolete, backward compatibility for M06)
 void G27(int); //Jump instruction
-void G33(int, char); //Threading with constant pitch (K = Thread Pitch)
+void G33(int, int); //Threading with constant pitch (K = Thread Pitch)
 void G64(); //Feed motors currentless
 //void G65(); //Cassette operation (obsolete)
 //void G66(); //RS 232 operation (obsolete)
 void G73(int, int); //Chip breakage cycle
-void G78(int, int, char, int); //Threading cycle
+void G78(int, int, int, int); //Threading cycle
 void G81(int, int); //Drilling cycle
 void G82(int, int); //Drilling cycle with dwell
 void G83(int, int); //Drilling cycle, deep hole with withdrawal
@@ -73,7 +73,7 @@ void M06(int, int, byte); //Tool length compensation (T = Tool address)
 void M17(); //return command to the main program
 void M30(); //End of Program
 void M98(int, int); //Automatic compensation of play
-void M99(int, char); //Circle parameter (I, K = Center point coordinates)
+void M99(int, int); //Circle parameter (I, K = Center point coordinates)
 
 #endif
 

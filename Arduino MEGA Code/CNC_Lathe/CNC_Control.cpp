@@ -188,12 +188,12 @@ void G26(int X, int Z, byte T) { M06(X, Z, T);} //Tool correction and tool call-
 //Jump instruction
 void G27(int L) {STATE_N = L - N_Offset - 1;}
 
-void G33(int Z, char K) {} //Threading with constant pitch (K = Thread Pitch)
+void G33(int Z, int K) {} //Threading with constant pitch (K = Thread Pitch)
 void G64() {stepper_off();} //Feed motors currentless
 //void G65() {} //Cassette operation (obsolete)
 //void G66() {} //RS 232 operation (obsolete)
 void G73(int Z, int F) {} //Chip breakage cycle
-void G78(int X, int Z, char K, int H) {} //Threading cycle
+void G78(int X, int Z, int K, int H) {} //Threading cycle
 void G81(int Z, int F) {} //Drilling cycle
 void G82(int Z, int F) {} //Drilling cycle with dwell
 void G83(int Z, int F) {} //Drilling cycle, deep hole with withdrawal
@@ -246,5 +246,5 @@ void M17() {STATE_N = jumpback_N-1;} //return command to the main program
 void M30() {programm_stop();}
 
 void M98(int X, int Z) {} //Automatic compensation of play
-void M99(int I, char K) {} //Circle parameter (I, K = Center point coordinates)
+void M99(int I, int K) {} //Circle parameter (I, K = Center point coordinates)
 
