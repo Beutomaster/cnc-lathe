@@ -51,7 +51,7 @@ void setup() {
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
-  pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
+  pinMode(PIN_SPINDLEPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
   pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
   pinMode(PIN_DEBUG_INPUT_1, INPUT_PULLUP);
@@ -164,14 +164,6 @@ void setup() {
   //watchdogSetup();
 }
 
-void set_error(byte error_bit_position) {
-  ERROR_NO |= _BV(error_bit_position);
-}
-
-void reset_error(byte error_bit_position) {
-  ERROR_NO &= ~(_BV(error_bit_position));
-}
-
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -187,12 +179,26 @@ void loop() {
     if (initialized) {
       if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
           command_completed=1;
-          STATE_F = 0;
+          STATE_F = 0; //maybe not needed
           stepper_timeout();
       }
       if (command_completed) {
         if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-          if (!pause) process_cnc_listing();
+          if (!pause && !ERROR_NO) {
+            if (process_cnc_listing()) { //error
+              STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT);
+              ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
+            }
+            else {
+              STATE_N++;
+              if (STATE_N<0 || STATE_N>=CNC_CODE_NMAX) {
+                N_Offset = N_Offset + STATE_N;
+                ERROR_NO |= _BV(ERROR_CNC_CODE_NEEDED_BIT);
+                //wait for new code-messages and reset of ERROR_CNC_CODE_NEEDED_BIT
+                //maybe better STATE_CNC_CODE_NEEDED_BIT, because Errors are resetted all together on spi-error
+              }
+            }
+          }
         }
       }
       else reset_stepper_timeout=true;

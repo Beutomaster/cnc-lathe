@@ -50,7 +50,7 @@ volatile byte pos=0; // buffer empty
 volatile boolean byte_received=false; //first byte of transmission received)
 volatile boolean process_it=false; //not end of string (newline received)
 volatile unsigned char lastsuccessful_msg = 0;
-volatile char messages_to_process=0, rx_ringbuffer_write_pos=0, rx_ringbuffer_read_pos=0;
+volatile signed char messages_to_process=0, rx_ringbuffer_write_pos=0, rx_ringbuffer_read_pos=0;
 
 //Update messages_to_process
 void update_messages_to_process() {
@@ -134,7 +134,7 @@ unsigned char CRC8 (volatile unsigned char * buf, unsigned char message_offset, 
   return crc_8;
 }
 
-boolean check_msg(char msg_length, boolean force_action) {
+boolean check_msg(unsigned char msg_length, boolean force_action) {
   //debug lastsuccessful_msg
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
     Serial.print("lastsuccessful_msg DEC: ");
@@ -147,14 +147,14 @@ boolean check_msg(char msg_length, boolean force_action) {
   boolean success = true;
   if (CRC8(rx_doublebuf[rx_ringbuffer_read_pos], 0, msg_length, true, rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_CRC8])) {
     success=false; //msg-failure
-    set_error(ERROR_SPI_BIT);
+    ERROR_NO |= _BV(ERROR_SPI_BIT);
   }
   else if (rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
     lastsuccessful_msg++;
   }
   else {
     if (force_action) success=false; //message lost
-    set_error(ERROR_SPI_BIT);
+    ERROR_NO |= _BV(ERROR_SPI_BIT);
   }
   return success;
 }
@@ -162,7 +162,7 @@ boolean check_msg(char msg_length, boolean force_action) {
 boolean process_incomming_msg() {
   boolean success=true;
   int N=0;
-  char msg_length=2;
+  unsigned char msg_length=2;
   switch(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TYPE]) {
     case 1:   //Update Machine State
               if (!check_msg(msg_length, true)) success=false; //msg-failure
@@ -278,7 +278,8 @@ boolean process_incomming_msg() {
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
                 //some Error-Handling needed, if message is ignored
                 programm_stop();
-                //int NMAX = ((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L]) //maybe not needed
+                N_MAX = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L];
+                //N_Offset = ((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_OFFSET_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_OFFSET_L]); //needed for loading more data
                 for (N=0; N<CNC_CODE_NMAX; N++) {
                   cnc_code[N].GM = 0;
                 }
@@ -461,7 +462,7 @@ ISR (SPI_STC_vect) {
       else rx_ringbuffer_write_pos = 0;
       update_messages_to_process();
     }
-    else set_error(ERROR_SPI_BIT);
+    else ERROR_NO |= _BV(ERROR_SPI_BIT);
     pos = 0;
     SPDR = tx_buf [0]; //first byte for sending at next interrupt
     //process_it = true;
