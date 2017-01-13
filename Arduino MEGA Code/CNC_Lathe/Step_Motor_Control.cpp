@@ -141,20 +141,19 @@ void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { 
   //if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
   int X=0, Z=0;
   
-  //calculate needed Coordinates for s/2
-  if (xz_stepper) {
-    Z = feed * 100 / 120; //100 for mm * min/60s * 1/2
-    if (negativ_direction) Z *= -1;
-    if (absolute) Z += STATE_Z;
-  }
-  else {
-    X = feed * 100 / 120; //100 for mm * min/60s * 1/2
-    if (negativ_direction) X *= -1;
-    if (absolute) X += STATE_X;
-  }
-  
   //set signal with feed and direction
   if (command_completed) {
+    //calculate needed Coordinates for s/2
+    if (xz_stepper) {
+      Z = feed * 100 / 120; //100 for mm * min/60s * 1/2
+      if (negativ_direction) Z *= -1;
+      if (absolute) Z += STATE_Z;
+    }
+    else {
+      X = feed * 100 / 120; //100 for mm * min/60s * 1/2
+      if (negativ_direction) X *= -1;
+      if (absolute) X += STATE_X;
+    }
     set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
   }
   else {
