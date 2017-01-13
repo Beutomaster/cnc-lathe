@@ -447,6 +447,7 @@ uint8_t _crc8_ccitt_update (uint8_t inCrc, uint8_t inData) {
 uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes) {
   //get the crc_8-value of the msg returned
   //If the last byte of the message is the correct crc-value of the bytes before, CRC8 returns 0.
+  //ATTENTION: if all bytes are zero, CRC8-Check is always correct!!! High possibility of incorrect detected message.
   uint8_t bytecount, data, crc_8=0;
   
   for (bytecount=message_offset;bytecount<(used_message_bytes+message_offset);bytecount++) {
