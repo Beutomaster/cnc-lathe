@@ -184,12 +184,20 @@ void loop() {
       }
       if (command_completed) {
         if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-          if (!pause) {
+          if (!pause && !ERROR_NO) {
             if (process_cnc_listing()) { //error
               STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT);
               ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
             }
-            else STATE_N++;
+            else {
+              STATE_N++;
+              if (STATE_N<0 || STATE_N>=CNC_CODE_NMAX) {
+                N_Offset = N_Offset + STATE_N;
+                ERROR_NO |= _BV(ERROR_CNC_CODE_NEEDED_BIT);
+                //wait for new code-messages and reset of ERROR_CNC_CODE_NEEDED_BIT
+                //maybe better STATE_CNC_CODE_NEEDED_BIT, because Errors are resetted all together on spi-error
+              }
+            }
           }
         }
       }

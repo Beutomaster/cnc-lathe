@@ -59,6 +59,7 @@
 #define ERROR_SPI_BIT 0
 #define ERROR_CNC_CODE_BIT 1
 #define ERROR_SPINDLE_BIT 2
+#define ERROR_CNC_CODE_NEEDED_BIT 3
 
 //PINs
 #define PIN_CONTROL_ACTIVE 2       //PE4: Switch between EMCO and alternative Control (Usable for extINTR !!!)

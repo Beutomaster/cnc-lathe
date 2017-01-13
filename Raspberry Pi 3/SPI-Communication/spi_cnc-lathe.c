@@ -149,6 +149,7 @@
 #define ERROR_SPI_BIT 0
 #define ERROR_CNC_CODE_BIT 1
 #define ERROR_SPINDLE_BIT 2
+#define ERROR_CNC_CODE_NEEDED_BIT 3
 
 #define MACHINE_STATE_FILE "/var/www/html/xml/machine_state.xml"
 //#define MACHINE_STATE_FILE "~/machine_state.xml" //does not work
