@@ -156,6 +156,9 @@
 //#define MACHINE_STATE_FILE "machine_state.xml"
 
 //global vars
+//Machine-State
+uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
+int16_t STATE_N=0, STATE_RPM=0,  STATE_X=0, STATE_Z=0, STATE_F=0, STATE_H=0;
 
 //spi-Master
 FILE *machinestatefile;
@@ -457,7 +460,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					tx[pos++] = rpm>>8;
 					tx[pos++] = rpm;
 					
-					printf("Spindel direction invers (0 or 1): ");
+					printf("Spindle direction invers (0 or 1): ");
 					if ((spindle_direction>=0) && (spindle_direction<=1)) printf("%i\n",spindle_direction);
 					else if (pipe_msg_buffer == NULL) {
 						do {
@@ -851,7 +854,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 }
 
 static int spi_transfer(int spi_fd) {
-	int lostmessages=0, ret, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, HH=-1;
+	int ret;
+	uint8_t lostmessages=0, pid=0, crc_in=0;
 	
 	printf("tx-Buffer (HEX):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
@@ -886,47 +890,47 @@ static int spi_transfer(int spi_fd) {
 		//Byteorder: 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 		printf("Incomming Message:\n");
 		printf("------------------\n");
-		char pid = rx[SPI_BYTE_ARDUINO_MSG_TYPE];
+		pid = rx[SPI_BYTE_ARDUINO_MSG_TYPE];
 		printf("PID: %i\n", pid);
 		lastsuccessful_msg = rx[SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO];
 		printf("Last Successful Message: %i\n", lastsuccessful_msg);
-		char active = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
-		printf("Control active: %i\n", active);
-		char init = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INIT_BIT)&1;
-		printf("init: %i\n", init);
-		char manual = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_MANUAL_BIT)&1;
-		printf("manual: %i\n", manual);
-		char pause = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_PAUSE_BIT)&1;
-		printf("Pause: %i\n", pause);
-		char inch = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INCH_BIT)&1;
-		printf("inch: %i\n", inch);
-		char spindel_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_BIT)&1;
-		printf("Spindel on: %i\n", spindel_on);
-		char spindel_direction = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
-		printf("Spindel direction: %i\n", spindel_direction);
-		char stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_STEPPER_BIT)&1;
-		printf("Stepper on: %i\n", stepper_on);
-		rpm = (((int)rx[SPI_BYTE_ARDUINO_RPM_H]<<8)|(rx[SPI_BYTE_ARDUINO_RPM_L]));
-		printf("RPM: %i\n", rpm);
-		XX = (((int)rx[SPI_BYTE_ARDUINO_X_H]<<8)|(rx[SPI_BYTE_ARDUINO_X_L]));
-		printf("X: %i\n", XX);
-		ZZ = (((int)rx[SPI_BYTE_ARDUINO_Z_H]<<8)|(rx[SPI_BYTE_ARDUINO_Z_L]));
-		printf("Z: %i\n", ZZ);
-		feed = (((int)rx[SPI_BYTE_ARDUINO_F_H]<<8)|(rx[SPI_BYTE_ARDUINO_F_L]));
-		printf("F: %i\n", feed);
-		HH = (((int)rx[SPI_BYTE_ARDUINO_H_H]<<8)|(rx[SPI_BYTE_ARDUINO_H_L]));
-		printf("H: %i\n", HH);
-		tool = rx[SPI_BYTE_ARDUINO_T];
-		printf("T: %i\n", tool);
-		block = (((int)rx[SPI_BYTE_ARDUINO_N_H]<<8)|(rx[SPI_BYTE_ARDUINO_N_L]));
-		printf("Block-No: %i\n", block);
-		char spi_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPI_BIT)&1;
-		printf("SPI-Error: %i\n", spi_error);
-		char cnc_code_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
-		printf("CNC-Code-Error: %i\n", cnc_code_error);
-		char spindel_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
-		printf("Spindel-Error: %i\n", spindel_error);
-		char crc_in = rx[SPI_BYTE_ARDUINO_CRC8];
+		STATE_active = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
+		printf("Control active: %i\n", STATE_active);
+		STATE_init = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INIT_BIT)&1;
+		printf("init: %i\n", STATE_init);
+		STATE_manual = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_MANUAL_BIT)&1;
+		printf("manual: %i\n", STATE_manual);
+		STATE_pause = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_PAUSE_BIT)&1;
+		printf("Pause: %i\n", STATE_pause);
+		STATE_inch = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INCH_BIT)&1;
+		printf("inch: %i\n", STATE_inch);
+		STATE_spindle_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_BIT)&1;
+		printf("Spindle on: %i\n", STATE_spindle_on);
+		STATE_spindle_direction = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
+		printf("Spindle direction: %i\n", STATE_spindle_direction);
+		STATE_stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_STEPPER_BIT)&1;
+		printf("Stepper on: %i\n", STATE_stepper_on);
+		STATE_RPM = (((int)rx[SPI_BYTE_ARDUINO_RPM_H]<<8)|(rx[SPI_BYTE_ARDUINO_RPM_L]));
+		printf("RPM: %i\n", STATE_RPM);
+		STATE_X = (((int)rx[SPI_BYTE_ARDUINO_X_H]<<8)|(rx[SPI_BYTE_ARDUINO_X_L]));
+		printf("X: %i\n", STATE_X);
+		STATE_Z = (((int)rx[SPI_BYTE_ARDUINO_Z_H]<<8)|(rx[SPI_BYTE_ARDUINO_Z_L]));
+		printf("Z: %i\n", STATE_Z);
+		STATE_F = (((int)rx[SPI_BYTE_ARDUINO_F_H]<<8)|(rx[SPI_BYTE_ARDUINO_F_L]));
+		printf("F: %i\n", STATE_F);
+		STATE_H = (((int)rx[SPI_BYTE_ARDUINO_H_H]<<8)|(rx[SPI_BYTE_ARDUINO_H_L]));
+		printf("H: %i\n", STATE_H);
+		STATE_T = rx[SPI_BYTE_ARDUINO_T];
+		printf("T: %i\n", STATE_T);
+		STATE_N = (((int)rx[SPI_BYTE_ARDUINO_N_H]<<8)|(rx[SPI_BYTE_ARDUINO_N_L]));
+		printf("Block-No: %i\n", STATE_N);
+		ERROR_spi_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPI_BIT)&1;
+		printf("SPI-Error: %i\n", ERROR_spi_error);
+		ERROR_cnc_code_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_CNC_CODE_BIT)&1;
+		printf("CNC-Code-Error: %i\n", ERROR_cnc_code_error);
+		ERROR_spindle_error = (rx[SPI_BYTE_ARDUINO_ERROR_NO]>>ERROR_SPINDLE_BIT)&1;
+		printf("Spindle-Error: %i\n", ERROR_spindle_error);
+		crc_in = rx[SPI_BYTE_ARDUINO_CRC8];
 		printf("CRC: %i\n\n", crc_in);
 		
 		if (CRC8(rx, SPI_BYTE_LENGTH_PRAEAMBEL, SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL) || pid != 100) {
@@ -955,30 +959,30 @@ static int spi_transfer(int spi_fd) {
 				fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 				fprintf(machinestatefile, "<machinestate>\n");
 				fprintf(machinestatefile, "\t<state>\n");
-				fprintf(machinestatefile, "\t\t<active>%i</active>\n", active);
-				fprintf(machinestatefile, "\t\t<init>%i</init>\n", init);
-				fprintf(machinestatefile, "\t\t<manual>%i</manual>\n", manual);
-				fprintf(machinestatefile, "\t\t<pause>%i</pause>\n", pause);
-				fprintf(machinestatefile, "\t\t<inch>%i</inch>\n", inch);
-				fprintf(machinestatefile, "\t\t<spindel_on>%i</spindel_on>\n", spindel_on);
-				fprintf(machinestatefile, "\t\t<spindel_direction>%i</spindel_direction>\n", spindel_direction);
-				fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", stepper_on);
+				fprintf(machinestatefile, "\t\t<active>%i</active>\n", STATE_active);
+				fprintf(machinestatefile, "\t\t<init>%i</init>\n", STATE_init);
+				fprintf(machinestatefile, "\t\t<manual>%i</manual>\n", STATE_manual);
+				fprintf(machinestatefile, "\t\t<pause>%i</pause>\n", STATE_pause);
+				fprintf(machinestatefile, "\t\t<inch>%i</inch>\n", STATE_inch);
+				fprintf(machinestatefile, "\t\t<spindle_on>%i</spindle_on>\n", STATE_spindle_on);
+				fprintf(machinestatefile, "\t\t<spindle_direction>%i</spindle_direction>\n", STATE_spindle_direction);
+				fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", STATE_stepper_on);
 				fprintf(machinestatefile, "\t</state>\n");
 				fprintf(machinestatefile, "\t<measure>\n");
-				fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", rpm);
-				fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", XX);
-				fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", ZZ);
-				fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", feed);
-				fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", HH);
-				fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", tool);	
+				fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", STATE_RPM);
+				fprintf(machinestatefile, "\t\t<x_actual>%i</x_actual>\n", STATE_X);
+				fprintf(machinestatefile, "\t\t<z_actual>%i</z_actual>\n", STATE_Z);
+				fprintf(machinestatefile, "\t\t<f_actual>%i</f_actual>\n", STATE_F);
+				fprintf(machinestatefile, "\t\t<h_actual>%i</h_actual>\n", STATE_H);
+				fprintf(machinestatefile, "\t\t<t_actual>%i</t_actual>\n", STATE_T);	
 				fprintf(machinestatefile, "\t</measure>\n");
 				fprintf(machinestatefile, "\t<error>\n");
-				fprintf(machinestatefile, "\t\t<spi_error>%i</spi_error>\n", spi_error);
-				fprintf(machinestatefile, "\t\t<cnc_code_error>%i</cnc_code_error>\n", cnc_code_error);
-				fprintf(machinestatefile, "\t\t<spindel_error>%i</spindel_error>\n", spindel_error);
+				fprintf(machinestatefile, "\t\t<spi_error>%i</spi_error>\n", ERROR_spi_error);
+				fprintf(machinestatefile, "\t\t<cnc_code_error>%i</cnc_code_error>\n", ERROR_cnc_code_error);
+				fprintf(machinestatefile, "\t\t<spindle_error>%i</spindle_error>\n", ERROR_spindle_error);
 				fprintf(machinestatefile, "\t</error>\n");
 				fprintf(machinestatefile, "\t<cncblock>\n");
-				fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", block);
+				fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", STATE_N);
 				fprintf(machinestatefile, "\t</cncblock>\n");
 				fprintf(machinestatefile, "</machinestate>\n");
 
