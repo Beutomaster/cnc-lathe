@@ -259,12 +259,12 @@ if(!$_SESSION['logged_in'])
 				<p>inch</p>
 	</div>
 	<div class="state clearfix">
-				<div id="SpindelOnLED" class="led-grey"></div>
-				<p>Spindel on</p>
+				<div id="SpindleOnLED" class="led-grey"></div>
+				<p>Spindle on</p>
 	</div>
 	<div class="state clearfix">
-				<div id="SpindelDirectionLED" class="led-grey"></div>
-				<p>Spindel-Direction</p>
+				<div id="SpindleDirectionLED" class="led-grey"></div>
+				<p>Spindle-Direction</p>
 	</div>
 	<div class="state clearfix">
 				<div id="StepperOnLED" class="led-grey"></div>
@@ -307,8 +307,8 @@ if(!$_SESSION['logged_in'])
 				<p>CNC-Code-Error</p>
 	</div>
 	<div class="state clearfix">
-				<div id="SpindelErrorLED" class="led-grey"></div>
-				<p>Spindel-Error</p>
+				<div id="SpindleErrorLED" class="led-grey"></div>
+				<p>Spindle-Error</p>
 	</div>
 	
 <!--
@@ -333,12 +333,12 @@ if(!$_SESSION['logged_in'])
 			<input type="text" name="inch" id="inch" />
 			</label>
 			<br />
-			<label>Spindel on:<br />
-			<input type="text" name="spindel_on" id="spindel_on" />
+			<label>Spindle on:<br />
+			<input type="text" name="spindle_on" id="spindle_on" />
 			</label>
 			<br />
-			<label>Spindel-Direction:<br />
-			<input type="text" name="init" id="spindel_direction" />
+			<label>Spindle-Direction:<br />
+			<input type="text" name="init" id="spindle_direction" />
 			</label>
 			<br />
 			<label>Stepper on:<br />
@@ -381,8 +381,8 @@ if(!$_SESSION['logged_in'])
 			<input type="text" name="cnc_code_error" id="cnc_code_error" />
 			</label>
 			<br />
-			<label>Spindel-Error:<br />
-			<input type="text" name="spindel_error" id="spindel_error" />
+			<label>Spindle-Error:<br />
+			<input type="text" name="spindle_error" id="spindle_error" />
 			</label>
 			<br />
 	</form>

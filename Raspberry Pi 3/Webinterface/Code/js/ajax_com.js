@@ -25,8 +25,8 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var manual=xmlDoc.getElementsByTagName("manual")[0].textContent;
 	var pause=xmlDoc.getElementsByTagName("pause")[0].textContent;
 	var inch=xmlDoc.getElementsByTagName("inch")[0].textContent;
-	var spindel_on=xmlDoc.getElementsByTagName("spindel_on")[0].textContent;
-	var spindel_direction=xmlDoc.getElementsByTagName("spindel_direction")[0].textContent;
+	var spindle_on=xmlDoc.getElementsByTagName("spindle_on")[0].textContent;
+	var spindle_direction=xmlDoc.getElementsByTagName("spindle_direction")[0].textContent;
 	var stepper_on=xmlDoc.getElementsByTagName("stepper_on")[0].textContent;
 	var rpm_measure=xmlDoc.getElementsByTagName("rpm_measure")[0].textContent;
 	var x_actual=xmlDoc.getElementsByTagName("x_actual")[0].textContent;
@@ -36,7 +36,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var t_actual=xmlDoc.getElementsByTagName("t_actual")[0].textContent;
 	var spi_error=xmlDoc.getElementsByTagName("spi_error")[0].textContent;
 	var cnc_code_error=xmlDoc.getElementsByTagName("cnc_code_error")[0].textContent;
-	var spindel_error=xmlDoc.getElementsByTagName("spindel_error")[0].textContent;
+	var spindle_error=xmlDoc.getElementsByTagName("spindle_error")[0].textContent;
 	var n_actual=xmlDoc.getElementsByTagName("n_actual")[0].textContent;
 
 	/*
@@ -45,8 +45,8 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	document.getElementById("manual").setAttribute("value", manual);
 	document.getElementById("pause").setAttribute("value", pause);
 	document.getElementById("inch").setAttribute("value", inch);
-	document.getElementById("spindel_on").setAttribute("value", spindel_on);
-	document.getElementById("spindel_direction").setAttribute("value", spindel_direction);
+	document.getElementById("spindle_on").setAttribute("value", spindle_on);
+	document.getElementById("spindle_direction").setAttribute("value", spindle_direction);
 	document.getElementById("stepper_on").setAttribute("value", stepper_on);
 	document.getElementById("rpm_measure").setAttribute("value", rpm_measure);
 	document.getElementById("x_actual").setAttribute("value", x_actual);
@@ -56,7 +56,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	document.getElementById("t_actual").setAttribute("value", t_actual);
 	document.getElementById("spi_error").setAttribute("value", spi_error);
 	document.getElementById("cnc_code_error").setAttribute("value", cnc_code_error);
-	document.getElementById("spindel_error").setAttribute("value", spindel_error);
+	document.getElementById("spindle_error").setAttribute("value", spindle_error);
 	document.getElementById("n_actual").setAttribute("value", n_actual);
 	*/
 	
@@ -79,7 +79,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 			  if (!debug) HideClass("cnc");
 			  ShowClass("manual");
 		  }
-		  if (spindel_on == 1) {
+		  if (spindle_on == 1) {
 			  document.getElementById("SpindleOff").style.display='';
 			  //document.getElementById("SpindleOff").disabled = false;
 			  document.getElementById("SpindleOn").value = "Set RPM";
@@ -165,18 +165,18 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		document.getElementById("inchLED").className = "led-grey";
 	}
 	
-	if (spindel_on == 1) {
-		document.getElementById("SpindelOnLED").className = "led-red";
+	if (spindle_on == 1) {
+		document.getElementById("SpindleOnLED").className = "led-red";
 	} 
 	else {
-		document.getElementById("SpindelOnLED").className = "led-grey";
+		document.getElementById("SpindleOnLED").className = "led-grey";
 	}
 	
-	if (spindel_direction == 1) {
-		document.getElementById("SpindelDirectionLED").className = "led-red";
+	if (spindle_direction == 1) {
+		document.getElementById("SpindleDirectionLED").className = "led-red";
 	} 
 	else {
-		document.getElementById("SpindelDirectionLED").className = "led-grey";
+		document.getElementById("SpindleDirectionLED").className = "led-grey";
 	}
 	
 	if (stepper_on == 1) {
@@ -200,11 +200,11 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		document.getElementById("CNCErrorLED").className = "led-grey";
 	}
 	
-	if (spindel_error == 1) {
-		document.getElementById("SpindelErrorLED").className = "led-red";
+	if (spindle_error == 1) {
+		document.getElementById("SpindleErrorLED").className = "led-red";
 	} 
 	else {
-		document.getElementById("SpindelErrorLED").className = "led-grey";
+		document.getElementById("SpindleErrorLED").className = "led-grey";
 	}
 }
 

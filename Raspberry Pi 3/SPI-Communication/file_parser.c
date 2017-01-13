@@ -465,7 +465,7 @@ static int spi_create_cnc_code_messages() {
 	
 	#ifdef FILEPARSER_STANDALONE
 		printf("Backend File-Parser: Create tx[SPI_BYTE_LENGTH_PRAEAMBEL-1] - tx[SPI_MSG_LENGTH-1] for Msg:\n");
-		printf("MT MNO N_H  N_L  GM NO XI_H XI_L ZK_H ZK_L FLTK  HS_H HS_L\n");
+		printf("Backend File-Parser: MT  MNO  N_H  N_L   GM NO  XI_H XI_L  ZK_H ZK_L  FLTK_H,_L  HS_H HS_L\n");
 	#endif
 	
 	for (i=0; i<cnc_code_array_length; i++) {
@@ -480,7 +480,8 @@ static int spi_create_cnc_code_messages() {
 		tx[pos++] = cnc_code_array[i].XI;
 		tx[pos++] = cnc_code_array[i].ZK >> 8;
 		tx[pos++] = cnc_code_array[i].ZK;
-		tx[pos++] = cnc_code_array[i].FTLK; //Problem L is int
+		tx[pos++] = cnc_code_array[i].FTLK >> 8;
+		tx[pos++] = cnc_code_array[i].FTLK;
 		tx[pos++] = cnc_code_array[i].HS >> 8;
 		tx[pos++] = cnc_code_array[i].HS;
 		
@@ -513,18 +514,20 @@ static int spi_create_cnc_code_messages() {
 			tx[pos] = 0; //CRC
 			
 			//Output
+			printf("Backend File-Parser: ");
 			pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
-			printf("%i ", tx[pos++]); //msg_type
-			printf("%03i ", tx[pos++]); //msg_number;
+			printf("%i  ", tx[pos++]); //msg_type
+			printf("%03i  ", tx[pos++]); //msg_number;
 			printf("0x%02x ", tx[pos++]); //(i+1)>>8;
-			printf("0x%02x ", tx[pos++]); //(i+1);
+			printf("0x%02x  ", tx[pos++]); //(i+1);
 			printf("%c ", tx[pos++]); //cnc_code_array[i].GM;
-			printf("%03i ", tx[pos++]); //cnc_code_array[i].GM_NO;
+			printf("%03i  ", tx[pos++]); //cnc_code_array[i].GM_NO;
 			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].XI >> 8;
-			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].XI;
+			printf("0x%02x  ", tx[pos++]); //cnc_code_array[i].XI;
 			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].ZK >> 8;
-			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].ZK;
-			printf("%05i ", tx[pos++]); //cnc_code_array[i].FTLK; //Problem L is int
+			printf("0x%02x  ", tx[pos++]); //cnc_code_array[i].ZK;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].FTLK >> 8;
+			printf("0x%02x  ", tx[pos++]); //cnc_code_array[i].FTLK;
 			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].HS >> 8;
 			printf("0x%02x \n", tx[pos++]); //cnc_code_array[i].HS;
 		#endif
