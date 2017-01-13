@@ -42,6 +42,8 @@
 #define SPI_BYTE_RASPI_MSG_NO 1
 #define SPI_BYTE_RASPI_MSG_N_H 2
 #define SPI_BYTE_RASPI_MSG_N_L 3
+#define SPI_BYTE_RASPI_MSG_N_OFFSET_H 4
+#define SPI_BYTE_RASPI_MSG_N_OFFSET_L 5
 #define SPI_BYTE_RASPI_MSG_GM 4
 #define SPI_BYTE_RASPI_MSG_GM_NO 5
 #define SPI_BYTE_RASPI_MSG_XI_H 6
@@ -72,7 +74,7 @@ extern volatile boolean byte_received;
 
 //Controlled by (Timer-) Interrupts:
 void spi_buffer_handling();
-unsigned char CRC8 (char *, unsigned char, unsigned char, boolean, unsigned char);
+unsigned char CRC8 (volatile unsigned char *, unsigned char, unsigned char, boolean, unsigned char);
 boolean process_incomming_msg();
 void init_msg_praeambel();
 void create_machine_state_msg();

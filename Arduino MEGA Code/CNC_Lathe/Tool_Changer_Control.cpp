@@ -3,7 +3,7 @@
 //Positionssensor oder Eingabe benoetigt
 
 volatile byte tool_step=0;
-volatile char i_tool=0;
+volatile signed char i_tool=0;
 
 void set_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
