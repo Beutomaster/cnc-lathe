@@ -17,27 +17,10 @@
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
  * On Raspberry Pi compile with: gcc -o spi_cnc-lathe spi_cnc-lathe.c
  */
- 
-#include <stdint.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-//#include <sys/types.h>
-#include <sys/stat.h>
-#include <linux/types.h>
-#include <linux/spi/spidev.h>
-#include <signal.h>
-#include <sys/select.h>
-//#include <sys/time.h>
-//#include <sys/types.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
+
 
 //defines
+//#######
 
 //Pipe-Server
 #define COMMAND_PIPE "/home/pi/spi_com/arduino_pipe.tx"
@@ -155,7 +138,40 @@
 //#define MACHINE_STATE_FILE "~/machine_state.xml" //does not work
 //#define MACHINE_STATE_FILE "machine_state.xml"
 
+//File-Parser
+#define CNC_CODE_FILE "/var/www/html/uploads/cnc_code.txt"
+#define LINELENGTH 80
+
+//development switches
+//#define FILEPARSER_STANDALONE
+
+
+//includes
+//#######
+
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+//#include <sys/types.h>
+#include <sys/stat.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
+#include <signal.h>
+#include <sys/select.h>
+//#include <sys/time.h>
+//#include <sys/types.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
+
+
 //global vars
+//###########
+
 //Machine-State
 uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
 int16_t STATE_N=0, STATE_RPM=0,  STATE_X=0, STATE_Z=0, STATE_F=0, STATE_H=0;
@@ -166,6 +182,11 @@ int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
 //uint8_t tx[SPI_MSG_LENGTH] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
+static const char *device = "/dev/spidev0.0";
+static uint8_t mode;
+static uint8_t bits = 8;
+static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
+static uint16_t delay;
 
 //pipe-Server
 char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
@@ -176,17 +197,31 @@ fd_set r_fd_set;
 struct timeval timeout;
 
 //File-Parser
+FILE *cnc_code_file;
+int cnc_code_array_length = 0;
 char process_file = 0;
+struct cnc_code_block {
+	unsigned int N; //block-No.
+	char GM; //G or M-Code
+	unsigned char GM_NO; //G/M-Code-Number
+	int XI; //X/I-Parameter
+	int ZK; //Z/K-Parameter (K for M99)
+	int FTLK; //F/T/L/K-Parameter (K for G33 and G78)
+	int HS; //H/S-Parameter
+};
+struct cnc_code_block *cnc_code_array = NULL;
 
-static void pabort(const char *s)
-{
+
+//functions
+//#########
+
+static void pabort(const char *s) {
 	perror(s);
 	abort();
 }
 
 // Define the function to be called when ctrl-c (SIGINT) signal is sent to process
-void signal_callback_handler(int signum)
-{
+void signal_callback_handler(int signum) {
 	printf("\nCaught signal %d\n",signum);
 	// Cleanup and close up stuff here
 	printf("close(spi_fd)\n");
@@ -199,6 +234,104 @@ void signal_callback_handler(int signum)
 	// Terminate program
 	exit(signum);
 }
+
+static void print_usage(const char *prog) {
+	printf("Usage: %s [-DsbdlHOLC3]\n", prog);
+	puts("  -D --device   device to use (default /dev/spidev1.1)\n"
+	     "  -s --speed    max speed (Hz)\n"
+	     "  -d --delay    delay (usec)\n"
+	     "  -b --bpw      bits per word \n"
+	     "  -l --loop     loopback\n"
+	     "  -H --cpha     clock phase\n"
+	     "  -O --cpol     clock polarity\n"
+	     "  -L --lsb      least significant bit first\n"
+	     "  -C --cs-high  chip select active high\n"
+	     "  -3 --3wire    SI/SO signals shared\n"
+		 "  -N --no-cs    no chip select?\n"
+	     "  -R --ready    SPI_READY\n"
+		 "  -m --manual   manual input of msg (no pipe-server)\n");
+	exit(1);
+}
+
+static void parse_opts(int argc, char *argv[]) {
+	while (1) {
+		static const struct option lopts[] = {
+			{ "device",  1, 0, 'D' },
+			{ "speed",   1, 0, 's' },
+			{ "delay",   1, 0, 'd' },
+			{ "bpw",     1, 0, 'b' },
+			{ "loop",    0, 0, 'l' },
+			{ "cpha",    0, 0, 'H' },
+			{ "cpol",    0, 0, 'O' },
+			{ "lsb",     0, 0, 'L' },
+			{ "cs-high", 0, 0, 'C' },
+			{ "3wire",   0, 0, '3' },
+			{ "no-cs",   0, 0, 'N' },
+			{ "ready",   0, 0, 'R' },
+			{ "manual",  0, 0, 'm' },
+			{ "verbose", 0, 0, 'v' },
+			{ NULL, 0, 0, 0 },
+		};
+		int c;
+
+		c = getopt_long(argc, argv, "D:s:d:b:lHOLC3NR:m:v", lopts, NULL);
+
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case 'D':
+			device = optarg;
+			break;
+		case 's':
+			speed = atoi(optarg);
+			break;
+		case 'd':
+			delay = atoi(optarg);
+			break;
+		case 'b':
+			bits = atoi(optarg);
+			break;
+		case 'l':
+			mode |= SPI_LOOP;
+			break;
+		case 'H':
+			mode |= SPI_CPHA;
+			break;
+		case 'O':
+			mode |= SPI_CPOL;
+			break;
+		case 'L':
+			mode |= SPI_LSB_FIRST;
+			break;
+		case 'C':
+			mode |= SPI_CS_HIGH;
+			break;
+		case '3':
+			mode |= SPI_3WIRE;
+			break;
+		case 'N':
+			mode |= SPI_NO_CS;
+			break;
+		case 'R':
+			mode |= SPI_READY;
+			break;
+		case 'm':
+			start_pipe_server = 0;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			print_usage(argv[0]);
+			break;
+		}
+	}
+}
+
+
+//Pipe-Server
+//###########
 
 setup_pipe_server() {
 	//Server creates arduino_pipe.tx, if it does not exist
@@ -227,27 +360,23 @@ setup_pipe_server() {
 	//r_fz = fdopen(r_fd, "r"); //create an Filepointer for High-Level I/O-Functions like fscanf
 }
 
-/*The SPI-Driver supports following speeds:
 
-  cdiv     speed          cdiv     speed
-    2    125.0 MHz          4     62.5 MHz
-    8     31.2 MHz         16     15.6 MHz
-   32      7.8 MHz         64      3.9 MHz
-  128     1953 kHz        256      976 kHz
-  512      488 kHz       1024      244 kHz
- 2048      122 kHz       4096       61 kHz
- 8192     30.5 kHz      16384     15.2 kHz
-32768     7629 Hz
-*/
+//SPI-Master
+//##########
 
-static const char *device = "/dev/spidev0.0";
-static uint8_t mode;
-static uint8_t bits = 8;
-static uint32_t speed = 122000; //max speed in Hz (at 500000 Hz the Arduino receives not all bytes for sure)
-static uint16_t delay;
+int setup_spi() {
+	/*The SPI-Driver supports following speeds:
 
-int setup_spi()
-{
+	  cdiv     speed          cdiv     speed
+		2    125.0 MHz          4     62.5 MHz
+		8     31.2 MHz         16     15.6 MHz
+	   32      7.8 MHz         64      3.9 MHz
+	  128     1953 kHz        256      976 kHz
+	  512      488 kHz       1024      244 kHz
+	 2048      122 kHz       4096       61 kHz
+	 8192     30.5 kHz      16384     15.2 kHz
+	32768     7629 Hz
+	*/
 	int ret = 0;
 
 	spi_fd = open(device, O_RDWR);
@@ -1014,104 +1143,480 @@ static int spi_transfer(int spi_fd) {
 	return lostmessages;
 }
 
-static void print_usage(const char *prog)
-{
-	printf("Usage: %s [-DsbdlHOLC3]\n", prog);
-	puts("  -D --device   device to use (default /dev/spidev1.1)\n"
-	     "  -s --speed    max speed (Hz)\n"
-	     "  -d --delay    delay (usec)\n"
-	     "  -b --bpw      bits per word \n"
-	     "  -l --loop     loopback\n"
-	     "  -H --cpha     clock phase\n"
-	     "  -O --cpol     clock polarity\n"
-	     "  -L --lsb      least significant bit first\n"
-	     "  -C --cs-high  chip select active high\n"
-	     "  -3 --3wire    SI/SO signals shared\n"
-		 "  -N --no-cs    no chip select?\n"
-	     "  -R --ready    SPI_READY\n"
-		 "  -m --manual   manual input of msg (no pipe-server)\n");
-	exit(1);
+
+//File-Parser
+//###########
+
+int test_value_range(int line_number, char name, int value, int min, int max) {
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser debug: Line %i: Parameter %c: %i\n", line_number, name, value);
+	#endif
+	//test if range of value matches
+	if (value < min || value > max) {
+		fprintf(stderr, "Backend File-Parser: Line %i: %c out of Range\n", line_number, name);
+		return 0;
+	}
+	return 1;
+}
+	
+int get_next_cnc_code_parameter(int line_number, int *InputParameterNumber, char *InputParameterName, int *InputParameter, char name, int *OutputValue, char optional, int min, int max) {
+	int success = 1;
+	//check Name of Parameter
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser debug: Line %i: InputParameterName %c, Searching for %c, InputParameter %i\n", line_number, *InputParameterName, name, *InputParameter);
+	#endif
+	if (*InputParameterName == name) {
+		//test range of value matches
+		if (success = test_value_range(line_number, name, *InputParameter, min, max)) {
+			*OutputValue=*InputParameter;
+			(*InputParameterNumber)++;
+		}
+		//else return 0;
+	}
+	else {
+		*OutputValue=0; //set Default Value
+		if (!optional) {
+			fprintf(stderr, "Backend File-Parser: Line %i: no %c-Parameter or incorrect format\n", line_number, name);
+			//return 0;
+		} //else return 1;
+		success = 0;
+	}
+	return success;
+	//return 2; //Parameter found
 }
 
-static void parse_opts(int argc, char *argv[])
-{
-	while (1) {
-		static const struct option lopts[] = {
-			{ "device",  1, 0, 'D' },
-			{ "speed",   1, 0, 's' },
-			{ "delay",   1, 0, 'd' },
-			{ "bpw",     1, 0, 'b' },
-			{ "loop",    0, 0, 'l' },
-			{ "cpha",    0, 0, 'H' },
-			{ "cpol",    0, 0, 'O' },
-			{ "lsb",     0, 0, 'L' },
-			{ "cs-high", 0, 0, 'C' },
-			{ "3wire",   0, 0, '3' },
-			{ "no-cs",   0, 0, 'N' },
-			{ "ready",   0, 0, 'R' },
-			{ "manual",  0, 0, 'm' },
-			{ "verbose", 0, 0, 'v' },
-			{ NULL, 0, 0, 0 },
-		};
-		int c;
+int file_parser_abort() {
+	fclose(cnc_code_file);
+	return EXIT_FAILURE;
+}
 
-		c = getopt_long(argc, argv, "D:s:d:b:lHOLC3NR:m:v", lopts, NULL);
+int file_parser() {
+	printf("Backend File-Parser: File-Parser\n");
+	
+	struct cnc_code_block_raw {
+		unsigned int N; //block-No.
+		char GM; //G or M-Code
+		unsigned char GM_NO; //G/M-Code-Number
+		char c1; //Name of 1. Parameter
+		int p1; //1. Parameter
+		char c2; //Name of 2. Parameter
+		int p2; //2. Parameter
+		char c3; //Name of 3. Parameter
+		int p3; //3. Parameter
+		char c4; //Name of 4. Parameter
+		int p4; //4. Parameter
+	} cnc_code_block_raw;
 
-		if (c == -1)
-			break;
-
-		switch (c) {
-		case 'D':
-			device = optarg;
-			break;
-		case 's':
-			speed = atoi(optarg);
-			break;
-		case 'd':
-			delay = atoi(optarg);
-			break;
-		case 'b':
-			bits = atoi(optarg);
-			break;
-		case 'l':
-			mode |= SPI_LOOP;
-			break;
-		case 'H':
-			mode |= SPI_CPHA;
-			break;
-		case 'O':
-			mode |= SPI_CPOL;
-			break;
-		case 'L':
-			mode |= SPI_LSB_FIRST;
-			break;
-		case 'C':
-			mode |= SPI_CS_HIGH;
-			break;
-		case '3':
-			mode |= SPI_3WIRE;
-			break;
-		case 'N':
-			mode |= SPI_NO_CS;
-			break;
-		case 'R':
-			mode |= SPI_READY;
-			break;
-		case 'm':
-			start_pipe_server = 0;
-			break;
-		case 'v':
-			verbose = 1;
-			break;
-		default:
-			print_usage(argv[0]);
-			break;
+	cnc_code_file = fopen(CNC_CODE_FILE, "r");
+	
+	char c = 0, success=0;
+	char line[LINELENGTH] = {};
+	int n = 0, i = 0, j = 0, StartSignLine = 0, StopSignLine = 0, ret = 0;
+	fpos_t startpos;
+	char *InputParameterName[4];
+	int *InputParameter[4];
+	
+	cnc_code_array_length =0;
+	
+	
+	//find start- and stop-signs '%'
+	while (c != EOF){
+		StopSignLine++; //stopsign not needed
+		fgets(line, LINELENGTH, cnc_code_file);
+		n = sscanf(line,"%c", &c);
+		if (n < 1) {
+			if (errno != 0) {
+				perror("Backend File-Parser: scanf");
+				return file_parser_abort();
+			}
+		}
+		else if(c == '%') {
+			if (!StartSignLine) {
+				StartSignLine = StopSignLine;
+				fgetpos(cnc_code_file,&startpos);
+			}
+			else break; //StopSignLine
 		}
 	}
+	//end if no cnc-code found between start- and stop-signs
+	if (!StartSignLine || StopSignLine-StartSignLine<1) {
+		return file_parser_abort();
+	}
+	
+	//rewind file-pointer to StartSignLine+1
+	fsetpos(cnc_code_file,&startpos);
+	int line_number = StartSignLine+1;
+	
+	//free old cnc_code_array
+	if(cnc_code_array != NULL) free(cnc_code_array);
+	
+	//reserve memory for cnc_code_array (should be global)
+	cnc_code_array_length = StopSignLine-StartSignLine-1;
+	cnc_code_array = (struct cnc_code_block*) calloc(cnc_code_array_length, sizeof(struct cnc_code_block));  //zero it with calloc
+	if(cnc_code_array == NULL) {
+		perror("Backend File-Parser: no memory");
+		return file_parser_abort();
+	}
+	//static struct cnc_code_block cnc_code_array[cnc_code_array_length] = {0}; //zero it
+	
+	printf("Backend File-Parser: StartSignLine: %i\n", StartSignLine);
+	printf("Backend File-Parser: StopSignLine: %i\n", StopSignLine);
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser debug: cnc_code_array_length: %i\n", cnc_code_array_length);
+	#endif
+	
+	//read cnc-code
+	for (i=0; i<cnc_code_array_length; i++) {
+		fgets(line, LINELENGTH, cnc_code_file);
+		n = sscanf(line,"N%d %c%d %c%d %c%d %c%d %c%d", &(cnc_code_block_raw.N), &(cnc_code_block_raw.GM), &(cnc_code_block_raw.GM_NO), &cnc_code_block_raw.c1, &cnc_code_block_raw.p1, &cnc_code_block_raw.c2, &cnc_code_block_raw.p2, &cnc_code_block_raw.c3, &cnc_code_block_raw.p3, &cnc_code_block_raw.c4, &cnc_code_block_raw.p4);
+		if (n < 3) {
+			if (errno != 0) perror("Backend File-Parser: scanf");
+			else fprintf(stderr, "Backend File-Parser: Line %i: Parameter not matching\n");
+			return file_parser_abort();
+		}
+		
+		#ifdef FILEPARSER_STANDALONE
+			printf("Backend File-Parser debug: Line %i: N%04i %c%i %c%i %c%i %c%i %c%i\n", line_number, cnc_code_block_raw.N, cnc_code_block_raw.GM, cnc_code_block_raw.GM_NO, cnc_code_block_raw.c1, cnc_code_block_raw.p1, cnc_code_block_raw.c2, cnc_code_block_raw.p2, cnc_code_block_raw.c3, cnc_code_block_raw.p3, cnc_code_block_raw.c4, cnc_code_block_raw.p4);
+		#endif
+		
+		j=0;
+		InputParameterName[0] = &cnc_code_block_raw.c1;
+		InputParameter[0] = &cnc_code_block_raw.p1;
+		InputParameterName[1] = &cnc_code_block_raw.c2;
+		InputParameter[1] = &cnc_code_block_raw.p2;
+		InputParameterName[2] = &cnc_code_block_raw.c3;
+		InputParameter[2] = &cnc_code_block_raw.p3;
+		InputParameterName[3] = &cnc_code_block_raw.c4;
+		InputParameter[3] = &cnc_code_block_raw.p4;
+		
+		//process Code-Line
+		if (cnc_code_block_raw.GM == 'G') {
+			switch (cnc_code_block_raw.GM_NO){
+				case 0:
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						break;
+				case 1:
+				case 2:
+				case 3:
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						break;
+				case 4:
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 0, 0, X_DWELL_MIN_MAX_CNC); //Ranges correct?
+						if (!ret) return file_parser_abort();
+						break;
+				case 20:
+				case 21:
+						break;
+				case 22:
+						//M30[line] = N;
+						break;
+				case 24:
+						break;
+				case 25: //G25(L); //Subroutine Call-Up (returns to next block)
+						/*
+						if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $G25[$N] = $L;
+						else $success = 0;
+						*/
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'L', &cnc_code_array[i].FTLK, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
+						if (!ret) return file_parser_abort();
+						break;
+				case 26: //G26(X,Z,T);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'T', &cnc_code_array[i].FTLK, 0, T_MIN, T_MAX);
+						if (!ret) return file_parser_abort();
+						break;
+				case 27: //G27(L); //Jump
+						/*
+						if (get_next_cnc_code_parameter($Parameter, $line, $N, "L", $L, 0, CNC_CODE_NMIN, CNC_CODE_NMAX)) $jumps[$N] = $L;
+						else $success = 0;
+						*/
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'L', &cnc_code_array[i].FTLK, 0, CNC_CODE_NMIN, CNC_CODE_NMAX);
+						if (!ret) return file_parser_abort();
+						break;
+				case 33: //G33(Z,K);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].XI, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'K', &cnc_code_array[i].ZK, 0, IK_MIN, K_MAX); //Ranges correct?
+						if (!ret) return file_parser_abort();
+						break;
+				case 64:
+						break;
+				case 73: //G73(Z,F);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].XI, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						break;
+				case 78: //G78(X,Z,K,H);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'K', &cnc_code_array[i].FTLK, 0, IK_MIN, K_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'H', &cnc_code_array[i].HS, 0, H_MIN, H_MAX); //Ranges correct?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 81: //G81(Z,F);
+				case 82: //G82(Z,F);
+				case 83: //G83(Z,F);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].XI, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 84: //G84(X,Z,F,H);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'H', &cnc_code_array[i].HS, 0, H_MIN, H_MAX); //optional?, Ranges correct?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 85: //G85(Z,F);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].XI, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 86: //G86(X,Z,F,H);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'H', &cnc_code_array[i].HS, 0, H_G86_MIN, H_MAX); //optional?, Ranges correct?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 88: //G88(X,Z,F,H);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'H', &cnc_code_array[i].HS, 0, H_MIN, H_MAX); //optional?, Ranges correct?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 89: //G89(Z,F);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].XI, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) return file_parser_abort();
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'F', &cnc_code_array[i].FTLK, 0, F_MIN, F_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						//Ranges correct?
+						break;
+				case 90:
+				case 91:
+						break;
+				case 92: //G92(X,Z);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						break;
+				case 94:
+				case 95:
+				case 96:
+						break;
+				case 97: //G97(S);
+				case 196: //G196(S);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'S', &cnc_code_array[i].HS, 1, REVOLUTIONS_MIN, REVOLUTIONS_MAX); //optional?
+						if (!ret) return file_parser_abort();
+						break;
+				default:
+						fprintf(stderr, "Backend File-Parser: Line %i: G-Code is not supported\n", line_number);
+						return file_parser_abort();
+			}
+		}
+		else if (cnc_code_block_raw.GM == 'M') {
+			switch (cnc_code_block_raw.GM_NO){
+				case 0:
+				case 3:
+				case 4:
+				case 5:
+						break;
+				case 6: //M06(X,Z,T);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'T', &cnc_code_array[i].FTLK, 0, T_MIN, T_MAX);
+						if (!ret) return file_parser_abort();
+						break;
+				case 17://Return from Subroutine
+						//M17[line] = N;
+						break;
+				case 30://End of Programm
+						//$M30="$line"; //last End of Programm for check of jump instructions
+						//M30[line] = N;
+						break;
+				case 98: //M98(X,Z);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 1, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret |= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 1, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) {
+							fprintf(stderr, "Backend File-Parser: Line %i: No X- or Z-Parameter or incorrect format. At least one of them is required.\n", line_number);
+							return file_parser_abort();
+						}
+						break;
+				case 99: //M99(I,K);
+						ret = get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'X', &cnc_code_array[i].XI, 0, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //optional?
+						ret &= get_next_cnc_code_parameter(line_number, &j, InputParameterName[j], InputParameter[j], 'Z', &cnc_code_array[i].ZK, 0, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //optional?
+						if (!ret) return file_parser_abort();
+						break;
+				default:
+						fprintf(stderr, "Backend File-Parser: Line %i: M-Code is not supported\n", line_number);
+						return file_parser_abort();
+			}
+		}
+		else {
+			fprintf(stderr, "Backend File-Parser: Line %i: Parameter not matching\n", line_number);
+			return file_parser_abort();
+		}
+		if (cnc_code_block_raw.N >= CNC_CODE_NMIN && cnc_code_block_raw.N <= CNC_CODE_NMAX) {
+			cnc_code_array[i].N = cnc_code_block_raw.N;
+		}
+		else {
+			fprintf(stderr, "Backend File-Parser: Line %i: N out of Range\n", line_number);
+			return file_parser_abort();
+		}	
+		cnc_code_array[i].GM = cnc_code_block_raw.GM;
+		cnc_code_array[i].GM_NO = cnc_code_block_raw.GM_NO;
+		line_number++;
+	}
+	
+	//change L-Parameter of Jumps and Subroutine-Call-Ups (needed to flatten block-numbers for arduino to array-index, to save memory)
+	for (i=0; i<cnc_code_array_length; i++) {
+		if (cnc_code_array[i].GM_NO == 25 || cnc_code_array[i].GM_NO == 27) { //only G-Codes with these No. exist
+			for (j=0; j<cnc_code_array_length; j++) {
+				if (cnc_code_array[j].N == cnc_code_array[i].FTLK) {
+					cnc_code_array[i].FTLK = j;
+					success=1;
+					break;
+				}
+			}
+			if (success) success=0;
+			else {
+				fprintf(stderr, "Backend File-Parser: N%04i: L%i target block does not exist\n", cnc_code_array[i].N, cnc_code_array[i].FTLK);
+				return file_parser_abort();
+			}
+		}
+	}
+	
+	fclose(cnc_code_file);
+	return EXIT_SUCCESS;
 }
 
-int main(int argc, char *argv[])
-{	
+static int spi_create_cnc_code_messages() {
+	char msg_type = 16;
+	unsigned int i, pos, used_length;
+	
+	#ifdef FILEPARSER_STANDALONE
+		printf("Backend File-Parser: Create tx[SPI_BYTE_LENGTH_PRAEAMBEL-1] - tx[SPI_MSG_LENGTH-1] for Msg:\n");
+		printf("Backend File-Parser: MT  MNO  N_H  N_L   GM NO  XI_H XI_L  ZK_H ZK_L  FLTK_H,_L  HS_H HS_L\n");
+	#endif
+	
+	for (i=0; i<cnc_code_array_length; i++) {
+		pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
+		tx[pos++] = msg_type;
+		tx[pos++] = msg_number;
+		tx[pos++] = (i+1)>>8;
+		tx[pos++] = (i+1);
+		tx[pos++] = cnc_code_array[i].GM;
+		tx[pos++] = cnc_code_array[i].GM_NO;
+		tx[pos++] = cnc_code_array[i].XI >> 8;
+		tx[pos++] = cnc_code_array[i].XI;
+		tx[pos++] = cnc_code_array[i].ZK >> 8;
+		tx[pos++] = cnc_code_array[i].ZK;
+		tx[pos++] = cnc_code_array[i].FTLK >> 8;
+		tx[pos++] = cnc_code_array[i].FTLK;
+		tx[pos++] = cnc_code_array[i].HS >> 8;
+		tx[pos++] = cnc_code_array[i].HS;
+		
+		used_length = pos;
+		
+		//zero unused bytes (not needed in loop)
+		for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
+			tx[pos] = 0;
+		}
+		
+		#ifndef FILEPARSER_STANDALONE
+		//CRC
+		tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
+		
+		//send msg
+		messages_notreceived = spi_transfer(spi_fd);
+		
+		//Error-Handling
+		if(messages_notreceived > i) return EXIT_FAILURE;
+		else {
+			i -= messages_notreceived;
+			//Reset SPI-Error
+			while (messages_notreceived) {	
+					if (!spi_create_command_msg(NULL, 19)) messages_notreceived = spi_transfer(spi_fd);
+					usleep(200000); //0,2s
+					if (!spi_create_command_msg(NULL, 1)) messages_notreceived = spi_transfer(spi_fd);
+			}
+		}
+		#else
+			tx[pos] = 0; //CRC
+			
+			//Output
+			printf("Backend File-Parser: ");
+			pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
+			printf("%i  ", tx[pos++]); //msg_type
+			printf("%03i  ", tx[pos++]); //msg_number;
+			printf("0x%02x ", tx[pos++]); //(i+1)>>8;
+			printf("0x%02x  ", tx[pos++]); //(i+1);
+			printf("%c ", tx[pos++]); //cnc_code_array[i].GM;
+			printf("%03i  ", tx[pos++]); //cnc_code_array[i].GM_NO;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].XI >> 8;
+			printf("0x%02x  ", tx[pos++]); //cnc_code_array[i].XI;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].ZK >> 8;
+			printf("0x%02x  ", tx[pos++]); //cnc_code_array[i].ZK;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].FTLK >> 8;
+			printf("0x%02x  ", tx[pos++]); //cnc_code_array[i].FTLK;
+			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].HS >> 8;
+			printf("0x%02x \n", tx[pos++]); //cnc_code_array[i].HS;
+		#endif
+	}
+	return EXIT_SUCCESS;
+}
+
+
+//main
+//####
+
+int main(int argc, char *argv[]) {	
 	parse_opts(argc, argv);
 	
 	//allow all rights for new created files
@@ -1207,7 +1712,7 @@ int main(int argc, char *argv[])
 						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
 						if (process_file) {
 							usleep(200000); //0,2s
-							//if(!file_parser()) spi_create_cnc_code_messages(); //create and send messages from file
+							if(!file_parser()) spi_create_cnc_code_messages(); //create and send messages from file
 							process_file = 0;
 						}
 						/*
