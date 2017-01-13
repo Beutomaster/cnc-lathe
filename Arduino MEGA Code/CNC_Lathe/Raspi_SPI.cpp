@@ -278,7 +278,8 @@ boolean process_incomming_msg() {
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
                 //some Error-Handling needed, if message is ignored
                 programm_stop();
-                //int NMAX = ((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L]) //maybe not needed
+                N_MAX = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L];
+                //N_Offset = ((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_OFFSET_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_OFFSET_L]); //needed for loading more data
                 for (N=0; N<CNC_CODE_NMAX; N++) {
                   cnc_code[N].GM = 0;
                 }
