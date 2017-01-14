@@ -6,7 +6,7 @@
 	include 'verify_cnc_code.php';
 
 	// define variables and set to empty values
-	$Input_N = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $msg_pid = "";
+	$Input_N = $Input_N_MAX = $Input_N_OFFSET = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $msg_pid = "";
 	$G_Code_Numbers = array(0, 1, 2, 3, 4, 20, 21 ,22, 24, 25, 26, 27, 33, 64, 73, 78, 81, 82, 83, 84, 85, 86, 88, 89, 90, 91, 92, 94, 95, 96, 97, 196);
 	$M_Code_Numbers = array(0, 3, 4, 5, 6, 17, 30, 98, 99);
 	
@@ -28,7 +28,7 @@
 				$parameter = array("block");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
+				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX);
 				$msg .= $msg_pid . " " . $Input_N . "\n";
 				break;
 			case "ProgramStop":
@@ -124,10 +124,12 @@
 				break;
 			case "LoadNewProgramm":
 				$msg_pid = "15";
-				$parameter = array("block", "metric_inch");
+				$parameter = array("n_offset", "n_max", "metric_inch");
 				$success &= test_keys_exist($parameter) or exit(1);
-				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
+				$Input_N_OFFSET = test_input($_POST["n_offset"]);
+				$success &= test_value_range($Input_N_OFFSET, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX); //value ignored by Backend, instead value from file-parser is used
+				$Input_N_MAX = test_input($_POST["n_max"]);
+				$success &= test_value_range($Input_N_MAX, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX); //value ignored by Backend, instead value from file-parser is used
 				$Input_INCH = test_input($_POST["metric_inch"]);
 				if ($Input_INCH == "metric") $Input_INCH = "0";
 				elseif ($Input_INCH == "inch") $Input_INCH = "1";
@@ -135,14 +137,14 @@
 					echo "Value of metric_inch out of range!";
 					$success = 0;
 				}
-				$msg .= $msg_pid . " " . $Input_N . " " . $Input_INCH . "\n";
+				$msg .= $msg_pid . " " . $Input_N_OFFSET . " " . $Input_N_MAX . " " . $Input_INCH . "\n";
 				break;
 			case "NewProgrammBlock": //maybe not used, instead Textarea is uploaded
 				$msg_pid = "16";
 				$parameter = array("block", "gm_code", "gm_code_no", "cnc_xi", "cnc_zk", "cnc_ftlk", "cnc_hs");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
+				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX); //block-numbers should be flattened
 				$Input_GM = test_input($_POST["gm_code"]);
 				$Input_GM_NO = test_input($_POST["gm_code_no"]);
 				if ($Input_GM == "G") {
@@ -164,13 +166,13 @@
 					$success = 0;
 				}
 				$Input_XI = test_input($_POST["cnc_xi"]);
-				$success &= test_value_range($Input_XI, -X_MIN_MAX_CNC, X_MIN_MAX_CNC);
+				$success &= test_value_range($Input_XI, -X_MIN_MAX_CNC, X_MIN_MAX_CNC); //not right!!! Many cases!!!
 				$Input_ZK = test_input($_POST["cnc_zk"]);
-				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC);
+				$success &= test_value_range($Input_ZK, -Z_MIN_MAX_CNC, Z_MIN_MAX_CNC); //not right!!! Many cases!!!
 				$Input_FTLK = test_input($_POST["cnc_ftlk"]);
-				$success &= test_value_range($Input_FTLK, -32760, 32760); //not right!!! Many cases!!!
+				$success &= test_value_range($Input_FTLK, -CNC_CODE_FILE_PARSER_NMAX, CNC_CODE_FILE_PARSER_NMAX); //not right!!! Many cases!!!
 				$Input_HS = test_input($_POST["cnc_hs"]);
-				$success &= test_value_range($Input_HS, -32760, 32760); //not right!!! Many cases!!!
+				$success &= test_value_range($Input_HS, H_MIN, REVOLUTIONS_MAX); //not right!!! Many cases!!!
 				$msg .= $msg_pid . " " . $Input_N . " " . $Input_GM . " " . $Input_GM_NO . " " . $Input_XI . " " . $Input_ZK . " " . $Input_FTLK . " " . $Input_HS . "\n";
 				break;
 			case "Shutdown":

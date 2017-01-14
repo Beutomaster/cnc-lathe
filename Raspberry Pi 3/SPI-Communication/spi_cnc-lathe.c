@@ -41,7 +41,8 @@
 
 //Input Parameter Ranges
 #define CNC_CODE_NMIN 0
-#define CNC_CODE_NMAX 500
+#define CNC_CODE_NMAX 499
+#define CNC_CODE_FILE_PARSER_NMAX 9999
 #define GM_CODE_MIN 0
 #define G_CODE_MAX 196
 #define M_CODE_MAX 99
@@ -90,9 +91,11 @@
 #define SPI_BYTE_RASPI_MSG_NO (1+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_N_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_N_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_N_OFFSET_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_N_OFFSET_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_GM (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_OFFSET_N_H (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_OFFSET_N_L (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_MAX_N_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_MAX_N_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_GM_TYPE (4+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_GM_NO (5+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_XI_H (6+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_XI_L (7+SPI_BYTE_LENGTH_PRAEAMBEL)
@@ -113,7 +116,7 @@
 #define SPI_BYTE_RASPI_MSG_Z_L 3 (3+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_TOOL_Z_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_TOOL_Z_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_TOOL_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
@@ -139,7 +142,7 @@
 //#define MACHINE_STATE_FILE "machine_state.xml"
 
 //File-Parser
-#define CNC_CODE_FILE "/var/www/html/uploads/cnc_code.txt"
+#define FILE_CNC_CODE "/var/www/html/uploads/cnc_code.txt"
 #define LINELENGTH 80
 
 //development switches
@@ -459,7 +462,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes)
 }
 
 static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
-	int n, block=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	int n, block=-1, block_n_max=-1, block_n_offset=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 	
 	const char *pipe_msg_buffer_temp = pipe_msg_buffer; //hotfix
@@ -546,7 +549,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						}
 					}
 					
-					printf("Block-No (0 to 500): ");
+					printf("Block-No (0 to 499): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
 					else if (pipe_msg_buffer == NULL) {
 						do {
@@ -783,7 +786,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 15:  	//New CNC-Programm wit N Blocks in metric or inch
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block, &inch);
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block_n_offset, &block_n_max, &inch);
 						if (n != 4) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
@@ -791,20 +794,35 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						}
 					}
 					
-					printf("Blocks (0 to 500): ");
-					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
+					printf("N-Offset (0 to 9999): ");
+					if ((block_n_offset>=CNC_CODE_NMIN) && (block_n_offset<=CNC_CODE_FILE_PARSER_NMAX)) printf("%i\n",block_n_offset);
 					else if (pipe_msg_buffer == NULL) {
 						do {
-							scanf("%d",&block);
+							scanf("%d",&block_n_offset);
 							getchar();
-						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+						} while ((block_n_offset<CNC_CODE_NMIN) || (block_n_offset>CNC_CODE_FILE_PARSER_NMAX));
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
 						return(EXIT_FAILURE);
 					}
-					tx[pos++] = block>>8;
-					tx[pos++] = block;
+					tx[pos++] = block_n_offset>>8;
+					tx[pos++] = block_n_offset;
+					
+					printf("N-Max (0 to 9999): ");
+					if ((block_n_max>=CNC_CODE_NMIN) && (block_n_max<=CNC_CODE_FILE_PARSER_NMAX)) printf("%i\n",block_n_max);
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&block_n_max);
+							getchar();
+						} while ((block_n_max<CNC_CODE_NMIN) || (block_n_max>CNC_CODE_FILE_PARSER_NMAX));
+					}
+					else {
+						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
+						return(EXIT_FAILURE);
+					}
+					tx[pos++] = block_n_max>>8;
+					tx[pos++] = block_n_max;
 					
 					printf("metric or inch (0 or 1): ");
 					if ((inch>=0) && (inch<=1)) printf("%i\n",inch);
@@ -822,7 +840,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					
 					process_file = 1;
 					break;
-		case 16:  	//CNC-Code-Block
+		case 16:  	//CNC-Code-Block (maybe not used, instead Textarea is uploaded)
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %c %d %d %d %d %d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 						if (n != 9) {
@@ -832,7 +850,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						}
 					}
 					
-					printf("Block-No (0 to 500): ");
+					printf("Block-No (0 to 499): ");
 					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
 					else if (pipe_msg_buffer == NULL) {
 						do {
@@ -891,7 +909,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					tx[pos++] = gmcode;
 					
-					printf("X (+-5999): ");
+					printf("X or I (+-5999): ");
 					if ((XX>=-X_MIN_MAX_CNC) && (XX<=X_MIN_MAX_CNC)) printf("%i\n",XX);
 					else if (pipe_msg_buffer == NULL) {
 						do {
@@ -900,7 +918,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						} while ((XX<-X_MIN_MAX_CNC) || (XX>X_MIN_MAX_CNC));
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: X out of Range\n");
+						fprintf(stderr, "Backend Command-Interpreter: X or I out of Range\n");
 						return(EXIT_FAILURE);
 					}
 					scanf("%d",&XX);
@@ -908,46 +926,46 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
 					
-					printf("Z (+-32700): ");
-					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ);
+					printf("Z (+-32700) or K (+-5999): ");
+					if ((ZZ>=-Z_MIN_MAX_CNC) && (ZZ<=Z_MIN_MAX_CNC)) printf("%i\n",ZZ); //not right!!! Many cases!!!
 					else if (pipe_msg_buffer == NULL) {
 						do {
 							scanf("%d",&ZZ);
 							getchar();
-						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC));
+						} while ((ZZ<-Z_MIN_MAX_CNC) || (ZZ>Z_MIN_MAX_CNC)); //not right!!! Many cases!!!
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: Z out of Range\n");
+						fprintf(stderr, "Backend Command-Interpreter: Z or K out of Range\n");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
 					
-					printf("Feed (2 to 499): ");
-					if ((feed>=F_MIN) && (feed<=F_MAX)) printf("%i\n",feed);
+					printf("F (2 to 499), T (0 to 6), L (+-9999), K (0 to 499 (Thread Pitch) or 5999: ");
+					if ((feed>=-CNC_CODE_FILE_PARSER_NMAX) && (feed<=CNC_CODE_FILE_PARSER_NMAX)) printf("%i\n",feed); //not right!!! Many cases!!!
 					else if (pipe_msg_buffer == NULL) {
 						do {
 							scanf("%d",&feed);
 							getchar();
-						} while ((feed<F_MIN) || (feed>F_MAX));
+						} while ((feed<-CNC_CODE_FILE_PARSER_NMAX) || (feed>CNC_CODE_FILE_PARSER_NMAX)); //not right!!! Many cases!!!
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: F out of Range\n");
+						fprintf(stderr, "Backend Command-Interpreter: F,T,L or K out of Range\n");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
 					
-					printf("H (0 to 999): ");
-					if ((HH>=H_MIN) && (HH<=H_MAX)) printf("%i\n",HH);
+					printf("H (0 to 999) or S (460 to 3220: ");
+					if ((HH>=H_MIN) && (HH<=REVOLUTIONS_MAX)) printf("%i\n",HH);  //not right!!! Many cases!!!
 					else if (pipe_msg_buffer == NULL) {
 						do {
 							scanf("%d",&HH);
 							getchar();
-						} while ((HH<H_MIN) || (HH>H_MAX));
+						} while ((HH<H_MIN) || (HH>REVOLUTIONS_MAX)); //not right!!! Many cases!!!
 					}
 					else {
-						fprintf(stderr, "Backend Command-Interpreter: H out of Range\n");
+						fprintf(stderr, "Backend Command-Interpreter: H or S out of Range\n");
 						return(EXIT_FAILURE);
 					}
 					tx[pos++] = HH>>8;
@@ -1208,7 +1226,7 @@ int file_parser() {
 		int p4; //4. Parameter
 	} cnc_code_block_raw;
 
-	cnc_code_file = fopen(CNC_CODE_FILE, "r");
+	cnc_code_file = fopen(FILE_CNC_CODE, "r");
 	
 	char c = 0, success=0;
 	char line[LINELENGTH] = {};

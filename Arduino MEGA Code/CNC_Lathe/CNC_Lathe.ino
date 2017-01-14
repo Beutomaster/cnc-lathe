@@ -191,7 +191,7 @@ void loop() {
             }
             else {
               STATE_N++;
-              if (STATE_N<0 || STATE_N>=CNC_CODE_NMAX) {
+              if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
                 N_Offset = N_Offset + STATE_N;
                 ERROR_NO |= _BV(ERROR_CNC_CODE_NEEDED_BIT);
                 //wait for new code-messages and reset of ERROR_CNC_CODE_NEEDED_BIT

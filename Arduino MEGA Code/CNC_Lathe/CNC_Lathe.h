@@ -21,7 +21,8 @@
 
 //Input Parameter Ranges
 #define CNC_CODE_NMIN 0
-#define CNC_CODE_NMAX 500
+#define CNC_CODE_NMAX 499
+#define CNC_CODE_FILE_PARSER_NMAX 9999
 #define GM_CODE_MIN 0
 #define G_CODE_MAX 196
 #define M_CODE_MAX 99

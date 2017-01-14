@@ -233,7 +233,7 @@ boolean process_incomming_msg() {
               else if (get_control_active() && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
                 get_Tool_X((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_X_L]);
                 get_Tool_Z((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_L]);
-                set_tool_position(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_T]);
+                set_tool_position(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_T]);
               }
               break;
     case 12:   //Origin-XOffset
@@ -278,9 +278,9 @@ boolean process_incomming_msg() {
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
                 //some Error-Handling needed, if message is ignored
                 programm_stop();
-                N_MAX = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L];
-                //N_Offset = ((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_OFFSET_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_OFFSET_L]); //needed for loading more data
-                for (N=0; N<CNC_CODE_NMAX; N++) {
+                N_Offset = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_OFFSET_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_OFFSET_N_L]; //needed for loading more data
+                N_MAX = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_MAX_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_MAX_N_L];
+                for (N=0; N<=CNC_CODE_NMAX; N++) {
                   cnc_code[N].GM = 0;
                 }
                 //metric or inch? maybe better replaced by G-Code
@@ -297,7 +297,7 @@ boolean process_incomming_msg() {
               else if ((STATE>>STATE_PAUSE_BIT)&1) {
                 //some Error-Handling needed, if message is ignored
                 N = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L];
-                cnc_code[N].GM = rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_GM];
+                cnc_code[N].GM = rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_GM_TYPE];
                 cnc_code[N].GM_NO = rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_GM_NO];
                 cnc_code[N].XI = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_XI_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_XI_L];
                 cnc_code[N].ZK = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ZK_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ZK_L];
