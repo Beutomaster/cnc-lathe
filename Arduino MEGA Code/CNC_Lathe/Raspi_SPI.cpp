@@ -28,7 +28,7 @@ Praeambel 011 msg_no XX ZZ T 10xZero CRC-8 #Set Tool-Position (and INIT)
 Praeambel 012 msg_no XX 13xZero CRC-8 #Origin-XOffset
 Praeambel 013 msg_no ZZ 13xZero CRC-8 #Origin-ZOffset
 Praeambel 014 msg_no metric 14xZero CRC-8 #metric or inch (maybe not needed)
-Praeambel 015 msg_no NN metric 12xZero CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
+Praeambel 015 msg_no NN NN metric 10xZero CRC-8 #New CNC-Programm wit NN Offset and NN Blocks in metric or inch
 Praeambel 016 msg_no NN GG XX ZZ FF HH 3xZero CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
 Praeambel 017 msg_no 15xZero CRC-8 #shutdown
 Praeambel 018 msg_no 15xZero CRC-8 #Load last coordinates and tool position and init
