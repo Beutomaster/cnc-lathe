@@ -271,6 +271,26 @@ if(!$_SESSION['logged_in'])
 				<p>Stepper on</p>
 	</div>
 	<div class="state clearfix">
+				<div id="CommandTimeLED" class="led-grey"></div>
+				<p>Command-Time</p>
+	</div>
+	<div class="state clearfix">
+				<div id="XStepperMovingLED" class="led-grey"></div>
+				<p>X-Stepper moving</p>
+	</div>
+	<div class="state clearfix">
+				<div id="ZStepperMovingLED" class="led-grey"></div>
+				<p>Z-Stepper moving</p>
+	</div>
+	<div class="state clearfix">
+				<div id="ToolchangerMovingLED" class="led-grey"></div>
+				<p>Toolchanger moving</p>
+	</div>
+	<div class="state clearfix">
+				<div id="CNCCodeNeededLED" class="led-grey"></div>
+				<p>CNC-Code needed</p>
+	</div>
+	<div class="state clearfix">
 				<p>RPM:</p>
 				<div id="RPMDisplaybox" class="Displaybox"></div>	
 	</div>
@@ -343,6 +363,26 @@ if(!$_SESSION['logged_in'])
 			<br />
 			<label>Stepper on:<br />
 			<input type="text" name="stepper_on" id="stepper_on" />
+			</label>
+			<br />
+			<label>Command-Time:<br />
+			<input type="text" name="command_time" id="command_time" />
+			</label>
+			<br />
+			<label>X-Stepper moving:<br />
+			<input type="text" name="xstepper_running" id="xstepper_running" />
+			</label>
+			<br />
+			<label>Z-Stepper moving:<br />
+			<input type="text" name="zstepper_running" id="zstepper_running" />
+			</label>
+			<br />
+			<label>Toolchanger moving:<br />
+			<input type="text" name="toolchanger_running" id="toolchanger_running" />
+			</label>
+			<br />
+			<label>CNC-Code needed:<br />
+			<input type="text" name="cnc_code_needed" id="cnc_code_needed" />
 			</label>
 			<br /><br />
 			<label>RPM:<br />

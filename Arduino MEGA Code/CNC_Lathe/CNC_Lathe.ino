@@ -185,7 +185,7 @@ void loop() {
       }
       if (command_completed) {
         if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-          if (!pause && !ERROR_NO) {
+          if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
             if (process_cnc_listing()) { //error
               STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT);
               ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);

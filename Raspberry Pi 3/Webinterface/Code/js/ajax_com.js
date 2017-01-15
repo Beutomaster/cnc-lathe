@@ -28,6 +28,11 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var spindle_on=xmlDoc.getElementsByTagName("spindle_on")[0].textContent;
 	var spindle_direction=xmlDoc.getElementsByTagName("spindle_direction")[0].textContent;
 	var stepper_on=xmlDoc.getElementsByTagName("stepper_on")[0].textContent;
+	var command_time=xmlDoc.getElementsByTagName("command_time")[0].textContent;
+	var xstepper_running=xmlDoc.getElementsByTagName("xstepper_running")[0].textContent;
+	var zstepper_running=xmlDoc.getElementsByTagName("zstepper_running")[0].textContent;
+	var toolchanger_running=xmlDoc.getElementsByTagName("toolchanger_running")[0].textContent;
+	var cnc_code_needed=xmlDoc.getElementsByTagName("cnc_code_needed")[0].textContent;
 	var rpm_measure=xmlDoc.getElementsByTagName("rpm_measure")[0].textContent;
 	var x_actual=xmlDoc.getElementsByTagName("x_actual")[0].textContent;
 	var z_actual=xmlDoc.getElementsByTagName("z_actual")[0].textContent;
@@ -48,6 +53,11 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	document.getElementById("spindle_on").setAttribute("value", spindle_on);
 	document.getElementById("spindle_direction").setAttribute("value", spindle_direction);
 	document.getElementById("stepper_on").setAttribute("value", stepper_on);
+	document.getElementById("command_time").setAttribute("value", command_time);
+	document.getElementById("xstepper_running").setAttribute("value", xstepper_running);
+	document.getElementById("xstepper_running").setAttribute("value", zstepper_running);
+	document.getElementById("toolchanger_running").setAttribute("value", toolchanger_running);
+	document.getElementById("cnc_code_needed").setAttribute("value", cnc_code_needed);
 	document.getElementById("rpm_measure").setAttribute("value", rpm_measure);
 	document.getElementById("x_actual").setAttribute("value", x_actual);
 	document.getElementById("z_actual").setAttribute("value", z_actual);
@@ -184,6 +194,41 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	} 
 	else {
 		document.getElementById("StepperOnLED").className = "led-grey";
+	}
+	
+	if (command_time == 1) {
+		document.getElementById("CommandTimeLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("CommandTimeLED").className = "led-grey";
+	}
+	
+	if (xstepper_running == 1) {
+		document.getElementById("XStepperMovingLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("XStepperMovingLED").className = "led-grey";
+	}
+	
+	if (zstepper_running == 1) {
+		document.getElementById("ZStepperMovingLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("ZStepperMovingLED").className = "led-grey";
+	}
+	
+	if (toolchanger_running == 1) {
+		document.getElementById("ToolchangerMovingLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("ToolchangerMovingLED").className = "led-grey";
+	}
+	
+	if (cnc_code_needed == 1) {
+		document.getElementById("CNCCodeNeededLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("CNCCodeNeededLED").className = "led-grey";
 	}
 	
 	if (spi_error == 1) {

@@ -85,7 +85,7 @@
 #define SPI_BYTE_ARDUINO_N_H (15+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_ARDUINO_N_L (16+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_ARDUINO_ERROR_NO (17+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_CRC8 (SPI_MSG_LENGTH - SPI_BYTE_LENGTH_PRAEAMBEL - 1)
+#define SPI_BYTE_ARDUINO_CRC8 (SPI_MSG_LENGTH-1)
 
 //Byte Postions of RASPI-Msg
 #define SPI_BYTE_RASPI_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
@@ -120,7 +120,7 @@
 #define SPI_BYTE_RASPI_MSG_TOOL_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_CRC8 (SPI_MSG_LENGTH - SPI_BYTE_LENGTH_PRAEAMBEL - 1)
+#define SPI_BYTE_RASPI_MSG_CRC8 (SPI_MSG_LENGTH-1)
 
 //Bit Postions of STATE
 #define STATE1_CONTROL_ACTIVE_BIT 0
@@ -133,12 +133,11 @@
 #define STATE1_STEPPER_BIT 7
 
 //Bit Postions of STATE2
-#define STATE2_COMMAND_RUNNING_BIT 0
-#define STATE2_COMMAND_TIME_BIT 1
-#define STATE2_XSTEPPER_RUNNING_BIT 2
-#define STATE2_ZSTEPPER_RUNNING_BIT 3
-#define STATE2_TOOLCHANGER_RUNNING_BIT 4
-#define STATE2_CNC_CODE_NEEDED_BIT 5
+#define STATE2_COMMAND_TIME_BIT 0
+#define STATE2_XSTEPPER_RUNNING_BIT 1
+#define STATE2_ZSTEPPER_RUNNING_BIT 2
+#define STATE2_TOOLCHANGER_RUNNING_BIT 3
+#define STATE2_CNC_CODE_NEEDED_BIT 4
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
 #define ERROR_SPI_BIT 0
@@ -184,7 +183,7 @@
 //###########
 
 //Machine-State
-uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, STATE2_cnc_code_needed=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
+uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, STATE2_command_time=0, STATE2_xstepper_running=0, STATE2_zstepper_running=0, STATE2_toolchanger_running=0, STATE2_cnc_code_needed=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
 int16_t STATE_N=0, STATE_N_Offset=0, STATE_RPM=0,  STATE_X=0, STATE_Z=0, STATE_F=0, STATE_H=0;
 
 //spi-Master
@@ -1139,6 +1138,14 @@ static int spi_transfer(int spi_fd) {
 		printf("Spindle direction: %i\n", STATE_spindle_direction);
 		STATE_stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_STEPPER_BIT)&1;
 		printf("Stepper on: %i\n", STATE_stepper_on);
+		STATE2_command_time = (rx[SPI_BYTE_ARDUINO_MSG_STATE2]>>STATE2_COMMAND_TIME_BIT)&1;
+		printf("Command time: %i\n", STATE2_command_time);
+		STATE2_xstepper_running = (rx[SPI_BYTE_ARDUINO_MSG_STATE2]>>STATE2_XSTEPPER_RUNNING_BIT)&1;
+		printf("X-Stepper running: %i\n", STATE2_xstepper_running);
+		STATE2_zstepper_running = (rx[SPI_BYTE_ARDUINO_MSG_STATE2]>>STATE2_ZSTEPPER_RUNNING_BIT)&1;
+		printf("Z-Stepper running: %i\n", STATE2_zstepper_running);
+		STATE2_toolchanger_running = (rx[SPI_BYTE_ARDUINO_MSG_STATE2]>>STATE2_TOOLCHANGER_RUNNING_BIT)&1;
+		printf("Toolchanger running: %i\n", STATE2_toolchanger_running);
 		STATE2_cnc_code_needed = (rx[SPI_BYTE_ARDUINO_MSG_STATE2]>>STATE2_CNC_CODE_NEEDED_BIT)&1;
 		printf("CNC-Code needed: %i\n", STATE2_cnc_code_needed);
 		STATE_RPM = (((int)rx[SPI_BYTE_ARDUINO_RPM_H]<<8)|(rx[SPI_BYTE_ARDUINO_RPM_L]));
@@ -1202,6 +1209,10 @@ static int spi_transfer(int spi_fd) {
 				fprintf(machinestatefile, "\t\t<spindle_on>%i</spindle_on>\n", STATE_spindle_on);
 				fprintf(machinestatefile, "\t\t<spindle_direction>%i</spindle_direction>\n", STATE_spindle_direction);
 				fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", STATE_stepper_on);
+				fprintf(machinestatefile, "\t\t<command_time>%i</command_time>\n", STATE2_command_time);
+				fprintf(machinestatefile, "\t\t<xstepper_running>%i</xstepper_running>\n", STATE2_xstepper_running);
+				fprintf(machinestatefile, "\t\t<zstepper_running>%i</zstepper_running>\n", STATE2_zstepper_running);
+				fprintf(machinestatefile, "\t\t<toolchanger_running>%i</toolchanger_running>\n", STATE2_toolchanger_running);
 				fprintf(machinestatefile, "\t\t<cnc_code_needed>%i</cnc_code_needed>\n", STATE2_cnc_code_needed);
 				fprintf(machinestatefile, "\t</state>\n");
 				fprintf(machinestatefile, "\t<measure>\n");
