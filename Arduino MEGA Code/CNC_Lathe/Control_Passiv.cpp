@@ -3,7 +3,7 @@
 boolean get_control_active() { //not detected with interrupt, because of switch-bouncing
 	boolean control_active = digitalRead(PIN_CONTROL_ACTIVE);
   if (control_active) {
-    STATE |= _BV(STATE_CONTROL_ACTIVE_BIT); //set STATE_bit0 = control_active
+    STATE1 |= _BV(STATE1_CONTROL_ACTIVE_BIT); //set STATE1_bit0 = control_active
     //Observing old Control
     detachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_OFF));
     detachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_A));
@@ -12,8 +12,8 @@ boolean get_control_active() { //not detected with interrupt, because of switch-
     detachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_Z_B));
   }
   else {
-    if ((STATE>>STATE_CONTROL_ACTIVE_BIT)&1) { //if control was active
-      STATE &= ~(_BV(STATE_CONTROL_ACTIVE_BIT)); //delete STATE_bit0 = control_active
+    if ((STATE1>>STATE1_CONTROL_ACTIVE_BIT)&1) { //if control was active
+      STATE1 &= ~(_BV(STATE1_CONTROL_ACTIVE_BIT)); //delete STATE1_bit0 = control_active
       //reset steps
       x_steps = 0;
       z_steps = 0;

@@ -20,7 +20,7 @@ struct cnc_code_block { //not finished, Format of Siemens NX Postprocessor???
 //global vars
 extern volatile boolean command_completed, x_command_completed, z_command_completed;
 extern volatile boolean pause;
-extern struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
+extern struct cnc_code_block cnc_code[CNC_CODE_NMAX+1]; //Array of CNC-Code-Blocks, fixed length should be replaced
 extern volatile int N_Offset, N_MAX;
 
 //functions

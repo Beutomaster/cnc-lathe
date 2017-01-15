@@ -26,6 +26,7 @@ void set_tool_position(byte tool) {
 
         #ifndef DEBUG_TOOL_CODE_OFF
           //#error Tool compilation activated!
+          STATE2 |= _BV(STATE2_TOOLCHANGER_RUNNING_BIT);
           //Step1 TOOL_CHANGER_CHANGE 2,9s
           tool_step=1;
           command_completed=0;
@@ -53,7 +54,7 @@ void set_tool_position(byte tool) {
     }
     else {
       //initialize
-      STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
+      STATE1 |= _BV(STATE1_INIT_BIT); //set STATE1_bit1 = STATE_INIT
       initialized=1;
       //set initial Tool Postion
       STATE_T=tool;
@@ -91,6 +92,7 @@ ISR(TIMER1_CAPT_vect) {
         //stop Timer1
         //Input Compare Match Interrupt Disable
         TIMSK1 &= ~(_BV(ICIE1)); //set 0
+        STATE2 &= ~(_BV(STATE2_TOOLCHANGER_RUNNING_BIT));
         command_completed=1;
         }
         else {

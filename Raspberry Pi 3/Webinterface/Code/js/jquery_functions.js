@@ -1,4 +1,6 @@
-﻿$(document).ready(function(){
+﻿var mtime_last=-1;
+
+$(document).ready(function(){
 
     // jQuery methods go here...
 	
@@ -53,6 +55,7 @@
 		$.ajax({
 			url: "/uploads/cnc_code.txt",
 			success: function(result){
+				mtime_last=-1;
 				$("#CncCodeTxt").val(result);
 				$("#responses").append("<br />Textarea Updated!");
 				var txt = $("#CncCodeTxt").val();
@@ -87,6 +90,7 @@
 			data:$('#CncCode').serialize(),
 			success: function(response) {
 				$("#responses").html("Response:<br />" +  JSON.stringify(response));
+				mtime_last=-1;
 				//Load new CNC-Code-File from Server (for Security)
 				//UpdateAndResizeTextarea(); //Error-Handling needed!!!
 			},
@@ -115,7 +119,7 @@
 	
 	$("#ProgramStart").click(function(){
 		var StartBlock = document.getElementById("block").value;
-		var data = {command: "ProgramStart", block: StartBlock};
+		var data = {command: "ProgramStart", block: StartBlock, FileParserOverride: "0"};
 		sendCommand(data);
 	});
 	

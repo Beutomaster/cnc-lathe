@@ -22,7 +22,7 @@ Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
 
 void stepper_on() {
-  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT
+  STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT
   //turn stepper on with last_x_step & last_z_step (at Init from eeprom)
   set_xstep(current_x_step);
   set_zstep(current_z_step);
@@ -53,7 +53,8 @@ void stepper_off() {
   digitalWrite(PIN_STEPPER_Z_B, LOW);
   digitalWrite(PIN_STEPPER_Z_C, LOW);
   digitalWrite(PIN_STEPPER_Z_D, LOW);
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT
+  STATE2 &= ~(_BV(STATE2_XSTEPPER_RUNNING_BIT)) & ~(_BV(STATE2_ZSTEPPER_RUNNING_BIT));
+  STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT
 }
 
 void set_xstep(byte nextstep) {
@@ -138,7 +139,7 @@ void stepper_timeout() {
 //continuous movement for manual control
 void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
   //manual control
-  //if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  //if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
   int X=0, Z=0;
   
   //set signal with feed and direction
@@ -181,7 +182,7 @@ void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_step
   interpolationmode=INTERPOLATION_LINEAR;
 
   //turn stepper on with last step
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 
   X0 = STATE_X;
   Z0 = STATE_Z;
@@ -194,12 +195,14 @@ void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_step
     z_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
     if (negativ_direction) z_steps *= -1;
     x_command_completed = 0;
+    STATE2 |= _BV(STATE2_ZSTEPPER_RUNNING_BIT);
   }
   else { //x_stepper
     z_steps = 0;
     x_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
     if (negativ_direction) x_steps *= -1;
     z_command_completed = 0;
+    STATE2 |= _BV(STATE2_XSTEPPER_RUNNING_BIT);
   }
   //set signal with feed and direction
   //configure and start Timer
@@ -304,10 +307,10 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
 void get_stepper_on_off() { //to observe EMCO Control (ISR)
   //detect stepper off !!! (X-Stepper)
   if (digitalRead(PIN_OLD_CONTROL_STEPPER_X_OFF)){
-    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
+    STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
   }
   else {
-    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
+    STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
   }
 }
 
@@ -374,6 +377,7 @@ ISR(TIMER1_OVF_vect) {
         TIMSK1 &= ~(_BV(TOIE1)); //set 0
         command_completed=1;
         command_time=0;
+        STATE2 &= ~(_BV(STATE2_COMMAND_TIME_BIT));
         //STATE_N++;
     }
     if (i_command_time) i_command_time--;
@@ -408,6 +412,7 @@ ISR(TIMER1_OVF_vect) {
       phi_x=0;
       x_step=0;
       x_steps=0;
+      STATE2 &= ~(_BV(STATE2_XSTEPPER_RUNNING_BIT));
       x_command_completed=1;
       //Disable OVF1 Interrupt Enable
       TIMSK1 &= ~(_BV(TOIE1)); //set 0
@@ -525,6 +530,7 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     phi_z=0;
     z_step=0;
     z_steps=0;
+    STATE2 &= ~(_BV(STATE2_ZSTEPPER_RUNNING_BIT));
     z_command_completed=1;
     //Disable OVF3 Interrupt Enable
     TIMSK3 &= ~(_BV(TOIE3)); //set 0
