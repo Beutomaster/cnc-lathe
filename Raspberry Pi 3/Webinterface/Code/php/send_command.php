@@ -27,10 +27,11 @@
 				$msg_pid = "2";
 				$parameter = array("block", "FileParserOverride");
 				$success &= test_keys_exist($parameter) or exit(1);
-				$Input_N = test_input($_POST["block"]);
-				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX);
 				$FileParserOverride = test_input($_POST["FileParserOverride"]);
 				$success &= test_value_range($FileParserOverride, 0, 1);
+				$Input_N = test_input($_POST["block"]);
+				if (!$FileParserOverride) $success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX);
+				else $success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_NMAX);
 				$msg .= $msg_pid . " " . $Input_N . " " . $FileParserOverride . "\n";
 				break;
 			case "ProgramStop":
