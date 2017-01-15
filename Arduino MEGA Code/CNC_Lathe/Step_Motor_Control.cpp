@@ -22,7 +22,7 @@ Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure
 Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
 
 void stepper_on() {
-  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT
+  STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT
   //turn stepper on with last_x_step & last_z_step (at Init from eeprom)
   set_xstep(current_x_step);
   set_zstep(current_z_step);
@@ -53,7 +53,7 @@ void stepper_off() {
   digitalWrite(PIN_STEPPER_Z_B, LOW);
   digitalWrite(PIN_STEPPER_Z_C, LOW);
   digitalWrite(PIN_STEPPER_Z_D, LOW);
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT
+  STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT
 }
 
 void set_xstep(byte nextstep) {
@@ -138,7 +138,7 @@ void stepper_timeout() {
 //continuous movement for manual control
 void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
   //manual control
-  //if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  //if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
   int X=0, Z=0;
   
   //set signal with feed and direction
@@ -181,7 +181,7 @@ void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_step
   interpolationmode=INTERPOLATION_LINEAR;
 
   //turn stepper on with last step
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 
   X0 = STATE_X;
   Z0 = STATE_Z;
@@ -304,10 +304,10 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
 void get_stepper_on_off() { //to observe EMCO Control (ISR)
   //detect stepper off !!! (X-Stepper)
   if (digitalRead(PIN_OLD_CONTROL_STEPPER_X_OFF)){
-    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
+    STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
   }
   else {
-    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
+    STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
   }
 }
 

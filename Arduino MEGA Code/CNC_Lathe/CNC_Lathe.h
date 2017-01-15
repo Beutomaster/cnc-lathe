@@ -12,7 +12,7 @@
 //#define DEBUG_STEPPER_CODE_OFF
 //#define DEBUG_RPM_CODE_OFF
 //#define DEBUG_TOOL_CODE_OFF
-//#define DEBUG_MSG_SPI_ON
+#define DEBUG_MSG_SPI_ON
 //#define DEBUG_MSG_STEPPER_ON
 //#define DEBUG_MSG_ACTIVE_ON
 //#define DEBUG_MSG_RPM_ON
@@ -46,21 +46,28 @@
 #define REVOLUTIONS_MIN 460  //rpm
 #define REVOLUTIONS_MAX 3220 //rpm
 
-//Bit Postions of STATE
-#define STATE_CONTROL_ACTIVE_BIT 0
-#define STATE_INIT_BIT 1
-#define STATE_MANUAL_BIT 2
-#define STATE_PAUSE_BIT 3
-#define STATE_INCH_BIT 4
-#define STATE_SPINDLE_BIT 5
-#define STATE_SPINDLE_DIRECTION_BIT 6
-#define STATE_STEPPER_BIT 7
+//Bit Postions of STATE1
+#define STATE1_CONTROL_ACTIVE_BIT 0
+#define STATE1_INIT_BIT 1
+#define STATE1_MANUAL_BIT 2
+#define STATE1_PAUSE_BIT 3
+#define STATE1_INCH_BIT 4
+#define STATE1_SPINDLE_BIT 5
+#define STATE1_SPINDLE_DIRECTION_BIT 6
+#define STATE1_STEPPER_BIT 7
+
+//Bit Postions of STATE2
+#define STATE2_COMMAND_RUNNING_BIT 0
+#define STATE2_COMMAND_TIME_BIT 1
+#define STATE2_XSTEPPER_RUNNING_BIT 2
+#define STATE2_ZSTEPPER_RUNNING_BIT 3
+#define STATE2_TOOLCHANGER_RUNNING_BIT 4
+#define STATE2_CNC_CODE_NEEDED_BIT 5
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
 #define ERROR_SPI_BIT 0
 #define ERROR_CNC_CODE_BIT 1
 #define ERROR_SPINDLE_BIT 2
-#define ERROR_CNC_CODE_NEEDED_BIT 3
 
 //PINs
 #define PIN_CONTROL_ACTIVE 2       //PE4: Switch between EMCO and alternative Control (Usable for extINTR !!!)
@@ -138,7 +145,8 @@ extern const int lookup_cosinus[91] PROGMEM;
 extern volatile byte ERROR_NO;
 
 //Machine State
-extern volatile byte STATE; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+extern volatile byte STATE1; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+extern volatile byte STATE2; //STATE2_CNC_CODE_NEEDED_BIT | STATE2_TOOLCHANGER_RUNNING_BIT | STATE2_ZSTEPPER_RUNNING_BIT | STATE2_XSTEPPER_RUNNING_BIT | STATE2_COMMAND_TIME_BIT | STATE2_COMMAND_RUNNING_BIT
 extern volatile int STATE_RPM;
 extern volatile int STATE_X;
 extern volatile int STATE_Z;

@@ -50,7 +50,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   interpolationmode=local_interpolationmode;
 
   //turn stepper on with last step
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 
   X0 = STATE_X;
   Z0 = STATE_Z;

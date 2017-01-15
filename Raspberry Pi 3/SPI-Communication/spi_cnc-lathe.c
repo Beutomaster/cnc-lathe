@@ -36,7 +36,7 @@
 
 //SPI
 #define SPI_BYTE_LENGTH_PRAEAMBEL 4
-#define SPI_MSG_LENGTH (18+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_MSG_LENGTH (19+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 //Input Parameter Ranges
@@ -69,22 +69,23 @@
 //Byte Postions of Arduino-Answer
 #define SPI_BYTE_ARDUINO_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO (1+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_MSG_STATE (2+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_RPM_H (3+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_RPM_L (4+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_X_H (5+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_X_L (6+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_Z_H (7+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_Z_L (8+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_F_H (9+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_F_L (10+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_H_H (11+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_H_L (12+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_T (13+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_N_H (14+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_N_L (15+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_ERROR_NO (16+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_ARDUINO_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_MSG_STATE1 (2+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_MSG_STATE2 (3+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_RPM_H (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_RPM_L (5+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_X_H (6+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_X_L (7+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_Z_H (8+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_Z_L (9+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_F_H (10+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_F_L (11+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_H_H (12+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_H_L (13+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_T (14+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_N_H (15+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_N_L (16+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_ERROR_NO (17+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_ARDUINO_CRC8 (18+SPI_BYTE_LENGTH_PRAEAMBEL)
 
 //Byte Postions of RASPI-Msg
 #define SPI_BYTE_RASPI_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
@@ -119,23 +120,30 @@
 #define SPI_BYTE_RASPI_MSG_TOOL_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
-#define SPI_BYTE_RASPI_MSG_CRC8 (17+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_CRC8 (18+SPI_BYTE_LENGTH_PRAEAMBEL)
 
 //Bit Postions of STATE
-#define STATE_CONTROL_ACTIVE_BIT 0
-#define STATE_INIT_BIT 1
-#define STATE_MANUAL_BIT 2
-#define STATE_PAUSE_BIT 3
-#define STATE_INCH_BIT 4
-#define STATE_SPINDLE_BIT 5
-#define STATE_SPINDLE_DIRECTION_BIT 6
-#define STATE_STEPPER_BIT 7
+#define STATE1_CONTROL_ACTIVE_BIT 0
+#define STATE1_INIT_BIT 1
+#define STATE1_MANUAL_BIT 2
+#define STATE1_PAUSE_BIT 3
+#define STATE1_INCH_BIT 4
+#define STATE1_SPINDLE_BIT 5
+#define STATE1_SPINDLE_DIRECTION_BIT 6
+#define STATE1_STEPPER_BIT 7
+
+//Bit Postions of STATE2
+#define STATE2_COMMAND_RUNNING_BIT 0
+#define STATE2_COMMAND_TIME_BIT 1
+#define STATE2_XSTEPPER_RUNNING_BIT 2
+#define STATE2_ZSTEPPER_RUNNING_BIT 3
+#define STATE2_TOOLCHANGER_RUNNING_BIT 4
+#define STATE2_CNC_CODE_NEEDED_BIT 5
 
 //Bit Postions of ERROR_NO (actual ERROR-Numbers Bit-coded)
 #define ERROR_SPI_BIT 0
 #define ERROR_CNC_CODE_BIT 1
 #define ERROR_SPINDLE_BIT 2
-#define ERROR_CNC_CODE_NEEDED_BIT 3
 
 #define MACHINE_STATE_FILE "/var/www/html/xml/machine_state.xml"
 //#define MACHINE_STATE_FILE "~/machine_state.xml" //does not work
@@ -176,7 +184,7 @@
 //###########
 
 //Machine-State
-uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
+uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, STATE2_cnc_code_needed=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
 int16_t STATE_N=0, STATE_N_Offset=0, STATE_RPM=0,  STATE_X=0, STATE_Z=0, STATE_F=0, STATE_H=0;
 
 //spi-Master
@@ -203,7 +211,7 @@ struct timeval timeout;
 //File-Parser
 FILE *cnc_code_file;
 int cnc_code_array_length = 0, N_Offset_next=0;
-char file_changed=0, file_code_sent_to_arduino=0, process_file = 0;
+char file_code_sent_to_arduino=0;
 struct cnc_code_block {
 	unsigned int N; //block-No.
 	char GM; //G or M-Code
@@ -620,7 +628,6 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 								return EXIT_FAILURE;
 							}
 							spi_create_cnc_code_messages(block); //create and send messages from file
-							//process_file = 1;
 							return EXIT_SUCCESS;
 						}
 						else {
@@ -631,7 +638,6 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 							}
 							if (block < STATE_N_Offset || block > STATE_N_Offset+CNC_CODE_NMAX || !file_code_sent_to_arduino) { //needed Code not already uploaded to arduino?
 								spi_create_cnc_code_messages(block); //create and send messages from file
-								//process_file = 1;
 								return EXIT_SUCCESS;
 							}
 						}
@@ -1117,22 +1123,24 @@ static int spi_transfer(int spi_fd) {
 		printf("PID: %i\n", pid);
 		lastsuccessful_msg = rx[SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO];
 		printf("Last Successful Message: %i\n", lastsuccessful_msg);
-		STATE_active = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_CONTROL_ACTIVE_BIT)&1;
+		STATE_active = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_CONTROL_ACTIVE_BIT)&1;
 		printf("Control active: %i\n", STATE_active);
-		STATE_init = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INIT_BIT)&1;
+		STATE_init = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_INIT_BIT)&1;
 		printf("init: %i\n", STATE_init);
-		STATE_manual = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_MANUAL_BIT)&1;
+		STATE_manual = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_MANUAL_BIT)&1;
 		printf("manual: %i\n", STATE_manual);
-		STATE_pause = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_PAUSE_BIT)&1;
+		STATE_pause = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_PAUSE_BIT)&1;
 		printf("Pause: %i\n", STATE_pause);
-		STATE_inch = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_INCH_BIT)&1;
+		STATE_inch = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_INCH_BIT)&1;
 		printf("inch: %i\n", STATE_inch);
-		STATE_spindle_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_BIT)&1;
+		STATE_spindle_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_SPINDLE_BIT)&1;
 		printf("Spindle on: %i\n", STATE_spindle_on);
-		STATE_spindle_direction = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_SPINDLE_DIRECTION_BIT)&1;
+		STATE_spindle_direction = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_SPINDLE_DIRECTION_BIT)&1;
 		printf("Spindle direction: %i\n", STATE_spindle_direction);
-		STATE_stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE]>>STATE_STEPPER_BIT)&1;
+		STATE_stepper_on = (rx[SPI_BYTE_ARDUINO_MSG_STATE1]>>STATE1_STEPPER_BIT)&1;
 		printf("Stepper on: %i\n", STATE_stepper_on);
+		STATE2_cnc_code_needed = (rx[SPI_BYTE_ARDUINO_MSG_STATE2]>>STATE2_CNC_CODE_NEEDED_BIT)&1;
+		printf("CNC-Code needed: %i\n", STATE2_cnc_code_needed);
 		STATE_RPM = (((int)rx[SPI_BYTE_ARDUINO_RPM_H]<<8)|(rx[SPI_BYTE_ARDUINO_RPM_L]));
 		printf("RPM: %i\n", STATE_RPM);
 		STATE_X = (((int)rx[SPI_BYTE_ARDUINO_X_H]<<8)|(rx[SPI_BYTE_ARDUINO_X_L]));
@@ -1194,6 +1202,7 @@ static int spi_transfer(int spi_fd) {
 				fprintf(machinestatefile, "\t\t<spindle_on>%i</spindle_on>\n", STATE_spindle_on);
 				fprintf(machinestatefile, "\t\t<spindle_direction>%i</spindle_direction>\n", STATE_spindle_direction);
 				fprintf(machinestatefile, "\t\t<stepper_on>%i</stepper_on>\n", STATE_stepper_on);
+				fprintf(machinestatefile, "\t\t<cnc_code_needed>%i</cnc_code_needed>\n", STATE2_cnc_code_needed);
 				fprintf(machinestatefile, "\t</state>\n");
 				fprintf(machinestatefile, "\t<measure>\n");
 				fprintf(machinestatefile, "\t\t<rpm_measure>%i</rpm_measure>\n", STATE_RPM);
@@ -1885,17 +1894,17 @@ int main(int argc, char *argv[]) {
 						}
 						*/
 						
-						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
 						
-						//process message
-						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) { //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
-							if (process_file) {
-								usleep(200000); //0,2s
-								if(!file_parser()) spi_create_cnc_code_messages(STATE_N_Offset); //create and send messages from file
-								process_file = 0;
-							}
-							else messages_notreceived = spi_transfer(spi_fd);
+						//send CNC-Code to Arduino if required
+						if (STATE2_cnc_code_needed && file_code_sent_to_arduino) {
+							N_Offset_next = STATE_N_Offset + STATE_N;
+							spi_create_cnc_code_messages(N_Offset_next); //create and send messages from file
 						}
+						
+						//process pipe-message
+						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
+						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						
 						/*
 						//Error-Handling not ready
 						if (messages_notreceived) {
