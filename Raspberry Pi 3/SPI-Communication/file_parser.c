@@ -49,7 +49,7 @@ int messages_notreceived=0;
 uint8_t tx[SPI_MSG_LENGTH] = {0x7F,0xFF,0x7F,0xFF, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0};
 
 //File-Parser
-#define CNC_CODE_FILE "/var/www/html/uploads/cnc_code.txt"
+#define FILE_CNC_CODE "/var/www/html/uploads/cnc_code.txt"
 #define LINELENGTH 80
 
 //globals
@@ -130,7 +130,7 @@ int file_parser() {
 		int p4; //4. Parameter
 	} cnc_code_block_raw;
 
-	cnc_code_file = fopen(CNC_CODE_FILE, "r");
+	cnc_code_file = fopen(FILE_CNC_CODE, "r");
 	
 	char c = 0, success=0;
 	char line[LINELENGTH] = {};

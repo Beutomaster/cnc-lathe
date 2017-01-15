@@ -4,7 +4,7 @@
 //Kommunikation ueber Error-Code und Control-Signal
 
 //vars
-volatile boolean initialized=0; //could be replaced by (STATE>>STATE_INIT_BIT)&1
+volatile boolean initialized=0; //could be replaced by (STATE1>>STATE1_INIT_BIT)&1
 
 /* obsolete
 //functions
@@ -14,7 +14,7 @@ void intitialize() { //without sensors useless
 void initialize_tool_position(byte tool) {
   if ((tool>0) && (tool<7)) {
     STATE_T = tool;
-    STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
+    STATE1 |= _BV(STATE1_INIT_BIT); //set STATE1_bit1 = STATE_INIT
     initialized=1;
   }
 }
@@ -39,10 +39,10 @@ void reset_initialization() {
   STATE_H = 0; //reset H
   STATE_N = 0; //reset N
 
-  STATE &= ~(_BV(STATE_INIT_BIT)); //delete STATE_bit1 = STATE_INIT
+  STATE1 &= ~(_BV(STATE1_INIT_BIT)); //delete STATE1_bit1 = STATE_INIT
   initialized=0;
   programm_stop();
-  STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
+  STATE1 &= ~(_BV(STATE1_INCH_BIT)); //set STATE1_bit4 = 0
   command_completed = 1;
   
   //Anymore vars needed to be resetted?

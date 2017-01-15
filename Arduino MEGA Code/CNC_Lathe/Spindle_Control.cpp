@@ -13,14 +13,14 @@ void spindle_on() {
   //if (command_completed) { //not implemented yet, cammand-pipeline needed
     last_rpm_time = micros();
     digitalWrite(PIN_SPINDLE_ON, HIGH);
-    STATE |= _BV(STATE_SPINDLE_BIT); //set STATE_bit5 = spindle
+    STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
   //}
 }
 
 void spindle_off() {
-  if ((STATE>>STATE_SPINDLE_BIT)&1) {
+  if ((STATE1>>STATE1_SPINDLE_BIT)&1) {
     digitalWrite(PIN_SPINDLE_ON, LOW);
-    STATE &= ~(_BV(STATE_SPINDLE_BIT)); //delete STATE_bit5 = spindle
+    STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
     command_running(WAIT_TIME);
   }
 }
@@ -29,26 +29,26 @@ void spindle_direction(boolean spindle_reverse) {
   //don't change the spindle-direction, while the spindle is turning!!! Turn the Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!
   if (get_control_active()) { //Hotfix for Board V1.25, should be changed in V2.1
       spindle_off();
-    //if (spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
+    //if (spindle_reverse && !((STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
     if (spindle_reverse) {
       digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
-      STATE |= _BV(STATE_SPINDLE_DIRECTION_BIT); //set STATE_bit6 = spindle_direction
+      STATE1 |= _BV(STATE1_SPINDLE_DIRECTION_BIT); //set STATE1_bit6 = spindle_direction
     }
-    //else if (!spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
+    //else if (!spindle_reverse && ((STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
     else if (!spindle_reverse) {
       digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
-      STATE &= ~(_BV(STATE_SPINDLE_DIRECTION_BIT)); //delete STATE_bit6 = spindle_direction
+      STATE1 &= ~(_BV(STATE1_SPINDLE_DIRECTION_BIT)); //delete STATE1_bit6 = spindle_direction
     }
   } else {
-    //if (spindle_reverse && !((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
+    //if (spindle_reverse && !((STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
     if (spindle_reverse) {
       digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
-      STATE |= _BV(STATE_SPINDLE_DIRECTION_BIT); //set STATE_bit6 = spindle_direction
+      STATE1 |= _BV(STATE1_SPINDLE_DIRECTION_BIT); //set STATE1_bit6 = spindle_direction
     }
-    //else if (!spindle_reverse && ((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
+    //else if (!spindle_reverse && ((STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1)) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
     else if (!spindle_reverse) {
       digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
-      STATE &= ~(_BV(STATE_SPINDLE_DIRECTION_BIT)); //delete STATE_bit6 = spindle_direction
+      STATE1 &= ~(_BV(STATE1_SPINDLE_DIRECTION_BIT)); //delete STATE1_bit6 = spindle_direction
     }
   }
 }
@@ -137,7 +137,7 @@ void set_spindle_new(boolean spindle_new_local){
     set_Timer5();
     digitalWrite(PIN_SPINDLE_NEW, LOW);
   }
-  spindle_direction((STATE>>STATE_SPINDLE_DIRECTION_BIT)&1); //Hotfix for Board V1.25, should be changed in V2.1
+  spindle_direction((STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1); //Hotfix for Board V1.25, should be changed in V2.1
 }
 
 //Timer5 Servo and spindle regulator
