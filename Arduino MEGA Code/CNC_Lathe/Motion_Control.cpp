@@ -50,7 +50,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   interpolationmode=local_interpolationmode;
 
   //turn stepper on with last step
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 
   X0 = STATE_X;
   Z0 = STATE_Z;
@@ -224,6 +224,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
   //start Timer
   if (X) {
+    STATE2 |= _BV(STATE2_XSTEPPER_RUNNING_BIT);
     x_command_completed=0;
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
@@ -235,6 +236,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     TCCR1B |= _BV(CS12); //set 1
   }
   if (Z) {
+    STATE2 |= _BV(STATE2_ZSTEPPER_RUNNING_BIT);
     z_command_completed=0;
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT3 = 0; //set Start Value
@@ -275,8 +277,6 @@ int get_xz_feed_related_to_revolutions(int feed_per_revolution) { // for G95 - F
 //still needed for G04
 
 void command_running(int local_command_time) { //command_time in 1/100s
-  command_completed=0;
-  
   //handling durations over 1s
   i_command_time = 1+(local_command_time/100);
   command_time = local_command_time%100;
@@ -300,6 +300,8 @@ void command_running(int local_command_time) { //command_time in 1/100s
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
     }
+    command_completed=0;
+    STATE2 |= _BV(STATE2_COMMAND_TIME_BIT);
     TIFR1 = _BV(TOV1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
     //OVF Interrupt Enable
     TIMSK1 |= _BV(TOIE1); //set 1

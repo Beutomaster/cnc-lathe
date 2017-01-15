@@ -3,24 +3,25 @@
 //global vars
 volatile boolean command_completed=1, x_command_completed=1, z_command_completed=1; //0=command in progress, 1=command_completed
 volatile boolean pause=1; //0=programm running, 1=pause
-struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
-int jumpback_N = CNC_CODE_NMAX-1; //Return adress for CNC
+struct cnc_code_block cnc_code[CNC_CODE_NMAX+1]; //Array of CNC-Code-Blocks, fixed length should be replaced
+int jumpback_N = CNC_CODE_NMAX+1; //default Return address for CNC after array end
 volatile int N_Offset=0, N_MAX = 0;
 
 
 //functions
 void programm_start(int N) { //start at block N
   STATE_N = N;
-  STATE &= ~(_BV(STATE_MANUAL_BIT)); //set STATE_bit2 = 0
+  STATE1 &= ~(_BV(STATE1_MANUAL_BIT)); //set STATE1_bit2 = 0
   pause=0;
-  STATE &= ~(_BV(STATE_PAUSE_BIT)); //delete STATE_bit3 = STATE_PAUSE
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  STATE1 &= ~(_BV(STATE1_PAUSE_BIT)); //delete STATE1_bit3 = STATE_PAUSE
+  STATE2 &= ~(_BV(STATE2_CNC_CODE_NEEDED_BIT));
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 }
 
 void programm_pause() { //intermediate stop
-  STATE |= _BV(STATE_MANUAL_BIT); //set STATE_bit2 = 1
+  STATE1 |= _BV(STATE1_MANUAL_BIT); //set STATE1_bit2 = 1
   pause=1;
-  STATE |= _BV(STATE_PAUSE_BIT); //set STATE_bit3 = STATE_PAUSE
+  STATE1 |= _BV(STATE1_PAUSE_BIT); //set STATE1_bit3 = STATE_PAUSE
 }
 
 void programm_stop() { //stop and jump back to block 0

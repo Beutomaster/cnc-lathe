@@ -1,7 +1,8 @@
 <?php
 	//Input Parameter Ranges
 	define("CNC_CODE_NMIN", 0);
-	define("CNC_CODE_NMAX", 9999); //Attention!!! Range, not supported in Arduino-Code yet (only up to 499)
+	define("CNC_CODE_NMAX", 499);
+	define("CNC_CODE_FILE_PARSER_NMAX", 9999); //Attention!!! Range, not supported in Arduino-Code yet (only up to 499)
 	define("GM_CODE_MIN", 0);
 	define("G_CODE_MAX", 196);
 	define("M_CODE_MAX", 99);
@@ -145,7 +146,7 @@
 			//check if every Code-line has a Blocknumber at the beginning and that they are increasing per line (N>N_last)
 			if (preg_match('/^([N])([0-9]{4})[ ]?(.*$)/', $cnc_code_reference[$line-1], $code_line)) {
 				$N = $code_line[2];
-				if (test_value_range_cnc_code($line, $N, "N", $N, 0, 9999)) { //CNC_CODE_NMIN, CNC_CODE_NMAX)) {
+				if (test_value_range_cnc_code($line, $N, "N", $N, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX)) {
 					if ($N<=$N_last) {
 						echo "Line $line: N".$N." not greater as a previous one<br />";
 						$success = 0;

@@ -9,7 +9,8 @@ const int lookup_cosinus[91] PROGMEM = {32767, 32762, 32747, 32722, 32687, 32642
 volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-volatile byte STATE=0; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile byte STATE1=0; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile byte STATE2=0; //STATE2_CNC_CODE_NEEDED_BIT | STATE2_TOOLCHANGER_RUNNING_BIT | STATE2_ZSTEPPER_RUNNING_BIT | STATE2_XSTEPPER_RUNNING_BIT | STATE2_COMMAND_TIME_BIT | STATE2_COMMAND_RUNNING_BIT
 volatile int STATE_RPM=0;
 volatile int STATE_X=0;
 volatile int STATE_Z=0;
@@ -79,7 +80,7 @@ void setup() {
   //potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
 
   //set initial State
-  STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT); //set = 1
+  STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT); //set = 1
   get_control_active(); //get initial state
   
   //Serial Communication
@@ -183,19 +184,18 @@ void loop() {
           stepper_timeout();
       }
       if (command_completed) {
-        if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-          if (!pause && !ERROR_NO) {
+        if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
+          if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
             if (process_cnc_listing()) { //error
-              STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT);
+              STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT);
               ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
             }
             else {
               STATE_N++;
-              if (STATE_N<0 || STATE_N>=CNC_CODE_NMAX) {
-                N_Offset = N_Offset + STATE_N;
-                ERROR_NO |= _BV(ERROR_CNC_CODE_NEEDED_BIT);
-                //wait for new code-messages and reset of ERROR_CNC_CODE_NEEDED_BIT
-                //maybe better STATE_CNC_CODE_NEEDED_BIT, because Errors are resetted all together on spi-error
+              if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
+                //N_Offset = N_Offset + STATE_N; //should be done by Uploader
+                STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
+                //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
               }
             }
           }
