@@ -177,9 +177,10 @@
 
 //Machine-State
 uint8_t STATE_T=0, STATE_active=0, STATE_init=0, STATE_manual=0, STATE_pause=0, STATE_inch=0, STATE_spindle_on=0, STATE_spindle_direction=0, STATE_stepper_on=0, ERROR_spi_error=0, ERROR_cnc_code_error=0, ERROR_spindle_error=0;
-int16_t STATE_N=0, STATE_RPM=0,  STATE_X=0, STATE_Z=0, STATE_F=0, STATE_H=0;
+int16_t STATE_N=0, STATE_N_Offset=0, STATE_RPM=0,  STATE_X=0, STATE_Z=0, STATE_F=0, STATE_H=0;
 
 //spi-Master
+char spi_open = 0, machinestatefile_open = 0;
 FILE *machinestatefile;
 int spi_fd;
 uint8_t msg_number=1, lastsuccessful_msg =0;
@@ -201,8 +202,8 @@ struct timeval timeout;
 
 //File-Parser
 FILE *cnc_code_file;
-int cnc_code_array_length = 0;
-char process_file = 0;
+int cnc_code_array_length = 0, N_Offset_next=0;
+char file_changed=0, file_code_sent_to_arduino=0, process_file = 0;
 struct cnc_code_block {
 	unsigned int N; //block-No.
 	char GM; //G or M-Code
@@ -213,10 +214,29 @@ struct cnc_code_block {
 	int HS; //H/S-Parameter
 };
 struct cnc_code_block *cnc_code_array = NULL;
+struct stat cnc_code_file_attributes;
+time_t processed_file_m_time=0;
 
 
 //functions
 //#########
+static void pabort(const char *);
+void signal_callback_handler(int);
+static void print_usage(const char *);
+static void parse_opts(int, char **);
+void setup_pipe_server();
+int setup_spi();
+uint8_t _crc8_ccitt_update (uint8_t, uint8_t);
+uint8_t CRC8 (uint8_t *, uint8_t, uint8_t);
+static int spi_create_command_msg(const char *, char);
+static int spi_transfer(int);
+int test_value_range(int, char, int, int, int);
+int get_next_cnc_code_parameter(int, int *, char *, int *, char, int *, char, int, int);
+int file_parser_abort();
+int file_parser();
+int get_offset(int);
+static int spi_create_cnc_code_messages(int);
+
 
 static void pabort(const char *s) {
 	perror(s);
@@ -227,12 +247,19 @@ static void pabort(const char *s) {
 void signal_callback_handler(int signum) {
 	printf("\nCaught signal %d\n",signum);
 	// Cleanup and close up stuff here
-	printf("close(spi_fd)\n");
-	close(spi_fd);
-	printf("close(r_fd)\n");
-	close(r_fd);
-	//printf("fclose(machinestatefile)\n");
-	//fclose(machinestatefile)
+	
+	if (spi_open) {
+		printf("close(spi_fd)\n");
+		close(spi_fd);
+	}
+	if (start_pipe_server) {
+		printf("close(r_fd)\n");
+		close(r_fd);
+	}
+	if (machinestatefile_open) {
+		printf("fclose(machinestatefile)\n");
+		fclose(machinestatefile);
+	}
 		
 	// Terminate program
 	exit(signum);
@@ -336,7 +363,7 @@ static void parse_opts(int argc, char *argv[]) {
 //Pipe-Server
 //###########
 
-setup_pipe_server() {
+void setup_pipe_server() {
 	//Server creates arduino_pipe.tx, if it does not exist
 	if (mkfifo (COMMAND_PIPE, O_RDWR | 0666) < 0) {
 	  //arduino_pipe.tx exists
@@ -386,8 +413,8 @@ int setup_spi() {
 	if (spi_fd < 0)
 		pabort("can't open SPI-device");
 	
-	// Register signal and signal handler
-	signal(SIGINT, signal_callback_handler);
+	//set File-Handler-opened-flag for signal_callback_handler
+	spi_open = 1;
 
 	/*
 	 * spi mode
@@ -462,7 +489,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes)
 }
 
 static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
-	int n, block=-1, block_n_max=-1, block_n_offset=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
+	int n, block=-1, StartblockMax=CNC_CODE_NMAX, FileParserOverride=-1, block_n_max=-1, block_n_offset=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 	
 	const char *pipe_msg_buffer_temp = pipe_msg_buffer; //hotfix
@@ -504,7 +531,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 			if (n != 2) {
 				if (errno != 0) perror("Backend Command-Interpreter: scanf");
 				else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-				return 0;
+				return EXIT_FAILURE;
 			}
 			//printf ("n: %i\n", n);
 			pipe_msg_buffer = pipe_msg_buffer_temp;
@@ -528,7 +555,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 	}
 	else {
 		fprintf(stderr, "Backend Command-Interpreter: Command out of Range\n");
-		return(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	tx[pos++] = msg_type;
 		
@@ -541,26 +568,75 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 2:   	//Programm Start at Block
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &block);
-						if (n != 3) {
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block, &FileParserOverride);
+						if (n != 4) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
-					printf("Block-No (0 to 499): ");
-					if ((block>=CNC_CODE_NMIN) && (block<=CNC_CODE_NMAX)) printf("%i\n",block);
+					printf("FileParserOverride (0 or 1): "); //is not send to arduino, it is a backend-switch
+					if ((FileParserOverride>=0) && (FileParserOverride<=1)) printf("%i\n",FileParserOverride);
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%d",&FileParserOverride);
+							getchar();
+						} while ((FileParserOverride<0) || (FileParserOverride>1));
+					}
+					else {
+						fprintf(stderr, "Backend Command-Interpreter: FileParserOverride out of Range\n");
+						return EXIT_FAILURE;
+					}
+					
+					if (!FileParserOverride) StartblockMax = CNC_CODE_FILE_PARSER_NMAX;
+					
+					printf("Block-No (0 to %i): ", StartblockMax);
+					if ((block>=CNC_CODE_NMIN) && (block<=StartblockMax)) printf("%i\n",block);
 					else if (pipe_msg_buffer == NULL) {
 						do {
 							scanf("%d",&block);
 							getchar();
-						} while ((block<CNC_CODE_NMIN) || (block>CNC_CODE_NMAX));
+						} while ((block<CNC_CODE_NMIN) || (block>StartblockMax));
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
+					
+					if (!FileParserOverride) {
+						if (stat(FILE_CNC_CODE, &cnc_code_file_attributes)) { //get last modification time of CNC-Code_File
+							perror("Backend Command-Interpreter: Error reading last modification time of CNC-Code-File");
+							return EXIT_FAILURE;
+						}
+						if (cnc_code_file_attributes.st_mtime != processed_file_m_time) { //check if file was already processed
+							if (file_parser()) { //parse new file
+								perror("Backend Command-Interpreter: Could not process CNC-Code-File");
+								return EXIT_FAILURE;
+							}
+							if (!get_offset(block)) block = N_Offset_next; //Search for flattened Startblock-address (saved in global N_Offset_next)
+							else {
+								perror("Backend Command-Interpreter: Startblock not in CNC-Code-File");
+								return EXIT_FAILURE;
+							}
+							spi_create_cnc_code_messages(block); //create and send messages from file
+							//process_file = 1;
+							return EXIT_SUCCESS;
+						}
+						else {
+							if (!get_offset(block)) block = N_Offset_next; //Search for flattened Startblock-address (saved in global N_Offset_next)
+							else {
+								perror("Backend Command-Interpreter: Startblock not in CNC-Code-File");
+								return EXIT_FAILURE;
+							}
+							if (block < STATE_N_Offset || block > STATE_N_Offset+CNC_CODE_NMAX || !file_code_sent_to_arduino) { //needed Code not already uploaded to arduino?
+								spi_create_cnc_code_messages(block); //create and send messages from file
+								//process_file = 1;
+								return EXIT_SUCCESS;
+							}
+						}
+					}
+					//if the needed Code was already uploaded to the arduino, just send the flattened Startblock-address
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
 					break;
@@ -574,7 +650,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						if (n != 4) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -588,7 +664,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: rpm out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = rpm>>8;
 					tx[pos++] = rpm;
@@ -603,7 +679,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: spindle-direction out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = spindle_direction;
 					break;
@@ -620,7 +696,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						if (n != 4) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -634,7 +710,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: F out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
@@ -649,7 +725,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: Stepper direction out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = negativ_direction;
 					break;
@@ -662,7 +738,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						if (n != 5) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -676,7 +752,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: X out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
@@ -691,7 +767,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: Z out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
@@ -706,7 +782,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: T out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = tool;
 					break;
@@ -716,7 +792,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						if (n != 3) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -730,7 +806,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: X out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = XX>>8;
 					tx[pos++] = XX;
@@ -741,7 +817,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						if (n != 3) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -755,7 +831,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: Z out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
@@ -766,7 +842,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						if (n != 3) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -780,17 +856,17 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: metric or inch out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = inch;
 					break;
-		case 15:  	//New CNC-Programm wit N Blocks in metric or inch
+		case 15:  	//New CNC-Programm wit N Blocks in metric or inch (maybe not used, instead File is uploaded by file-parser)
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block_n_offset, &block_n_max, &inch);
 						if (n != 4) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -804,7 +880,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = block_n_offset>>8;
 					tx[pos++] = block_n_offset;
@@ -819,7 +895,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = block_n_max>>8;
 					tx[pos++] = block_n_max;
@@ -834,19 +910,18 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: metric or inch out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = inch;
-					
-					process_file = 1;
+					file_code_sent_to_arduino=0;
 					break;
-		case 16:  	//CNC-Code-Block (maybe not used, instead Textarea is uploaded)
+		case 16:  	//CNC-Code-Block (maybe not used, instead File is uploaded by file-parser)
 					if (pipe_msg_buffer != NULL) {
 						n = sscanf(pipe_msg_buffer,"%s %d %c %d %d %d %d %d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 						if (n != 9) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
-							return 0;
+							return EXIT_FAILURE;
 						}
 					}
 					
@@ -860,7 +935,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: N out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = block>>8;
 					tx[pos++] = block;
@@ -875,7 +950,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: G or M out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = code_type;
 					
@@ -890,7 +965,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						}
 						else {
 							fprintf(stderr, "Backend Command-Interpreter: G- or M-Code out of Range\n");
-							return(EXIT_FAILURE);
+							return EXIT_FAILURE;
 						}
 					}
 					else {
@@ -904,7 +979,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 						}
 						else {
 							fprintf(stderr, "Backend Command-Interpreter: G- or M-Code out of Range\n");
-							return(EXIT_FAILURE);
+							return EXIT_FAILURE;
 						}
 					}
 					tx[pos++] = gmcode;
@@ -919,7 +994,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: X or I out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					scanf("%d",&XX);
 					getchar();
@@ -936,7 +1011,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: Z or K out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = ZZ>>8;
 					tx[pos++] = ZZ;
@@ -951,7 +1026,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: F,T,L or K out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
@@ -966,11 +1041,11 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					}
 					else {
 						fprintf(stderr, "Backend Command-Interpreter: H or S out of Range\n");
-						return(EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					tx[pos++] = HH>>8;
 					tx[pos++] = HH;
-					
+					file_code_sent_to_arduino=0;
 					break;
 		case 17:  	//Shutdown
 					break;
@@ -1100,10 +1175,14 @@ static int spi_transfer(int spi_fd) {
 				printf("%i messages to arduino lost or ignored by arduino after send-error!!!\n\n", lostmessages);
 			}
 			
+			//get last modification time of CNC-Code_File
+			if (stat(FILE_CNC_CODE, &cnc_code_file_attributes)) perror("Error reading last modification time of CNC-Code_File");
+			
 			//Ouptut to Machine-State-File
 			machinestatefile = fopen(MACHINE_STATE_FILE, "w");
 			if (spi_fd < 0) printf("can't open Machine State file\n");
 			else {
+				machinestatefile_open = 1;
 				fprintf(machinestatefile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 				fprintf(machinestatefile, "<machinestate>\n");
 				fprintf(machinestatefile, "\t<state>\n");
@@ -1130,12 +1209,17 @@ static int spi_transfer(int spi_fd) {
 				fprintf(machinestatefile, "\t\t<spindle_error>%i</spindle_error>\n", ERROR_spindle_error);
 				fprintf(machinestatefile, "\t</error>\n");
 				fprintf(machinestatefile, "\t<cncblock>\n");
-				fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", STATE_N);
+				if(file_code_sent_to_arduino) fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", cnc_code_array[STATE_N].N);
+				else fprintf(machinestatefile, "\t\t<n_actual>%i</n_actual>\n", STATE_N);
 				fprintf(machinestatefile, "\t</cncblock>\n");
+				fprintf(machinestatefile, "\t<cncfile>\n");
+				fprintf(machinestatefile, "\t\t<mtime>%ld</mtime>\n", cnc_code_file_attributes.st_mtime);
+				fprintf(machinestatefile, "\t</cncfile>\n");
 				fprintf(machinestatefile, "</machinestate>\n");
 
 				printf("close(machinestatefile)\n\n");
 				fclose(machinestatefile);
+				machinestatefile_open = 0;
 			}
 		}
 	}
@@ -1552,20 +1636,63 @@ int file_parser() {
 	}
 	
 	fclose(cnc_code_file);
+	
+	if (stat(FILE_CNC_CODE, &cnc_code_file_attributes)) { //get last modification time of CNC-Code_File
+		perror("Backend Command-Interpreter: Error reading last modification time of CNC-Code-File");
+		return EXIT_FAILURE;
+	}
+	else processed_file_m_time = cnc_code_file_attributes.st_mtime; //save last modification time for processed file
+	
 	return EXIT_SUCCESS;
 }
 
-static int spi_create_cnc_code_messages() {
-	char msg_type = 16;
+int get_offset(int block) {
+	for (i=0; i<cnc_code_array_length; i++) {
+		if (cnc_code_array[i].N == block) {
+			N_Offset_next = i;
+			return EXIT_SUCCESS;
+		}
+	}
+	return EXIT_FAILURE;
+}
+
+static int spi_create_cnc_code_messages(int N_Offset) {
+	char msg_type;
 	unsigned int i, pos, used_length;
 	
+	//send Msg 15 (New Programm Code with N_Offset and N_MAX)
+	msg_type = 15;
+	pos=SPI_BYTE_LENGTH_PRAEAMBEL;
+	tx[pos++] = msg_type;
+	tx[pos++] = msg_number;
+	tx[pos++] = N_Offset>>8;
+	tx[pos++] = N_Offset;
+	tx[pos++] = cnc_code_array_length>>8;
+	tx[pos++] = cnc_code_array_length;
+	
+	used_length = pos;
+		
+	//zero unused bytes (not needed in loop)
+	for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
+		tx[pos] = 0;
+	}
+	
+	//CRC
+	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
+	
+	//send msg
+	messages_notreceived = spi_transfer(spi_fd);
+	
+	//Error-Handling needed!!!
+	
+	//send Msg 16 (New Block) for each needed block
 	#ifdef FILEPARSER_STANDALONE
 		printf("Backend File-Parser: Create tx[SPI_BYTE_LENGTH_PRAEAMBEL-1] - tx[SPI_MSG_LENGTH-1] for Msg:\n");
 		printf("Backend File-Parser: MT  MNO  N_H  N_L   GM NO  XI_H XI_L  ZK_H ZK_L  FLTK_H,_L  HS_H HS_L\n");
 	#endif
-	
-	for (i=0; i<cnc_code_array_length; i++) {
-		pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
+	msg_type = 16;
+	for (i=N_Offset; i<=CNC_CODE_NMAX && i<cnc_code_array_length; i++) {
+		pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 		tx[pos++] = msg_type;
 		tx[pos++] = msg_number;
 		tx[pos++] = (i+1)>>8;
@@ -1611,7 +1738,7 @@ static int spi_create_cnc_code_messages() {
 			
 			//Output
 			printf("Backend File-Parser: ");
-			pos=SPI_BYTE_LENGTH_PRAEAMBEL-1;
+			pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 			printf("%i  ", tx[pos++]); //msg_type
 			printf("%03i  ", tx[pos++]); //msg_number;
 			printf("0x%02x ", tx[pos++]); //(i+1)>>8;
@@ -1627,7 +1754,32 @@ static int spi_create_cnc_code_messages() {
 			printf("0x%02x ", tx[pos++]); //cnc_code_array[i].HS >> 8;
 			printf("0x%02x \n", tx[pos++]); //cnc_code_array[i].HS;
 		#endif
+		usleep(200000); //0,2s
 	}
+	//send Msg 2 (Programm-Start with Startblock=0)
+	msg_type = 2;
+	pos=SPI_BYTE_LENGTH_PRAEAMBEL;
+	tx[pos++] = msg_type;
+	tx[pos++] = msg_number;
+	tx[pos++] = 0;
+	tx[pos++] = 0;
+	
+	used_length = pos;
+		
+	//zero unused bytes (not needed in loop)
+	for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
+		tx[pos] = 0;
+	}
+	
+	//CRC
+	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
+	
+	//send msg
+	messages_notreceived = spi_transfer(spi_fd);
+	
+	//Error-Handling needed!!!
+	
+	file_code_sent_to_arduino=1;
 	return EXIT_SUCCESS;
 }
 
@@ -1638,8 +1790,16 @@ static int spi_create_cnc_code_messages() {
 int main(int argc, char *argv[]) {	
 	parse_opts(argc, argv);
 	
+	// Register signal and signal handler
+	signal(SIGINT, signal_callback_handler);
+	
 	//allow all rights for new created files
 	umask(0);
+	
+	if (!stat(FILE_CNC_CODE, &cnc_code_file_attributes)) {
+		printf("last modification time of CNC-Code_File: %ld\n", cnc_code_file_attributes.st_mtime); //time_t st_mtime fits in long int
+	}
+	else perror("Error reading last modification time of CNC-Code_File");
 	
 	if (start_pipe_server) setup_pipe_server();
 
@@ -1728,11 +1888,13 @@ int main(int argc, char *argv[]) {
 						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
 						
 						//process message
-						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
-						if (process_file) {
-							usleep(200000); //0,2s
-							if(!file_parser()) spi_create_cnc_code_messages(); //create and send messages from file
-							process_file = 0;
+						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) { //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+							if (process_file) {
+								usleep(200000); //0,2s
+								if(!file_parser()) spi_create_cnc_code_messages(STATE_N_Offset); //create and send messages from file
+								process_file = 0;
+							}
+							else messages_notreceived = spi_transfer(spi_fd);
 						}
 						/*
 						//Error-Handling not ready

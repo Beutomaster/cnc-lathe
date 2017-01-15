@@ -25,11 +25,13 @@
 		switch (test_input($_POST["command"])) {
 			case "ProgramStart":
 				$msg_pid = "2";
-				$parameter = array("block");
+				$parameter = array("block", "FileParserOverride");
 				$success &= test_keys_exist($parameter) or exit(1);
 				$Input_N = test_input($_POST["block"]);
 				$success &= test_value_range($Input_N, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX);
-				$msg .= $msg_pid . " " . $Input_N . "\n";
+				$FileParserOverride = test_input($_POST["FileParserOverride"]);
+				$success &= test_value_range($FileParserOverride, 0, 1);
+				$msg .= $msg_pid . " " . $Input_N . " " . $FileParserOverride . "\n";
 				break;
 			case "ProgramStop":
 				$msg_pid = "3";
@@ -122,7 +124,7 @@
 				}
 				$msg .= $msg_pid . " " . $Input_INCH . "\n";
 				break;
-			case "LoadNewProgramm":
+			case "LoadNewProgramm": //maybe not used, instead Code is automatically uploaded at Programm Start
 				$msg_pid = "15";
 				$parameter = array("n_offset", "n_max", "metric_inch");
 				$success &= test_keys_exist($parameter) or exit(1);

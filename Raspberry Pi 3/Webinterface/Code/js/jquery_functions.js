@@ -115,7 +115,7 @@
 	
 	$("#ProgramStart").click(function(){
 		var StartBlock = document.getElementById("block").value;
-		var data = {command: "ProgramStart", block: StartBlock};
+		var data = {command: "ProgramStart", block: StartBlock, FileParserOverride: "0"};
 		sendCommand(data);
 	});
 	
