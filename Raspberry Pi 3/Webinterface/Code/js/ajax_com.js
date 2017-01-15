@@ -43,7 +43,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var cnc_code_error=xmlDoc.getElementsByTagName("cnc_code_error")[0].textContent;
 	var spindle_error=xmlDoc.getElementsByTagName("spindle_error")[0].textContent;
 	var n_actual=xmlDoc.getElementsByTagName("n_actual")[0].textContent;
-
+	var mtime=xmlDoc.getElementsByTagName("mtime")[0].textContent;
 	/*
 	document.getElementById("active").setAttribute("value", active);
 	document.getElementById("init").setAttribute("value", init);
@@ -250,6 +250,14 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	} 
 	else {
 		document.getElementById("SpindleErrorLED").className = "led-grey";
+	}
+	
+	if (mtime_last == -1) mtime_last=mtime;
+	
+	if (mtime != mtime_last) {
+		//cnc-code-file on server changed
+		mtime_last=mtime;
+		alert("CNC-Code-File on Server changed! You can reload it with Reset Changes");
 	}
 }
 
