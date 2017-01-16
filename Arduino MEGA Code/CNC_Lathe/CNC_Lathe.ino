@@ -197,6 +197,10 @@ void loop() {
                 STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
                 //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
               }
+              //debug
+              #ifdef DEBUG_CNC_ON
+                //programm_pause();
+              #endif
             }
           }
         }

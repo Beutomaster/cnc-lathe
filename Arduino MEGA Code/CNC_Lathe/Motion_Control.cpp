@@ -61,6 +61,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     Z=get_inc_Z(Z);
   }
 
+  //end if nothing to do
+  if (!X && !Z) {
+    command_completed=1;
+    return;
+  }
+
   //calculate needed steps
   x_steps = (long)X*STEPS_PER_MM/100;
   z_steps = (long)Z*STEPS_PER_MM/100;
@@ -222,6 +228,18 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     }
   }
 
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_STEPPER_ON
+    //#error Stepper debug-msg compilation activated!
+    Serial.print("XStepper clk_xfeed ");
+    Serial.println(clk_xfeed, DEC);
+    Serial.print("ZStepper clk_zfeed ");
+    Serial.println(clk_zfeed, DEC);
+    Serial.print("XStepper ICR1 ");
+    Serial.println(ICR1, DEC);
+    Serial.print("ZStepper ICR3 ");
+    Serial.println(ICR3, DEC);
+  #endif
+  
   //start Timer
   if (X) {
     STATE2 |= _BV(STATE2_XSTEPPER_RUNNING_BIT);
@@ -251,7 +269,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
 int get_xz_coordinates(int XZ0, int xz_step) { //calculate Coordinates
   int XZ_delta;
-  long XZ_delta_fixpoint = ((xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+  long XZ_delta_fixpoint = (((long)xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
       //Rounding
       if ((XZ_delta_fixpoint%512) < 256) {
         XZ_delta = XZ_delta_fixpoint>>9;
