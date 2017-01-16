@@ -276,7 +276,7 @@ boolean process_incomming_msg() {
               }
               break;
     case 15:  //New CNC-Programm wit N Blocks in metric or inch
-              msg_length=5;
+              msg_length=7;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
                 //some Error-Handling needed, if message is ignored
@@ -339,6 +339,7 @@ boolean process_incomming_msg() {
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               else {
                 ERROR_NO = 0;
+                //should be resetted with a received mask
               }
               break;
     default:  //SPI-Error "PID unkown"
