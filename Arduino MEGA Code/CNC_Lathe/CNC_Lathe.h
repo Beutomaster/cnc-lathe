@@ -18,6 +18,7 @@
 //#define DEBUG_MSG_RPM_ON
 //#define DEBUG_MSG_TOOL_ON
 //#define DEBUG_PROGRAM_FLOW_ON
+#define DEBUG_CNC_ON
 
 //Input Parameter Ranges
 #define CNC_CODE_NMIN 0

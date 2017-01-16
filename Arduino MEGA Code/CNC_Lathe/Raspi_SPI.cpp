@@ -174,6 +174,9 @@ boolean process_incomming_msg() {
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (get_control_active() && initialized && ((STATE1>>STATE1_PAUSE_BIT)&1) && command_completed) {
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
+                  Serial.println("Programm Start");
+                #endif
                 programm_start((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L]);
               }
               break;
@@ -279,6 +282,9 @@ boolean process_incomming_msg() {
               msg_length=7;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
+                  Serial.println("New CNC-Programm");
+                #endif
                 //some Error-Handling needed, if message is ignored
                 programm_stop();
                 N_Offset = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_OFFSET_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_OFFSET_N_L]; //needed for loading more data
@@ -306,6 +312,22 @@ boolean process_incomming_msg() {
                 cnc_code[N].ZK = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ZK_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ZK_L];
                 cnc_code[N].FTLK = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_L];
                 cnc_code[N].HS = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_HS_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_HS_L];
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
+                  Serial.print("New CNC-Code-Block ");
+                  Serial.print(N);
+                  Serial.print(", Code-Type ");
+                  Serial.write(cnc_code[N].GM);
+                  Serial.print(", Code-No ");
+                  Serial.print(cnc_code[N].GM_NO);
+                  Serial.print(", XI ");
+                  Serial.print(cnc_code[N].XI);
+                  Serial.print(", ZK ");
+                  Serial.print(cnc_code[N].ZK);
+                  Serial.print(", FTLK ");
+                  Serial.print(cnc_code[N].FTLK);
+                  Serial.print(", HS ");
+                  Serial.println(cnc_code[N].HS);
+                #endif
               }
               else success=1;
               break;
