@@ -202,7 +202,7 @@ static uint16_t delay;
 //pipe-Server
 char start_pipe_server=1, verbose = 1, state=0, client_sid[CLIENT_SESSION_ID_ARRAY_LENGTH], exclusive[CLIENT_SESSION_ID_ARRAY_LENGTH], buffer[SPI_TX_RINGBUFFERSIZE][BUF], answer_to_client[BUF], answer_fifo_name[BUF];
 int r_fd, w_fd, i, ret, ringbuffer_pos=0, messages_notreceived=0, ringbuffer_fill_status=0;
-//FILE *r_fz, *w_fz;
+FILE *r_fz, *w_fz;
 //parameter for select
 fd_set r_fd_set;
 struct timeval timeout;
@@ -394,7 +394,7 @@ void setup_pipe_server() {
 	  perror("Backend File-Parser: open(1)");
 	  exit (EXIT_FAILURE);
 	}
-	//r_fz = fdopen(r_fd, "r"); //create an Filepointer for High-Level I/O-Functions like fscanf
+	r_fz = fdopen(r_fd, "r"); //create an Filepointer for High-Level I/O-Functions like fscanf
 }
 
 
@@ -699,7 +699,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 		case 9:   	//X-Stepper move with feed
 		case 10:   	//Z-Stepper move with feed
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s %d %d", client_sid, &msg_type, &feed, &negativ_direction);
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &feed, &negativ_direction);
 						if (n != 4) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
@@ -869,8 +869,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 15:  	//New CNC-Programm wit N Blocks in metric or inch (maybe not used, instead File is uploaded by file-parser)
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s %d %d %d", client_sid, &msg_type, &block_n_offset, &block_n_max, &inch);
-						if (n != 4) {
+						n = sscanf(pipe_msg_buffer,"%s %d %d %d %d", client_sid, &msg_type, &block_n_offset, &block_n_max, &inch);
+						if (n != 5) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
 							return EXIT_FAILURE;
@@ -924,7 +924,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					break;
 		case 16:  	//CNC-Code-Block (maybe not used, instead File is uploaded by file-parser)
 					if (pipe_msg_buffer != NULL) {
-						n = sscanf(pipe_msg_buffer,"%s %d %c %d %d %d %d %d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
+						n = sscanf(pipe_msg_buffer,"%s %d %c %d %d %d %d %d %d", client_sid, &msg_type, &block, &code_type, &gmcode, &XX, &ZZ, &feed, &HH);
 						if (n != 9) {
 							if (errno != 0) perror("Backend Command-Interpreter: scanf");
 							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
@@ -1877,7 +1877,8 @@ int main(int argc, char *argv[]) {
 					//printf("select says pipe is readable\n");
 					//fscanf(r_fz,"%s\n%d", client_sid, &pid);
 					
-					if (read (r_fd, buffer[ringbuffer_pos], BUF) != 0) {
+					//if (read (r_fd, buffer[ringbuffer_pos], BUF) != 0) {
+					if (fgets(buffer[ringbuffer_pos], BUF, r_fz ) != 0) {
 						/*
 						//debug
 						printf("buffer %p:\n", buffer[ringbuffer_pos]);
