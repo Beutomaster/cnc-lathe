@@ -1,5 +1,7 @@
 ﻿var mtime_last=-1;
 var mtime_WaitForUpdate=0;
+var t_last=0;
+var n_last=0;
 
 $(document).ready(function(){
 

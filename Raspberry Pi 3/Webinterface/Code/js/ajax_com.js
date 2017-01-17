@@ -261,6 +261,16 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 			alert("CNC-Code-File on Server changed! You can reload it with Reset Changes");
 		}
 	}
+	
+	if (t_actual != t_last) {
+		t_last = t_actual;
+		document.getElementById("toolnumber").value = t_actual;
+	}
+	
+	if (n_actual != n_last) {
+		n_last = n_actual;
+		document.getElementById("block").value = n_actual;
+	}
 }
 
 //Show CNC Code from cnc_code.xml

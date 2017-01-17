@@ -181,7 +181,15 @@ void loop() {
       if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
           command_completed=1;
           STATE_F = 0; //maybe not needed
-          stepper_timeout();
+          if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+            STATE_N++;
+            if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
+              //N_Offset = N_Offset + STATE_N; //should be done by Uploader
+              STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
+              //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
+            }
+          }
+          if (pause) stepper_timeout();
       }
       if (command_completed) {
         if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
@@ -191,13 +199,6 @@ void loop() {
               ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
             }
             else {
-              STATE_N++;
-              if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
-                //N_Offset = N_Offset + STATE_N; //should be done by Uploader
-                STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
-                //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
-              }
-              //debug
               #ifdef DEBUG_CNC_ON
                 //programm_pause();
               #endif

@@ -7,7 +7,7 @@
 //defines
 
 //Debug-Switches
-//#define DEBUG_SERIAL_CODE_OFF
+#define DEBUG_SERIAL_CODE_OFF
 //#define DEBUG_SPI_CODE_OFF
 //#define DEBUG_STEPPER_CODE_OFF
 //#define DEBUG_RPM_CODE_OFF
