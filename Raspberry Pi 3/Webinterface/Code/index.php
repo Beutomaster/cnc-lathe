@@ -80,7 +80,7 @@ if(!$_SESSION['logged_in'])
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
 					<input type="hidden" name="command" value="SetXOffset" />
-					<label>X-Offset (+-5999):<br />
+					<label>X-Offset<br />(+-5999 mm/100):<br />
 					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
 					<br />
@@ -94,7 +94,7 @@ if(!$_SESSION['logged_in'])
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
 					<input type="hidden" name="command" value="SetZOffset" />
-					<label>Z-Offset (+-32760):<br />
+					<label>Z-Offset<br />(+-32760 mm/100):<br />
 					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
 					<br />
@@ -113,7 +113,7 @@ if(!$_SESSION['logged_in'])
 				<br />
 				<label><input type="radio" name="spindle_direction" value="1" />Rotation left handed</label>
 				<br />
-				<label>RPM (460 to 3220):<br />
+				<label>RPM (460 to 3220 U/min):<br />
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
 				</label>
 				<br />
@@ -130,7 +130,7 @@ if(!$_SESSION['logged_in'])
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Stepper:</legend>
-				<label>Feed (2 to 499):<br />
+				<label>Feed<br />(2 to 499 mm/min):<br />
 				<input type="number" id="feed" name="feed" min="2" max="499" value="50" autocomplete="off" required />
 				</label>
 				<br />
@@ -147,14 +147,14 @@ if(!$_SESSION['logged_in'])
 				<legend>Tool:</legend>
 				<input type="hidden" name="command" value="SetTool" />
 				<label>Tool (1 to 6):<br />
-				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" required />
+				<input type="number" id="toolnumber" name="tool" min="1" max="6" value="0" autocomplete="off" required />
 				</label>
 				<br />
-				<label>X-Correction (+-5999):<br />
+				<label>X-Correction<br />(+-5999 mm/100):<br />
 				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" required />
 				</label>
 				<br />
-				<label>Z-Correction (+-32760):<br />
+				<label>Z-Correction<br />(+-32760 mm/100):<br />
 				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" required />
 				</label>
 				<br />
@@ -291,19 +291,19 @@ if(!$_SESSION['logged_in'])
 				<p>CNC-Code needed</p>
 	</div>
 	<div class="state clearfix">
-				<p>RPM:</p>
+				<p>RPM [U/min]:</p>
 				<div id="RPMDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>X:</p>
+				<p>X [mm/100]:</p>
 				<div id="XDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>Z:</p>
+				<p>Z [mm/100]:</p>
 				<div id="ZDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>Feed:</p>
+				<p>Feed [mm/min]:</p>
 				<div id="FeedDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
@@ -385,19 +385,19 @@ if(!$_SESSION['logged_in'])
 			<input type="text" name="cnc_code_needed" id="cnc_code_needed" />
 			</label>
 			<br /><br />
-			<label>RPM:<br />
+			<label>RPM [U/min]:<br />
 			<input type="text" name="rpm_measure" id="rpm_measure" />
 			</label>
 			<br />
-			<label>X:<br />
+			<label>X [mm/100]:<br />
 			<input type="text" name="x_actual" id="x_actual" />
 			</label>
 			<br />
-			<label>Z:<br />
+			<label>Z [mm/100]:<br />
 			<input type="text" name="z_actual" id="z_actual" />
 			</label>
 			<br />
-			<label>Feed:<br />
+			<label>Feed [mm/min]:<br />
 			<input type="text" name="f_actual" id="f_actual" />
 			</label>
 			<br />

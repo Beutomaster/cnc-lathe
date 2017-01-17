@@ -1,4 +1,7 @@
 ﻿var mtime_last=-1;
+var mtime_WaitForUpdate=0;
+var t_last=0;
+var n_last=0;
 
 $(document).ready(function(){
 
@@ -51,11 +54,10 @@ $(document).ready(function(){
 	});
 	
 		
-	function UpdateAndResizeTextarea() {		
+	function UpdateAndResizeTextarea() {
 		$.ajax({
 			url: "/uploads/cnc_code.txt",
 			success: function(result){
-				mtime_last=-1;
 				$("#CncCodeTxt").val(result);
 				$("#responses").append("<br />Textarea Updated!");
 				var txt = $("#CncCodeTxt").val();
@@ -69,6 +71,8 @@ $(document).ready(function(){
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
 				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
 			}
+		}).always(function() {
+			mtime_WaitForUpdate=0;
 		});
 	}
 	
@@ -84,13 +88,15 @@ $(document).ready(function(){
 	
 	//Upload Changes to CNC-Code-File on Server
 	$("#UploadChanges").click(function(){
+		mtime_WaitForUpdate=1;
 		$.ajax({
 			type:'POST',
 			url: '/php/update_cam-file.php',
 			data:$('#CncCode').serialize(),
 			success: function(response) {
-				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 				mtime_last=-1;
+				mtime_WaitForUpdate=0;
+				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 				//Load new CNC-Code-File from Server (for Security)
 				//UpdateAndResizeTextarea(); //Error-Handling needed!!!
 			},
@@ -344,9 +350,10 @@ $(document).ready(function(){
 	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
 	// wenn es sich ändert
 	$('body').on('change', '#file-1', function() {
-	   var data = new FormData(); // das ist unser Daten-Objekt ...
-	   data.append('file-1', this.files[0]); // ... an die wir unsere Datei anhängen
-	   $.ajax({
+		mtime_WaitForUpdate=1;
+		var data = new FormData(); // das ist unser Daten-Objekt ...
+		data.append('file-1', this.files[0]); // ... an die wir unsere Datei anhängen
+		$.ajax({
 			url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
 			data: data,          // Das ist unser Datenobjekt.
 			type: 'POST',         // HTTP-Methode, hier: POST
@@ -354,6 +361,7 @@ $(document).ready(function(){
 			//contentType : 'multipart/form-data',
 			contentType: false,
 			success: function(response) {
+				mtime_last=-1;
 				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 			},
 			error: function(xhr){
@@ -392,5 +400,4 @@ $(document).ready(function(){
 			UpdateAndResizeTextarea();
 		});
 	})
-
 }); 

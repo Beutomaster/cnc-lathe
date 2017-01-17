@@ -501,6 +501,8 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 	
 	const char *pipe_msg_buffer_temp = pipe_msg_buffer; //hotfix
 	
+	printf("Creating new SPI-Message\n");
+	printf("########################\n");
 	/*
 	//debug
 	printf("pipe_msg_buffer %p, length %i\n", pipe_msg_buffer, sizeof(pipe_msg_buffer));
@@ -1085,17 +1087,21 @@ static int spi_transfer(int spi_fd) {
 	int ret;
 	uint8_t lostmessages=0, pid=0, crc_in=0;
 	
+	printf("SPI-Transfer\n");
+	printf("------------\n");
+	printf("Message-No: %i\n\n", msg_number);
+	
 	printf("tx-Buffer (HEX):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
 		if (!(ret % 4))
-			puts("");
+			puts(""); //newline
 		printf("0x%.2X ", tx[ret]);
 	}
 	printf("\n");
 	printf("tx-Buffer (DEC):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
 		if (!(ret % 4))
-			puts("");
+			puts(""); //newline
 		printf("%.3i ", tx[ret]);
 	}
 	
@@ -1248,19 +1254,18 @@ static int spi_transfer(int spi_fd) {
 	printf("rx-Buffer (HEX):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
 		if (!(ret % 4))
-			puts("");
+			puts(""); //newline
 		printf("0x%.2X ", rx[ret]);
 	}
 	printf("\n");
 	printf("rx-Buffer (DEC):");
 	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
 		if (!(ret % 4))
-			puts("");
+			puts(""); //newline
 		printf("%.3i ", rx[ret]);
 	}
 	
-	puts("");
-	printf("\n");
+	printf("\n\n");
 	
 	msg_number++; //for next message
 	return lostmessages;
@@ -1689,8 +1694,9 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 	tx[pos++] = N_Offset;
 	tx[pos++] = cnc_code_array_length>>8;
 	tx[pos++] = cnc_code_array_length;
+	tx[pos++] = 0; //metric
 	
-	used_length = pos;
+	used_length = pos-SPI_BYTE_LENGTH_PRAEAMBEL;
 		
 	//zero unused bytes (not needed in loop)
 	for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
@@ -1701,6 +1707,10 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
 	
 	//send msg
+	printf("File-Parser-Msg:\n");
+	printf("################\n");
+	printf("Message-Type: ");
+	printf("%i\n\n",msg_type);
 	messages_notreceived = spi_transfer(spi_fd);
 	
 	//Error-Handling needed!!!
@@ -1715,8 +1725,8 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 		pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 		tx[pos++] = msg_type;
 		tx[pos++] = msg_number;
-		tx[pos++] = (i+1)>>8;
-		tx[pos++] = (i+1);
+		tx[pos++] = i>>8; //flattened block-number
+		tx[pos++] = i; //flattened block-number
 		tx[pos++] = cnc_code_array[i].GM;
 		tx[pos++] = cnc_code_array[i].GM_NO;
 		tx[pos++] = cnc_code_array[i].XI >> 8;
@@ -1728,7 +1738,7 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 		tx[pos++] = cnc_code_array[i].HS >> 8;
 		tx[pos++] = cnc_code_array[i].HS;
 		
-		used_length = pos;
+		used_length = pos-SPI_BYTE_LENGTH_PRAEAMBEL;
 		
 		//zero unused bytes (not needed in loop)
 		for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
@@ -1740,6 +1750,10 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 		tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
 		
 		//send msg
+		printf("File-Parser-Msg:\n");
+		printf("################\n");
+		printf("Message-Type: ");
+		printf("%i\n\n",msg_type);
 		messages_notreceived = spi_transfer(spi_fd);
 		
 		//Error-Handling
@@ -1781,10 +1795,10 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 	pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 	tx[pos++] = msg_type;
 	tx[pos++] = msg_number;
-	tx[pos++] = 0;
-	tx[pos++] = 0;
+	tx[pos++] = 0; //Start-Block
+	tx[pos++] = 0; //Start-Block
 	
-	used_length = pos;
+	used_length = pos-SPI_BYTE_LENGTH_PRAEAMBEL;
 		
 	//zero unused bytes (not needed in loop)
 	for (pos; pos<(SPI_MSG_LENGTH-1); pos++) {
@@ -1795,7 +1809,11 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 	tx[pos] = CRC8(tx, SPI_BYTE_LENGTH_PRAEAMBEL, used_length);
 	
 	//send msg
-	messages_notreceived = spi_transfer(spi_fd);
+	printf("File-Parser-Msg:\n");
+	printf("################\n");
+	printf("Message-Type: ");
+	printf("%i\n\n",msg_type);
+	//messages_notreceived = spi_transfer(spi_fd); //is done in main
 	
 	//Error-Handling needed!!!
 	
