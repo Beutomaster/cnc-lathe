@@ -7,17 +7,18 @@
 //defines
 
 //Debug-Switches
-//#define DEBUG_SERIAL_CODE_OFF
+#define DEBUG_SERIAL_CODE_OFF
 //#define DEBUG_SPI_CODE_OFF
 //#define DEBUG_STEPPER_CODE_OFF
 //#define DEBUG_RPM_CODE_OFF
 //#define DEBUG_TOOL_CODE_OFF
 //#define DEBUG_MSG_SPI_ON
-//#define DEBUG_MSG_STEPPER_ON
+#define DEBUG_MSG_STEPPER_ON
 //#define DEBUG_MSG_ACTIVE_ON
-//#define DEBUG_MSG_RPM_ON
-//#define DEBUG_MSG_TOOL_ON
+#define DEBUG_MSG_RPM_ON
+#define DEBUG_MSG_TOOL_ON
 //#define DEBUG_PROGRAM_FLOW_ON
+#define DEBUG_CNC_ON
 
 //Input Parameter Ranges
 #define CNC_CODE_NMIN 0

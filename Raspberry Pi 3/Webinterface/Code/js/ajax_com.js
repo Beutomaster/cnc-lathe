@@ -252,12 +252,24 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		document.getElementById("SpindleErrorLED").className = "led-grey";
 	}
 	
-	if (mtime_last == -1) mtime_last=mtime;
+	if (mtime_WaitForUpdate == 0) {
+		if (mtime_last == -1) mtime_last=mtime;
+		if (mtime != mtime_last) {
+			//cnc-code-file on server changed
+			mtime_last=mtime;
+			document.getElementById("responses").innerHTML = "CNC-Code-File on Server changed! You can reload it with Reset Changes";
+			alert("CNC-Code-File on Server changed! You can reload it with Reset Changes");
+		}
+	}
 	
-	if (mtime != mtime_last) {
-		//cnc-code-file on server changed
-		mtime_last=mtime;
-		alert("CNC-Code-File on Server changed! You can reload it with Reset Changes");
+	if (t_actual != t_last) {
+		t_last = t_actual;
+		document.getElementById("toolnumber").value = t_actual;
+	}
+	
+	if (n_actual != n_last) {
+		n_last = n_actual;
+		document.getElementById("block").value = n_actual;
 	}
 }
 
