@@ -2,14 +2,8 @@
 #define Raspi_SPI_h
 
 //includes
-#include <util/atomic.h>
-#include <util/crc16.h>
-#include <Arduino.h>
 #include "CNC_Lathe.h"
-#include "Motion_Control.h"
-#include "CNC_Control.h"
-#include "Spindle_Control.h"
-#include "Tool_Changer_Control.h"
+#include <util/crc16.h>
 #include <SPI.h>
 
 //defines

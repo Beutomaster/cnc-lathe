@@ -13,17 +13,9 @@ boolean get_control_active() { //not detected with interrupt, because of switch-
   }
   else {
     if ((STATE1>>STATE1_CONTROL_ACTIVE_BIT)&1) { //if control was active
-      STATE1 &= ~(_BV(STATE1_CONTROL_ACTIVE_BIT)); //delete STATE1_bit0 = control_active
-      //reset steps
-      x_steps = 0;
-      z_steps = 0;
-      X0 = STATE_X;
-      Z0 = STATE_Z;
+      reset_initialization();
     }
-    //get initional state
-    get_stepper_on_off();
-    get_current_x_step(); //not really correct, because it sets a new last_step_time
-    get_current_z_step(); //not really correct, because it sets a new last_step_time
+    STATE1 &= ~(_BV(STATE1_CONTROL_ACTIVE_BIT)); //delete STATE1_bit0 = control_active
     //Observing old Control
     attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_OFF),get_stepper_on_off,CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_OLD_CONTROL_STEPPER_X_A),get_current_x_step,CHANGE);
@@ -35,6 +27,9 @@ boolean get_control_active() { //not detected with interrupt, because of switch-
 }
 
 void observe_machine() {
+  get_stepper_on_off();
+  get_current_x_step(); //not really correct, because it sets a new last_step_time
+  get_current_z_step(); //not really correct, because it sets a new last_step_time
   //get feed and direction
   get_feed();
   //maybe count from last coordinates

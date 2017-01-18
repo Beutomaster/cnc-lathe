@@ -18,8 +18,10 @@ volatile int phi_z=0;
 volatile byte current_x_step=0, current_z_step=0, last_x_step=0, last_z_step=0;
 volatile boolean reset_stepper_timeout=false;
 
-Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
-Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
+#ifdef STEPPER_BIB
+  Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
+  Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
+#endif
 
 void stepper_on() {
   STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT
@@ -375,7 +377,6 @@ ISR(TIMER1_OVF_vect) {
         TCCR1B = 0; //Disable Timer
         //Disable OVF1 Interrupt Enable
         TIMSK1 &= ~(_BV(TOIE1)); //set 0
-        command_completed=1;
         command_time=0;
         STATE2 &= ~(_BV(STATE2_COMMAND_TIME_BIT));
         //STATE_N++;
@@ -466,7 +467,8 @@ ISR(TIMER1_OVF_vect) {
         if (clk_xfeed) { //clock not zero
           ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/clk_xfeed)-1
           //Overflow possible!!!
-        } else ICR1 = 62499U;
+        }
+        else ICR1 = 62499U;
       }
       
       else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
@@ -479,11 +481,12 @@ ISR(TIMER1_OVF_vect) {
                 ICR1=RAPID_MAX;
               }
             }
-          } else if ((x_steps-x_step) < 17) {
+          }
+          else if ((x_steps-x_step) < 17) {
             ICR1 = RAPID_MIN-(x_steps-x_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/499s)-1
-              if (ICR1>RAPID_MIN) {
-                ICR1=RAPID_MIN;
-              }
+            if (ICR1>RAPID_MIN) {
+              ICR1=RAPID_MIN;
+            }
           }
         }
       }
@@ -588,23 +591,23 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     }
 
     else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
-        //set Timer-Compare-Values
-          if (z_steps) {
-            if (z_step < z_steps/2) {
-              if (ICR3>RAPID_MAX) {
-                ICR3 = RAPID_MIN-z_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
-                if (ICR3<RAPID_MAX) {
-                  ICR3=RAPID_MAX;
-                }
-              }
-            } else if ((z_steps-z_step) < 17) {
-              ICR3 = RAPID_MIN-(z_steps-z_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
-                if (ICR3>RAPID_MIN) {
-                  ICR3=RAPID_MIN;
-                }
+    //set Timer-Compare-Values
+      if (z_steps) {
+        if (z_step < z_steps/2) {
+          if (ICR3>RAPID_MAX) {
+            ICR3 = RAPID_MIN-z_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
+            if (ICR3<RAPID_MAX) {
+              ICR3=RAPID_MAX;
             }
           }
+        } else if ((z_steps-z_step) < 17) {
+          ICR3 = RAPID_MIN-(z_steps-z_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
+          if (ICR3>RAPID_MIN) {
+            ICR3=RAPID_MIN;
+          }
         }
+      }
+    }
   }
   //reset INTR-flag? OVF resets automatically
 }

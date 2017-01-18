@@ -2,8 +2,6 @@
 #define Initialization_h
 
 //includes
-#include <util/atomic.h>
-#include <Arduino.h>
 #include "CNC_Lathe.h"
 
 //Freigabe oder Eingabe benoetigt.
