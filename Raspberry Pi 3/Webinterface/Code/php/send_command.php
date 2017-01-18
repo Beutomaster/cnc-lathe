@@ -6,7 +6,7 @@
 	include 'verify_cnc_code.php';
 
 	// define variables and set to empty values
-	$Input_N = $Input_N_MAX = $Input_N_OFFSET = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $msg_pid = "";
+	$Input_N = $Input_N_MAX = $Input_N_OFFSET = $Input_GM = $Input_GM_NO = $Input_XI = $Input_ZK = $Input_FTLK = $Input_HS = $Input_RPM = $Input_DIRECTION = $Input_INCH = $error_reset_mask = $msg_pid = "";
 	$G_Code_Numbers = array(0, 1, 2, 3, 4, 20, 21 ,22, 24, 25, 26, 27, 33, 64, 73, 78, 81, 82, 83, 84, 85, 86, 88, 89, 90, 91, 92, 94, 95, 96, 97, 196);
 	$M_Code_Numbers = array(0, 3, 4, 5, 6, 17, 30, 98, 99);
 	
@@ -188,7 +188,11 @@
 				break;
 			case "ResetErrors":
 				$msg_pid = "19";
-				$msg .= $msg_pid . "\n";
+				$parameter = array("error_reset_mask");
+				$success &= test_keys_exist($parameter) or exit(1);
+				$error_reset_mask = test_input($_POST["error_reset_mask"]);
+				$success &= test_value_range($error_reset_mask, ERROR_RESET_MASK_MIN, ERROR_RESET_MASK_MAX);
+				$msg .= $msg_pid . " " . $error_reset_mask . "\n";
 				break;
 			default:
 				echo ("Unknown Command!");

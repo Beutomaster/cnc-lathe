@@ -270,7 +270,11 @@ $(document).ready(function(){
 	*/
 	
 	$("#ResetErrors").click(function(){
-		var data = {command: "ResetErrors"};
+		var error_reset_mask=0;
+		if (document.getElementById("SpiError").checked) error_reset_mask += Number($("#SpiError").val());
+		if (document.getElementById("CNCError").checked) error_reset_mask += Number($("#CNCError").val());
+		if (document.getElementById("SpindleError").checked) error_reset_mask += Number($("#SpindleError").val());
+		var data = {command: "ResetErrors", error_reset_mask: error_reset_mask};
 		sendCommand(data);
 	});
 	

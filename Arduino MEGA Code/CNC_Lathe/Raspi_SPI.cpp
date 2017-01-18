@@ -32,7 +32,7 @@ Praeambel 015 msg_no NN NN metric 10xZero CRC-8 #New CNC-Programm wit NN Offset 
 Praeambel 016 msg_no NN GG XX ZZ FF HH 3xZero CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
 Praeambel 017 msg_no 15xZero CRC-8 #shutdown
 Praeambel 018 msg_no 15xZero CRC-8 #Load last coordinates and tool position and init
-Praeambel 019 msg_no 15xZero CRC-8 #Reset Errors
+Praeambel 019 msg_no error_reset_mask 14xZero CRC-8 #Reset Errors
 
 //Transmission-Factor needed for Calculation of Revolutions !!!
 //Change Spindle-Direction
@@ -358,9 +358,11 @@ boolean process_incomming_msg() {
               }
               break;
     case 19:  //Reset Errors
+              msg_length=3;
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               else {
-                ERROR_NO = 0;
+                //ERROR_NO &= ~rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK] | _BV(ERROR_CNC_CODE_BIT) | _BV(ERROR_SPINDLE_BIT); //for debugging only resetting of ERROR_SPI_BIT is allowed
+                ERROR_NO &= ~rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK];
                 //should be resetted with a received mask
               }
               break;

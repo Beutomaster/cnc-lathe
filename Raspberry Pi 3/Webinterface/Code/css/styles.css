@@ -34,6 +34,10 @@ p {
     font-size: 0.875em;
 }
 
+.smallfont {
+	font-size: 0.8em;
+}
+
 form, table {
     margin: 0 15px 15px 15px;
 }
@@ -437,7 +441,6 @@ aside form {
 }
 
 .state {
-    height: 32px;
 	line-height: 32px;
 }
 
@@ -536,4 +539,16 @@ aside p {
 #CncCodeTxt {
 	width: 100%;
     background-color: #f1f1c1;
+}
+
+.errorcheckboxes {
+	display: inline;
+	float: right;
+	margin: auto 0;
+}
+
+.errorcheckboxes input {
+	display: inline;
+	float: right;
+	margin: 9px 5px;
 }
