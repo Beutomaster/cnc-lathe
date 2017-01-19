@@ -42,6 +42,13 @@ $(document).ready(function(){
 	   $(".cnc").show();
 	});
 	
+	$("#EmcoButton").click(function(){
+	   //$(".manual").hide();
+	   //$(".cnc").hide();
+	   $(".help").hide();
+	   $(".emco").show();
+	});
+	
 	$("#HelpButton").click(function(){
 		$(".manual").hide();
 		$(".cnc").hide();

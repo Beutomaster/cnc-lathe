@@ -80,7 +80,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 
 	if (active == 1) {
 	  document.getElementById("activeLED").className = "led-red";
-	  if (!debug) HideClass("emco");
+	  if (!debug) {
+		  HideClass("emco");
+		  HideId("EmcoButton");
+	  }
 	  ShowId("CncButton");
 	  if (manual == 1) {
 		  //if (!debug) HideClass("cnc"); //should be shown while pause
@@ -112,7 +115,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		  HideId("ManButton");
 		  HideId("CncButton");
 	  }
-	  ShowClass("emco");
+	  if (active_last != active) {
+		  ShowClass("emco");
+	  }
+	  ShowId("EmcoButton");
 	}
 
 	active_last = active;

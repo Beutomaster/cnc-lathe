@@ -41,7 +41,7 @@ if(!$_SESSION['logged_in'])
 	<ul class="top_nav">
 		<li id="ManButton" class="clearfix">Manual Control</li>
 		<li id="CncButton" class="clearfix">CNC Control</li>
-		<li id="EmcoButton" class="emco clearfix">EMCO Control</li>
+		<li id="EmcoButton" class="clearfix">EMCO Control</li>
 		<li id="HelpButton" class="clearfix">Help</li>
 	</ul>
     <ul class="top_login">
