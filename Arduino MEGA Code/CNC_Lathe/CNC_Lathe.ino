@@ -83,7 +83,7 @@ void setup() {
 
   //set initial State
   STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT); //set = 1
-  get_control_active(); //get initial state
+  if(!get_control_active()) get_stepper_on_off(); //get initial state
   
   //Serial Communication
   #ifndef DEBUG_SERIAL_CODE_OFF
@@ -239,7 +239,7 @@ void loop() {
   //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
   else {
     observe_machine();
-    set_revolutions(get_SERVO_CONTROL_POTI());
+    set_revolutions(get_SERVO_CONTROL_POTI()); //problematic with spi-communication, analogRead should be replaced by an adc-isr
     //set spindle-direction
   }
 

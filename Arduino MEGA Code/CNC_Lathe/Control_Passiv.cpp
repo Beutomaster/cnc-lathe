@@ -27,9 +27,9 @@ boolean get_control_active() { //not detected with interrupt, because of switch-
 }
 
 void observe_machine() {
-  get_stepper_on_off();
-  get_current_x_step(); //not really correct, because it sets a new last_step_time
-  get_current_z_step(); //not really correct, because it sets a new last_step_time
+  //get_stepper_on_off(); //(now called by interrupt)
+  //get_current_x_step(); //not really correct, because it sets a new last_step_time (now called by interrupt)
+  //get_current_z_step(); //not really correct, because it sets a new last_step_time (now called by interrupt)
   //get feed and direction
   get_feed();
   //maybe count from last coordinates

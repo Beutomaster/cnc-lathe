@@ -16,6 +16,8 @@
 #define RAPID_MAX 4692 //Timer-Value for Feed=799
 #define RAPID_MIN 7514 //Timer-Value for Feed=499
 #define STEPPER_TIMEOUT_MS 1200000 //Stepper Timeout in ms (20 min)
+#define STEPPER_STEP_T_MIN 1000 //min Time per Step in us (F = 799 mm/min => 1043us)
+#define STEPPER_STEP_T_MAX 420000 //max Time per Step in us (F = 2 mm/min => 416666us)
 
 #ifdef STEPPER_BIB
   extern Stepper xstepper; //X-Motor-Object

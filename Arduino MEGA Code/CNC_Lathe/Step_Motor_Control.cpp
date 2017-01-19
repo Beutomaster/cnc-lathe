@@ -312,15 +312,19 @@ void get_stepper_on_off() { //to observe EMCO Control (ISR)
     STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
   }
   else {
-    STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
+    STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT (Stepper on)
   }
 }
 
 void get_feed() { //to observe EMCO Control
   //Errors at overflow of TIMER0
-  long x_feed = 60000000L/((xstep_time-last_xstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
-  long z_feed = 60000000L/((zstep_time-last_zstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
-  STATE_F = sqrt(x_feed*x_feed+z_feed*z_feed);
+  long x_feed, z_feed; //not really correct!!!
+  if (xstep_time-last_xstep_time>0 && xstep_time-last_xstep_time<STEPPER_STEP_T_MAX) x_feed = 60000000L/((long)(xstep_time-last_xstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
+  else x_feed=0;
+  if (zstep_time-last_zstep_time>0 && zstep_time-last_zstep_time<STEPPER_STEP_T_MAX) z_feed = 60000000L/((long)(zstep_time-last_zstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
+  else z_feed=0;
+  if (x_feed || z_feed) STATE_F = sqrt((long)x_feed*x_feed+(long)z_feed*z_feed);
+  else STATE_F=0;
 }
 
 // Write/Erase Cycles:10,000 Flash/100,000 EEPROM
