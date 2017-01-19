@@ -10,7 +10,7 @@ volatile char wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindl
   volatile boolean spindle_new=LOW;
 #endif
 
-#ifdef SERVO_BIB
+#ifdef SERVO_LIB
   //Create new Servo Objekt
   Servo potiservo;  //old Servo Bib
 #endif
@@ -161,7 +161,7 @@ int get_SERVO_CONTROL_POTI() {
 }
 
 void set_poti_servo(int poti_angle){
-  #ifdef SERVO_BIB
+  #ifdef SERVO_LIB
   	//write angle in degree to Servo-Objekt
   	potiservo.write(poti_angle); //old Servo Lib
   #else
