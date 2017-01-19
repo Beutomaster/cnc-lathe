@@ -77,7 +77,7 @@ void setup() {
   pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SCK, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SS, INPUT); 	//Arduino is SPI-Slave
-  #ifdef SERVO_BIB
+  #ifdef SERVO_LIB
     potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
   #endif
 

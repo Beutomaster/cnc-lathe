@@ -18,7 +18,7 @@ volatile int phi_z=0;
 volatile byte current_x_step=0, current_z_step=0, last_x_step=0, last_z_step=0;
 volatile boolean reset_stepper_timeout=false;
 
-#ifdef STEPPER_BIB
+#ifdef STEPPER_LIB
   Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
   Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
 #endif
