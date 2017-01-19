@@ -25,7 +25,7 @@
 //#define DEBUG_MSG_ACTIVE_ON
 #define DEBUG_MSG_RPM_ON
 #define DEBUG_MSG_TOOL_ON
-//#define DEBUG_PROGRAM_FLOW_ON
+//#define DEBUG_PROGRAM_FLOW_ON //for debugging with Serial-Plotter (Graph shows an approximately timeline of function-IDs)
 #define DEBUG_CNC_ON
 
 //Input Parameter Ranges
