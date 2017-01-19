@@ -89,28 +89,6 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 			  if (!debug) HideClass("cnc");
 			  ShowClass("manual");
 		  }
-		  if (spindle_on == 1) {
-			  document.getElementById("SpindleOff").style.display='';
-			  //document.getElementById("SpindleOff").disabled = false;
-			  document.getElementById("SpindleOn").value = "Set RPM";
-		  }
-		  else {
-			  document.getElementById("SpindleOff").style.display='none';
-			  //document.getElementById("SpindleOff").disabled = true;
-			  document.getElementById("SpindleOn").value = "Spindle ON";
-		  }
-		  if (stepper_on == 1) {
-			  document.getElementById("StepperOff").style.display='';
-			  //document.getElementById("StepperOff").disabled = false;
-			  document.getElementById("StepperOn").value = "Set Feed";
-		  }
-		  else {
-			  document.getElementById("StepperOff").style.display='none';
-			  //document.getElementById("StepperOff").disabled = true;
-			  document.getElementById("StepperOn").value = "Stepper ON";
-		  }
-		  if (init == 0) document.getElementById("SetTool").value = "Init Tool";
-		  else document.getElementById("SetTool").value = "Set Tool";
 	  }
 	  else {
 		  if (!pause && !debug) {
@@ -140,10 +118,12 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	active_last = active;
   
 	if (init == 1) {
+		document.getElementById("SetTool").value = "Set Tool";
 		document.getElementById("initLED").className = "led-red";
 		document.getElementById("LoadOldParameter").style.display='none';
 	} 
 	else {
+		document.getElementById("SetTool").value = "Init Tool";
 		document.getElementById("initLED").className = "led-grey";
 		document.getElementById("LoadOldParameter").style.display='';
 	}
@@ -176,9 +156,19 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	}
 	
 	if (spindle_on == 1) {
+		document.getElementById("SpindleOff").style.display='';
+		document.getElementById("SpindleOffEMCO").style.display='';
+		//document.getElementById("SpindleOff").disabled = false;
+		document.getElementById("SpindleOn").value = "Set RPM";
+		document.getElementById("SpindleOnEMCO").value = "Change Direction";
 		document.getElementById("SpindleOnLED").className = "led-red";
 	} 
 	else {
+		document.getElementById("SpindleOff").style.display='none';
+		document.getElementById("SpindleOffEMCO").style.display='none';
+		//document.getElementById("SpindleOff").disabled = true;
+		document.getElementById("SpindleOn").value = "Spindle ON";
+		document.getElementById("SpindleOnEMCO").value = "Spindle ON";
 		document.getElementById("SpindleOnLED").className = "led-grey";
 	}
 	
@@ -190,9 +180,15 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	}
 	
 	if (stepper_on == 1) {
+		document.getElementById("StepperOff").style.display='';
+		//document.getElementById("StepperOff").disabled = false;
+		document.getElementById("StepperOn").value = "Set Feed";
 		document.getElementById("StepperOnLED").className = "led-red";
 	} 
 	else {
+		document.getElementById("StepperOff").style.display='none';
+		//document.getElementById("StepperOff").disabled = true;
+		document.getElementById("StepperOn").value = "Stepper ON";
 		document.getElementById("StepperOnLED").className = "led-grey";
 	}
 	

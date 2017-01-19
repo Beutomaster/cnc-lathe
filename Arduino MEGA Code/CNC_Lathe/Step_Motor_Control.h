@@ -2,10 +2,10 @@
 #define Step_Motor_Control_h
 
 //includes
-#include <util/atomic.h>
-#include <Arduino.h>
 #include "CNC_Lathe.h"
-#include <Stepper.h> //we can't use it, because it uses a while loop instead of a timer!!!
+#ifdef STEPPER_BIB
+  #include <Stepper.h> //we can't use it, because it uses a while loop instead of a timer!!!
+#endif
 
 //defines
 //Stepper
@@ -16,9 +16,13 @@
 #define RAPID_MAX 4692 //Timer-Value for Feed=799
 #define RAPID_MIN 7514 //Timer-Value for Feed=499
 #define STEPPER_TIMEOUT_MS 1200000 //Stepper Timeout in ms (20 min)
+#define STEPPER_STEP_T_MIN 1000 //min Time per Step in us (F = 799 mm/min => 1043us)
+#define STEPPER_STEP_T_MAX 420000 //max Time per Step in us (F = 2 mm/min => 416666us)
 
-extern Stepper xstepper; //X-Motor-Object
-extern Stepper zstepper; //Z-Motor-Object
+#ifdef STEPPER_BIB
+  extern Stepper xstepper; //X-Motor-Object
+  extern Stepper zstepper; //Z-Motor-Object
+#endif
 extern volatile int x_step;
 extern volatile int z_step;
 extern volatile int x_steps; //has to be global for ISR
