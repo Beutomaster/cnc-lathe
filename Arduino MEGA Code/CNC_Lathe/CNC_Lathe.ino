@@ -77,18 +77,23 @@ void setup() {
   pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SCK, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SS, INPUT); 	//Arduino is SPI-Slave
-  //potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
+  #ifdef SERVO_BIB
+    potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
+  #endif
 
   //set initial State
   STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT); //set = 1
-  get_control_active(); //get initial state
+  if(!get_control_active()) get_stepper_on_off(); //get initial state
   
   //Serial Communication
   #ifndef DEBUG_SERIAL_CODE_OFF
     //#error Serial compilation activated!
     //Serial.begin(115200); //for Debugging with Serial Monitor (115200 baud * 4 bit/baud = 460800 bit/s)
     Serial.begin(74880); //for Debugging with Serial Monitor (74880 baud * 4 bit/baud = 299520 bit/s)
-    //Serial1.begin(9600); //Nikos Platine
+  #endif
+
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined SPINDLEDRIVER_EXTRA_BOARD
+    Serial1.begin(9600); //Nikos Platine
   #endif
   
   //SPI
@@ -127,18 +132,20 @@ void setup() {
   //Timer3
   //Z-Stepper output + set z_command_completed while in active mode and maybe observing Stepper in passive mode
 
-  //Timer4
-  //spindle PWM
-  //set and start Timer4 (Clk = 16MHz/(Prescaler*(TOP+1)) = 16MHz/(1023+1) = 15,625 kHz)
-  TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
-  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM
-  TCCR4C = 0; //no Force of Output Compare
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
-    TCNT4 = 0; //set Start Value
-  }
-  //Prescaler 1 and Start Timer
-  TCCR4B |= _BV(CS40); //set 1
+  #ifdef SPINDLEDRIVER_NEW
+    //Timer4
+    //spindle PWM
+    //set and start Timer4 (Clk = 16MHz/(Prescaler*(TOP+1)) = 16MHz/(1023+1) = 15,625 kHz)
+    TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
+    TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM
+    TCCR4C = 0; //no Force of Output Compare
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
+      TCNT4 = 0; //set Start Value
+    }
+    //Prescaler 1 and Start Timer
+    TCCR4B |= _BV(CS40); //set 1
+  #endif
   
   //Timer5 Servo and spindle regulator
   set_Timer5();
@@ -175,45 +182,64 @@ void loop() {
     spi_buffer_handling();
   #endif
 
-  //CNC-Lathe State-Machine  
+  //CNC-Lathe State-Machine
+  if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
+    STATE_F = 0; //maybe not needed
+    if (wait_for_spindle_stop) {
+      wait_for_spindle_stop=0;
+    }
+    else if (callback_spindle_direction_change) {
+      callback_spindle_direction_change=0;
+      spindle_direction(target_spindle_direction);
+    }
+    else if (wait_for_spindle_spindle_direction_relais) {
+      wait_for_spindle_spindle_direction_relais=0;
+    }
+    else if (callback_spindle_start) {
+      callback_spindle_start=0;
+      spindle_on();
+    }
+    else {
+      command_completed=1;
+      #ifdef RPM_ERROR_TEST
+        if ((STATE1>>STATE1_SPINDLE_BIT)&1) if(!test_for_spindle_rpm(target_revolutions, 100)) ERROR_NO |= _BV(ERROR_SPINDLE_BIT); //test for wrong rpm (not finished)
+      #endif
+      if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+        STATE_N++;
+        if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
+          //N_Offset = N_Offset + STATE_N; //should be done by Uploader
+          STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
+          //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
+        }
+      }
+    }
+  }
+  
   if (get_control_active()) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
     if (initialized) {
-      if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
-          command_completed=1;
-          STATE_F = 0; //maybe not needed
-          if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
-            STATE_N++;
-            if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
-              //N_Offset = N_Offset + STATE_N; //should be done by Uploader
-              STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
-              //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
-            }
+      if (pause) stepper_timeout();
+    }
+    if (command_completed) {
+      if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
+        if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+          if (process_cnc_listing()) { //error
+            STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT);
+            ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
           }
-          if (pause) stepper_timeout();
-      }
-      if (command_completed) {
-        if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-          if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
-            if (process_cnc_listing()) { //error
-              STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT);
-              ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
-            }
-            else {
-              #ifdef DEBUG_CNC_ON
-                //programm_pause();
-              #endif
-            }
+          else {
+            #ifdef DEBUG_CNC_ON
+              //programm_pause();
+            #endif
           }
         }
       }
-      else reset_stepper_timeout=true;
-	  }
-    //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
+    }
+    else reset_stepper_timeout=true;
   }
+  //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
   else {
-    reset_initialization();
     observe_machine();
-    set_revolutions(get_SERVO_CONTROL_POTI());
+    set_revolutions(get_SERVO_CONTROL_POTI()); //problematic with spi-communication, analogRead should be replaced by an adc-isr
     //set spindle-direction
   }
 

@@ -80,7 +80,7 @@ if(!$_SESSION['logged_in'])
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
 					<input type="hidden" name="command" value="SetXOffset" />
-					<label>X-Offset<br />(+-5999 mm/100):<br />
+					<label><span class="smallfont">(+-5999 mm/100)</span><br />
 					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
 					<br />
@@ -94,7 +94,7 @@ if(!$_SESSION['logged_in'])
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
 					<input type="hidden" name="command" value="SetZOffset" />
-					<label>Z-Offset<br />(+-32760 mm/100):<br />
+					<label><span class="smallfont">(+-32760 mm/100)</span><br />
 					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
 					<br />
@@ -109,11 +109,12 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Spindle:</legend>
 				<input type="hidden" name="command" value="SpindleSetRPM" />
-				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />Rotation right handed</label>
+				Rotation<br />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />right handed</label>
 				<br />
-				<label><input type="radio" name="spindle_direction" value="1" />Rotation left handed</label>
+				<label><input type="radio" name="spindle_direction" value="1" />left handed</label>
 				<br />
-				<label>RPM (460 to 3220 U/min):<br />
+				<label>RPM <span class="smallfont">(460 to 3220 U/min)</span>:<br />
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
 				</label>
 				<br />
@@ -130,7 +131,7 @@ if(!$_SESSION['logged_in'])
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Stepper:</legend>
-				<label>Feed<br />(2 to 499 mm/min):<br />
+				<label>Feed <span class="smallfont">(2 to 499 mm/min)</span>:<br />
 				<input type="number" id="feed" name="feed" min="2" max="499" value="50" autocomplete="off" required />
 				</label>
 				<br />
@@ -146,15 +147,15 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Tool:</legend>
 				<input type="hidden" name="command" value="SetTool" />
-				<label>Tool (1 to 6):<br />
+				<label>Tool <span class="smallfont">(1 to 6)</span>:<br />
 				<input type="number" id="toolnumber" name="tool" min="1" max="6" value="0" autocomplete="off" required />
 				</label>
 				<br />
-				<label>X-Correction<br />(+-5999 mm/100):<br />
+				<label>X-Correction <span class="smallfont">(+-5999 mm/100)</span>:<br />
 				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" required />
 				</label>
 				<br />
-				<label>Z-Correction<br />(+-32760 mm/100):<br />
+				<label>Z-Correction <span class="smallfont">(+-32760 mm/100)</span>:<br />
 				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" required />
 				</label>
 				<br />
@@ -225,6 +226,26 @@ if(!$_SESSION['logged_in'])
 	
 	<article class="emco clearfix">
         <h2>EMCO-Control</h2>
+		<div class="left">
+		<form action="/php/send_command.php" method="post">
+			<fieldset>
+				<legend>Spindle:</legend>
+				<input type="hidden" name="command" value="SpindleSetRPM" />
+				Rotation<br />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />right handed</label>
+				<br />
+				<label><input type="radio" name="spindle_direction" value="1" />left handed</label>
+				<br />
+				<label style="display: none;">RPM <span class="smallfont">(460 to 3220 U/min)</span>:<br />
+				<input type="hidden" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
+				</label>
+				<br />
+				<input type="submit" id="SpindleOnEMCO" class="button" name="SpindleOnEMCO" value="Spindle ON" />
+				<br />
+				<input type="button" id="SpindleOffEMCO" class="button button_red" name="SpindleOffEMCO" value="Spindle OFF" />
+			</fieldset>
+		</form>
+		</div>
 		<!-- Stream Video of old Emco Control
         <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
 		-->
@@ -291,19 +312,19 @@ if(!$_SESSION['logged_in'])
 				<p>CNC-Code needed</p>
 	</div>
 	<div class="state clearfix">
-				<p>RPM [U/min]:</p>
+				<p>RPM <span class="smallfont">[U/min]</span>:</p>
 				<div id="RPMDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>X [mm/100]:</p>
+				<p>X <span class="smallfont">[mm/100]</span>:</p>
 				<div id="XDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>Z [mm/100]:</p>
+				<p>Z <span class="smallfont">[mm/100]</span>:</p>
 				<div id="ZDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>Feed [mm/min]:</p>
+				<p>Feed <span class="smallfont">[mm/min]</span>:</p>
 				<div id="FeedDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
@@ -318,17 +339,29 @@ if(!$_SESSION['logged_in'])
 				<p>N:</p>
 				<div id="NDisplaybox" class="Displaybox"></div>	
 	</div>
+	<form>
+		<input type="button" name="LoadOldParameter" id="LoadOldParameter" class="button" value="Load Parameter" />
+	</form>
 	<div class="state clearfix">
 				<div id="SpiErrorLED" class="led-grey"></div>
 				<p>SPI-Error</p>
+				<form class="errorcheckboxes">
+					<input type="checkbox" name="SpiError" id="SpiError" value="1" />
+				</form>
 	</div>
 	<div class="state clearfix">
 				<div id="CNCErrorLED" class="led-grey"></div>
 				<p>CNC-Code-Error</p>
+				<form class="errorcheckboxes">
+					<input type="checkbox" name="CNCError" id="CNCError" value="2" />
+				</form>
 	</div>
 	<div class="state clearfix">
 				<div id="SpindleErrorLED" class="led-grey"></div>
 				<p>Spindle-Error</p>
+				<form class="errorcheckboxes">
+					<input type="checkbox" name="SpindleError" id="SpindleError" value="4" />
+				</form>
 	</div>
 	
 <!--
@@ -426,17 +459,13 @@ if(!$_SESSION['logged_in'])
 			</label>
 			<br />
 	</form>
--->
+-->	
 	<form>
-	<input type="button" name="LoadOldParameter" id="LoadOldParameter" class="button" value="Load Parameter" />
+		<input type="button" name="ResetErrors" id="ResetErrors" class="button" value="Reset Errors" />
 	</form>
 	
 	<form>
-	<input type="button" name="ResetErrors" id="ResetErrors" class="button" value="Reset Errors" />
-	</form>
-	
-	<form>
-	<input type="button" name="shutdown" id="shutdown" class="button button_red" value="Shutdown Pi" />
+		<input type="button" name="shutdown" id="shutdown" class="button button_red" value="Shutdown Pi" />
 	</form>
 </aside>
 

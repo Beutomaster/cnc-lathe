@@ -65,6 +65,8 @@
 #define H_MAX 999
 #define REVOLUTIONS_MIN 460  //rpm
 #define REVOLUTIONS_MAX 3220 //rpm
+#define ERROR_RESET_MASK_MIN 0
+#define ERROR_RESET_MASK_MAX 255
 
 //Byte Postions of Arduino-Answer
 #define SPI_BYTE_ARDUINO_MSG_TYPE (0+SPI_BYTE_LENGTH_PRAEAMBEL)
@@ -120,6 +122,7 @@
 #define SPI_BYTE_RASPI_MSG_TOOL_T (6+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_INCH (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_G_INCH (4+SPI_BYTE_LENGTH_PRAEAMBEL)
+#define SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK (2+SPI_BYTE_LENGTH_PRAEAMBEL)
 #define SPI_BYTE_RASPI_MSG_CRC8 (SPI_MSG_LENGTH-1)
 
 //Bit Postions of STATE
@@ -235,7 +238,7 @@ void setup_pipe_server();
 int setup_spi();
 uint8_t _crc8_ccitt_update (uint8_t, uint8_t);
 uint8_t CRC8 (uint8_t *, uint8_t, uint8_t);
-static int spi_create_command_msg(const char *, char);
+static int spi_create_command_msg(const char *, char, uint8_t);
 static int spi_transfer(int);
 int test_value_range(int, char, int, int, int);
 int get_next_cnc_code_parameter(int, int *, char *, int *, char, int *, char, int, int);
@@ -495,7 +498,7 @@ uint8_t CRC8 (uint8_t * buf, uint8_t message_offset, uint8_t used_message_bytes)
   return crc_8;
 }
 
-static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
+static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type, uint8_t error_reset_mask) {
 	int n, block=-1, StartblockMax=CNC_CODE_NMAX, FileParserOverride=-1, block_n_max=-1, block_n_offset=-1, rpm=-1, spindle_direction=-1, negativ_direction=-1, XX=32767, ZZ=32767, feed=-1, tool=0, inch=-1, gmcode=-1, HH=-1, code_type=0;
 	uint8_t used_length=0, pos=SPI_BYTE_LENGTH_PRAEAMBEL;
 	
@@ -1038,7 +1041,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 					tx[pos++] = feed>>8;
 					tx[pos++] = feed;
 					
-					printf("H (0 to 999) or S (460 to 3220: ");
+					printf("H (0 to 999) or S (460 to 3220): ");
 					if ((HH>=H_MIN) && (HH<=REVOLUTIONS_MAX)) printf("%i\n",HH);  //not right!!! Many cases!!!
 					else if (pipe_msg_buffer == NULL) {
 						do {
@@ -1059,10 +1062,37 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type) {
 		case 18:  	//Load last coordinates and tool position and init
 					break;
 		case 19:  	//Reset Errors
-					msg_number = (lastsuccessful_msg+1)%256; //Reset Msg-No
-					pos--;
-					tx[pos++] = msg_number; 
-					//With the next message, lost messages can be repeated, if they were important. (2D-Array needed for saving last messages)
+					if (pipe_msg_buffer != NULL) {
+						n = sscanf(pipe_msg_buffer,"%s %d %u", client_sid, &msg_type, &error_reset_mask);
+						if (n != 3) {
+							if (errno != 0) perror("Backend Command-Interpreter: scanf");
+							else fprintf(stderr, "Backend Command-Interpreter: Parameter not matching\n");
+							return EXIT_FAILURE;
+						}
+					}
+					
+					printf("Error-Reset-Mask (SPI-Error 1 + CNC-CODE-Error 2 + Spindel-Error 4): ");
+					if ((error_reset_mask>=ERROR_RESET_MASK_MIN) && (error_reset_mask<=ERROR_RESET_MASK_MAX)) printf("%u\n",error_reset_mask);
+					else if (pipe_msg_buffer == NULL) {
+						do {
+							scanf("%u",&error_reset_mask);
+							getchar();
+						} while ((error_reset_mask<ERROR_RESET_MASK_MIN) || (error_reset_mask>ERROR_RESET_MASK_MAX));
+					}
+					else {
+						fprintf(stderr, "Backend Command-Interpreter: Error-Reset-Mask out of Range\n");
+						return EXIT_FAILURE;
+					}
+					
+					if ((error_reset_mask>>ERROR_SPI_BIT)&1) {
+						msg_number = (lastsuccessful_msg+1)%256; //Reset Msg-No
+						pos--;
+						tx[pos++] = msg_number;
+						//With the next message, lost messages can be repeated, if they were important. (2D-Array needed for saving last messages)
+					}
+					
+					tx[pos++] = error_reset_mask;
+					
 					break;
 		default:  	//SPI-Error "PID unkown"
 					break;
@@ -1762,9 +1792,9 @@ static int spi_create_cnc_code_messages(int N_Offset) {
 			i -= messages_notreceived;
 			//Reset SPI-Error
 			while (messages_notreceived) {	
-					if (!spi_create_command_msg(NULL, 19)) messages_notreceived = spi_transfer(spi_fd);
+					if (!spi_create_command_msg(NULL, 19, 1)) messages_notreceived = spi_transfer(spi_fd);
 					usleep(200000); //0,2s
-					if (!spi_create_command_msg(NULL, 1)) messages_notreceived = spi_transfer(spi_fd);
+					if (!spi_create_command_msg(NULL, 1, 0)) messages_notreceived = spi_transfer(spi_fd);
 			}
 		}
 		#else
@@ -1866,7 +1896,7 @@ int main(int argc, char *argv[]) {
 				{
 					//printf("select timeout after 1s waiting for message on pipe!\n");
 					if (verbose) printf("Updating Machine-State after waiting for message on pipe for 1s!\n");
-					if (!spi_create_command_msg(NULL, 1)) messages_notreceived = spi_transfer(spi_fd);
+					if (!spi_create_command_msg(NULL, 1, 0)) messages_notreceived = spi_transfer(spi_fd);
 				}
 				else if (ret < 0) //error
 				{
@@ -1933,7 +1963,7 @@ int main(int argc, char *argv[]) {
 						
 						//process pipe-message
 						if (ringbuffer_fill_status<=SPI_TX_RINGBUFFERSIZE) ringbuffer_fill_status++;
-						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
+						if (!spi_create_command_msg(buffer[ringbuffer_pos], 0, 0)) messages_notreceived = spi_transfer(spi_fd); //status-update needed! Warning may come later, exspecially when CRC- or PID-Check of incomming msg fails.
 						
 						/*
 						//Error-Handling not ready
@@ -1943,9 +1973,9 @@ int main(int argc, char *argv[]) {
 							while(messages_to_repeat) {
 								//Reset SPI-Error
 								while (messages_notreceived) {	
-										if (!spi_create_command_msg(NULL, 19)) messages_notreceived = spi_transfer(spi_fd);
+										if (!spi_create_command_msg(NULL, 19, 1)) messages_notreceived = spi_transfer(spi_fd);
 										usleep(200000); //0,2s
-										if (!spi_create_command_msg(NULL, 1)) messages_notreceived = spi_transfer(spi_fd);
+										if (!spi_create_command_msg(NULL, 1, 0)) messages_notreceived = spi_transfer(spi_fd);
 										
 								}
 								
@@ -1960,7 +1990,7 @@ int main(int argc, char *argv[]) {
 									else ringbuffer_pos -= messages_notreceived;
 									if (ringbuffer_pos<0) ringbuffer_pos += SPI_TX_RINGBUFFERSIZE;
 									
-									if (!spi_create_command_msg(buffer[ringbuffer_pos], 0))	messages_notreceived = spi_transfer(spi_fd);
+									if (!spi_create_command_msg(buffer[ringbuffer_pos], 1, 0))	messages_notreceived = spi_transfer(spi_fd);
 								}
 							}
 						} 
@@ -1972,7 +2002,7 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			}
-			else if (!spi_create_command_msg(NULL, 0)) messages_notreceived = spi_transfer(spi_fd); //commandline-mode
+			else if (!spi_create_command_msg(NULL, 0, 0)) messages_notreceived = spi_transfer(spi_fd); //commandline-mode
 		}
 	}
 	else exit(EXIT_FAILURE);

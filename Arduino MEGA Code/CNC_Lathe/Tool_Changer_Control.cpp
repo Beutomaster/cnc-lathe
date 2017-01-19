@@ -72,37 +72,36 @@ void read_current_tool_position() {
 
 ISR(TIMER1_CAPT_vect) {
 //Toolchanger-ISR
-      if (tool_step==1) {
-        //Step2 TOOL_CHANGER_FIXING 3,5s
-        tool_step=2;
-        digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
-        //digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
-        //set and start Timer1 for 3,5s
-        ICR1 = 54687; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 3,5s*16MHz/1024 -1 = 54686,5 = 54687
-        TCNT1 = 0; //set Start Value
-      }
-
-      else if (tool_step==2) {
-        //Step0 TOOL_CHANGER_HOLD
-        tool_step=0;
-        //digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
-        digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
-        i_tool--;
-        if (i_tool==0) {
-        //stop Timer1
-        //Input Compare Match Interrupt Disable
-        TIMSK1 &= ~(_BV(ICIE1)); //set 0
-        STATE2 &= ~(_BV(STATE2_TOOLCHANGER_RUNNING_BIT));
-        command_completed=1;
-        }
-        else {
-          //Step1 TOOL_CHANGER_CHANGE 2,9s
-          tool_step=1;
-          digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
-          digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
-          ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
-          TCNT1 = 0; //set Start Value
-        }
-      }
+  if (tool_step==1) {
+    //Step2 TOOL_CHANGER_FIXING 3,5s
+    tool_step=2;
+    digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
+    //digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
+    //set and start Timer1 for 3,5s
+    ICR1 = 54687; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 3,5s*16MHz/1024 -1 = 54686,5 = 54687
+    TCNT1 = 0; //set Start Value
+  }
+  else if (tool_step==2) {
+    //Step0 TOOL_CHANGER_HOLD
+    tool_step=0;
+    //digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
+    digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+    i_tool--;
+    if (i_tool==0) {
+    //stop Timer1
+    //Input Compare Match Interrupt Disable
+    TIMSK1 &= ~(_BV(ICIE1)); //set 0
+    STATE2 &= ~(_BV(STATE2_TOOLCHANGER_RUNNING_BIT));
+    command_completed=1;
+    }
+    else {
+      //Step1 TOOL_CHANGER_CHANGE 2,9s
+      tool_step=1;
+      digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+      digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
+      ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
+      TCNT1 = 0; //set Start Value
+    }
+  }
 }
 
