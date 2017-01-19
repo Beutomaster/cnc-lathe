@@ -339,7 +339,7 @@ void save_current_z_step() { //needed to switch on stepper without movement, sav
 
 void save_current_x_coordinate() { //save in eeprom !!!
   EEPROM.update(LAST_X_ADDRESS, STATE_X>>8);
-  EEPROM.update(LAST_X_ADDRESS+1, STATE_X+1);
+  EEPROM.update(LAST_X_ADDRESS+1, STATE_X);
 }
 
 void save_current_z_coordinate() { //save in eeprom !!!
