@@ -144,6 +144,11 @@ $(document).ready(function(){
 		sendCommand(data);
 	});
 	
+	$("#SpindleOffEMCO").click(function(){
+		var data = {command: "SpindleOff"};
+		sendCommand(data);
+	});
+	
 	$("#StepperOn").click(function(){
 		var data = {command: "StepperOn"};
 		sendCommand(data);

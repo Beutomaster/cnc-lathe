@@ -226,6 +226,26 @@ if(!$_SESSION['logged_in'])
 	
 	<article class="emco clearfix">
         <h2>EMCO-Control</h2>
+		<div class="left">
+		<form action="/php/send_command.php" method="post">
+			<fieldset>
+				<legend>Spindle:</legend>
+				<input type="hidden" name="command" value="SpindleSetRPM" />
+				Rotation<br />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />right handed</label>
+				<br />
+				<label><input type="radio" name="spindle_direction" value="1" />left handed</label>
+				<br />
+				<label style="display: none;">RPM <span class="smallfont">(460 to 3220 U/min)</span>:<br />
+				<input type="hidden" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
+				</label>
+				<br />
+				<input type="submit" id="SpindleOnEMCO" class="button" name="SpindleOnEMCO" value="Spindle ON" />
+				<br />
+				<input type="button" id="SpindleOffEMCO" class="button button_red" name="SpindleOffEMCO" value="Spindle OFF" />
+			</fieldset>
+		</form>
+		</div>
 		<!-- Stream Video of old Emco Control
         <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
 		-->

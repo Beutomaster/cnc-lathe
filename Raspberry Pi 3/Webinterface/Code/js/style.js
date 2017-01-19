@@ -27,9 +27,9 @@ function ShowClass(classToShow) {
 }
 
 function HideId(IdToHide) {
-    document.getElementById(IdToHide).display='none';
+    document.getElementById(IdToHide).style.display='none';
 }
 
 function ShowId(IdToShow) {
-    document.getElementById(IdToShow).display='';
+    document.getElementById(IdToShow).style.display='';
 }
