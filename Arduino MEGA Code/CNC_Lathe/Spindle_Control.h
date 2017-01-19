@@ -28,7 +28,7 @@ extern volatile char wait_for_spindle_start, wait_for_spindle_stop, callback_spi
   extern volatile boolean spindle_new;
 #endif
 
-#ifdef SERVO_BIB
+#ifdef SERVO_LIB
   //Create new Servo Objekt
   extern Servo potiservo; //old Servo Lib
 #endif
