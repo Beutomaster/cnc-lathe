@@ -3,7 +3,7 @@
 
 //includes
 #include "CNC_Lathe.h"
-#ifdef STEPPER_BIB
+#ifdef STEPPER_LIB
   #include <Stepper.h> //we can't use it, because it uses a while loop instead of a timer!!!
 #endif
 
@@ -19,7 +19,7 @@
 #define STEPPER_STEP_T_MIN 1000 //min Time per Step in us (F = 799 mm/min => 1043us)
 #define STEPPER_STEP_T_MAX 420000 //max Time per Step in us (F = 2 mm/min => 416666us)
 
-#ifdef STEPPER_BIB
+#ifdef STEPPER_LIB
   extern Stepper xstepper; //X-Motor-Object
   extern Stepper zstepper; //Z-Motor-Object
 #endif
