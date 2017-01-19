@@ -25,6 +25,8 @@
 	define("H_MAX", 999);
 	define("REVOLUTIONS_MIN", 460); //rpm
 	define("REVOLUTIONS_MAX", 3220); //rpm
+	define("ERROR_RESET_MASK_MIN", 0);
+	define("ERROR_RESET_MASK_MAX", 255);
 	
 	function test_input($data) {
 		//information about changes needed!!!

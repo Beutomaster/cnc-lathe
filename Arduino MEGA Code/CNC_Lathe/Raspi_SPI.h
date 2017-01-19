@@ -2,14 +2,8 @@
 #define Raspi_SPI_h
 
 //includes
-#include <util/atomic.h>
-#include <util/crc16.h>
-#include <Arduino.h>
 #include "CNC_Lathe.h"
-#include "Motion_Control.h"
-#include "CNC_Control.h"
-#include "Spindle_Control.h"
-#include "Tool_Changer_Control.h"
+#include <util/crc16.h>
 #include <SPI.h>
 
 //defines
@@ -71,6 +65,7 @@
 #define SPI_BYTE_RASPI_MSG_TOOL_T 6
 #define SPI_BYTE_RASPI_MSG_INCH 2
 #define SPI_BYTE_RASPI_MSG_G_INCH 4
+#define SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK 2
 #define SPI_BYTE_RASPI_MSG_CRC8 (SPI_MSG_LENGTH - SPI_BYTE_LENGTH_PRAEAMBEL - 1)
 
 extern volatile boolean byte_received;
