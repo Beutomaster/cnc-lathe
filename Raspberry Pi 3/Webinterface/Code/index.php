@@ -51,11 +51,11 @@ if(!$_SESSION['logged_in'])
 
 <section class="clearfix">
 	<noscript>
-		<h1>In Ihrem Browser ist JavaScript deaktiviert.</h1>
+		<h2>In your Browser JavaScript is deactivated.</h2>
 		<p>
-			Ohne JavaScript funktioniert diese Seite nicht.
+			Without JavaScript this page does not work.
 			<br />
-			Im SELFHTML-Wiki erfahren Sie, <a href="https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/JavaScript_aktivieren"> wie Sie JavaScript in Ihrem Browser aktivieren können. </a>
+			<a href="https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/JavaScript_aktivieren">SELFHTML-Wiki</a> provides informations about activating JavaScript in your browser. (German)
 		</p>
 	</noscript>
 
@@ -237,7 +237,7 @@ if(!$_SESSION['logged_in'])
 				<label><input type="radio" name="spindle_direction" value="1" />left handed</label>
 				<br />
 				<label style="display: none;">RPM <span class="smallfont">(460 to 3220 U/min)</span>:<br />
-				<input type="hidden" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
+				<input type="hidden" name="rpm" value="460" autocomplete="off" />
 				</label>
 				<br />
 				<input type="submit" id="SpindleOnEMCO" class="button" name="SpindleOnEMCO" value="Spindle ON" />
