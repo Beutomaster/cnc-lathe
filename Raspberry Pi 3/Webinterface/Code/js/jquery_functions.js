@@ -310,16 +310,16 @@ $(document).ready(function(){
 	
 	//Ajax Form Submit
 	$("form").submit(function(event) {
-		// Das eigentliche Absenden verhindern
+		// prevent submit
 		event.preventDefault();
 		
-		// Das sendende Formular und die Metadaten bestimmen
-		var form = $(this); // Dieser Zeiger $(this) oder $("form"), falls die ID form im HTML exisitiert, klappt übrigens auch ohne jQuery ;)
-		var action = form.attr("action"), // attr() kann enweder den aktuellen Inhalt des gennanten Attributs auslesen, oder setzt ein neuen Wert, falls ein zweiter Parameter gegeben ist
+		// get Form
+		var form = $(this); // Pointer $(this) or $("form"), if ID form in HTML exists
+		var action = form.attr("action"),
 			method = form.attr("method"),
-			data   = form.serialize(); // baut die Daten zu einem String nach dem Muster vorname=max&nachname=Müller&alter=42 ... zusammen
+			data   = form.serialize(); // builds a string like firstname=max&surname=Müller&age=42 ...
 			
-		// Der eigentliche AJAX Aufruf
+		//AJAX Call
 		$.ajax({
 			url : action,
 			type : method,
@@ -333,14 +333,11 @@ $(document).ready(function(){
 			}
 		/*
 		}).done(function (data) {
-			// Bei Erfolg
-			alert("Erfolgreich:" + data);
+			alert("Success:" + data);
 		}).fail(function() {
-			// Bei Fehler
-			alert("Fehler!");
+			alert("Error!");
 		}).always(function() {
-			// Immer
-			alert("Beendet!");
+			alert("Finished!");
 		*/
 		});
 	});
@@ -363,16 +360,15 @@ $(document).ready(function(){
 	});
 	*/
 	
-	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
-	// wenn es sich ändert
+	// Register an EventHandler for a change of the Input-Element (#file-1)
 	$('body').on('change', '#file-1', function() {
 		mtime_WaitForUpdate=1;
-		var data = new FormData(); // das ist unser Daten-Objekt ...
-		data.append('file-1', this.files[0]); // ... an die wir unsere Datei anhängen
+		var data = new FormData(); // new data-objekt ...
+		data.append('file-1', this.files[0]); // ... to append the file
 		$.ajax({
-			url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
-			data: data,          // Das ist unser Datenobjekt.
-			type: 'POST',         // HTTP-Methode, hier: POST
+			url: '/php/upload_cam-file.php',
+			data: data,
+			type: 'POST',         // HTTP-Method: POST
 			processData: false,
 			//contentType : 'multipart/form-data',
 			contentType: false,
@@ -384,8 +380,7 @@ $(document).ready(function(){
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
 				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
 			}
-			// und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
-			// in das Response-Div
+			// at success write a message to the response-div
 			//success: function() { $("#responses").html("File successfully uploaded!");}
 			//success: function() { $("#responses").html("Success: " +  JSON.stringify(data));},
 			//error: function( jqXhr, textStatus, errorThrown ){console.log( errorThrown );}
@@ -399,13 +394,11 @@ $(document).ready(function(){
 			*/
 			/*
 		}).done(function (data) {
-			// Bei Erfolg
-			//alert("Erfolgreich:" + data);
+			//alert("Success:" + data);
 			$("#responses").html("Response: " +  JSON.stringify(data));
 		}).fail(function() {
-			// Bei Fehler
 			$("#responses").html("Request-Error: Upload failed!");
-			//alert("Fehler!");
+			//alert("Error!");
 			*/
 		}).always(function() {
 			// Immer
