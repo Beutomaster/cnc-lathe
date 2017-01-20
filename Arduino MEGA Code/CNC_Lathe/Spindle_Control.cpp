@@ -9,6 +9,7 @@ volatile char wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindl
   volatile long y=0, y_last=0;
   volatile boolean spindle_new=LOW;
 #endif
+volatile int adcvalue = 0; // adc value read by ISR(ADC_vect)
 
 #ifdef SERVO_LIB
   //Create new Servo Objekt
@@ -279,4 +280,48 @@ void set_Timer5 () {
     */
   }
 #endif
+
+
+void intr_analogRead(uint8_t pin) {
+  //function is compatible with analogRead(uint8_t pin), when used after adc-interrupt was disabled in ISR(ADC_vect)
+  //adcvalue has the same range as the return-value of analogRead
+  //configure the pin which is read by the adc (ADC0 - ADC15 at Arduino Mega 2560)
+  
+  // disable digital input buffer for pin (if pin is used as digital input afterwards, is has to be enabled again)
+  if (pin<=7) DIDR0 &= ~_BV(pin);
+  else if (pin<=15) DIDR2 &= ~_BV(pin-8);
+  else return; //abort if pin-number wrong
+  
+  /*
+    // this is done by init() in arduino-main()
+    // set a2d prescaler so we are inside the desired 50-200 KHz range.
+    #if F_CPU >= 16000000 // 16 MHz / 128 = 125 KHz
+    sbi(ADCSRA, ADPS2);
+    sbi(ADCSRA, ADPS1);
+    sbi(ADCSRA, ADPS0);
+    // enable a2d conversions
+    sbi(ADCSRA, ADEN);
+  */
+  
+  #if defined(ADCSRB) && defined(MUX5)
+    // the MUX5 bit of ADCSRB selects whether we're reading from channels
+    // 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
+    ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
+  #endif
+  ADMUX = _BV(ADLAR) | (pin & 0x07); //REFS1=0,REFS0=0 (AREF=5V, Internal V_REF turned off), ADLAR=1 (ADC Left Adjust Result), MUX4:0 = (pin & 0x07) (select PIN together with MUX5)
+  
+  //clear ADC-INTR-Flag by writing a one to ADIF (maybe analogRead was used before), enable ADC-INTR, start the conversion
+  ADCSRA |= _BV(ADIF) | _BV(ADIE) | _BV(ADSC);
+}
+
+
+ISR(ADC_vect) {
+  adcvalue = ADCL;        // ADC low-byte must be read first, to block update of Register
+  adcvalue |= (ADCH<<8);
+  //disable ADC-INTR
+  ADCSRA &= ~(_BV(ADIE));
+
+  //workaround-replacement for set_poti_servo_revolutions
+  if (!((STATE1>>STATE1_CONTROL_ACTIVE_BIT)&1)) OCR5A = OCR5A_max + OCR5A_min - map(adcvalue, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+}
 

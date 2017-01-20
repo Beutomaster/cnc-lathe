@@ -3,7 +3,9 @@
 
 //includes
 #include "CNC_Lathe.h"
-//#include <Servo.h>
+#ifdef SERVO_LIB
+  #include <Servo.h>
+#endif
 
 //defines
 #define OCR5A_min 870 //First Value which moves
@@ -27,6 +29,7 @@ extern volatile char wait_for_spindle_start, wait_for_spindle_stop, callback_spi
   extern volatile long y, y_last;
   extern volatile boolean spindle_new;
 #endif
+extern volatile int adcvalue; // adc value read by ISR(ADC_vect)
 
 #ifdef SERVO_LIB
   //Create new Servo Objekt
@@ -46,6 +49,7 @@ boolean test_for_spindle_rpm(int, int);
 #endif
 void set_Timer5();
 void get_revolutions_ISR();
+void intr_analogRead(uint8_t);
 
 #endif
 

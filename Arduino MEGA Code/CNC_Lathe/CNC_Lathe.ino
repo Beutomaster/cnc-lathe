@@ -239,7 +239,8 @@ void loop() {
   //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
   else {
     observe_machine();
-    set_revolutions(get_SERVO_CONTROL_POTI()); //problematic with spi-communication, analogRead should be replaced by an adc-isr
+    //set_revolutions(get_SERVO_CONTROL_POTI()); //problematic with spi-communication, analogRead should be replaced by an adc-isr, because it waits 100us for adc-conversion
+    if(!(millis()%10)) intr_analogRead(APIN_SERVO_CONTROL_POTI);
     //set spindle-direction
   }
 
