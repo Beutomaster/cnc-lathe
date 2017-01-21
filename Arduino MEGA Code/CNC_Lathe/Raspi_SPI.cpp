@@ -192,7 +192,7 @@ boolean process_incomming_msg() {
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
-                set_revolutions((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_RPM_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_RPM_L]);
+                if (get_control_active()) set_revolutions((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_RPM_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_RPM_L]);
                 spindle_direction(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION]);
                 spindle_on();
               }
