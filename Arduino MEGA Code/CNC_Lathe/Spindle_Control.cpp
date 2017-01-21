@@ -10,6 +10,7 @@ volatile char wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindl
   volatile boolean spindle_new=LOW;
 #endif
 volatile int adcvalue = 0; // adc value read by ISR(ADC_vect)
+volatile uint8_t adcpin = 0; // actual adc-pin for intr_analogRead
 
 #ifdef SERVO_LIB
   //Create new Servo Objekt
@@ -154,11 +155,11 @@ int get_SERVO_CONTROL_POTI() {
 	int manual_target_revolutions = analogRead(APIN_SERVO_CONTROL_POTI);
 	
 	//Convert 10-bit Value from Analog-Input (0-1023) to 460-3220 rpm
-	manual_target_revolutions = map(manual_target_revolutions, 0, 1023, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
+	target_revolutions = map(manual_target_revolutions, 0, 1023, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
 
   //needs moving average calculation
 
-	return manual_target_revolutions;
+	return target_revolutions;
 }
 
 void set_poti_servo(int poti_angle){
@@ -284,13 +285,15 @@ void set_Timer5 () {
 
 void intr_analogRead(uint8_t pin) {
   //function is compatible with analogRead(uint8_t pin), when used after adc-interrupt was disabled in ISR(ADC_vect)
-  //adcvalue has the same range as the return-value of analogRead
+  //adcvalue has the same range (0-1023 for GND-5V_Arduino) as the return-value of analogRead
   //configure the pin which is read by the adc (ADC0 - ADC15 at Arduino Mega 2560)
   
   // disable digital input buffer for pin (if pin is used as digital input afterwards, is has to be enabled again)
   if (pin<=7) DIDR0 &= ~_BV(pin);
   else if (pin<=15) DIDR2 &= ~_BV(pin-8);
   else return; //abort if pin-number wrong
+
+  adcpin = pin;
   
   /*
     // this is done by init() in arduino-main()
@@ -308,7 +311,7 @@ void intr_analogRead(uint8_t pin) {
     // 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
     ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
   #endif
-  ADMUX = _BV(ADLAR) | (pin & 0x07); //REFS1=0,REFS0=0 (AREF=5V, Internal V_REF turned off), ADLAR=1 (ADC Left Adjust Result), MUX4:0 = (pin & 0x07) (select PIN together with MUX5)
+  ADMUX = _BV(REFS0) | (pin & 0x07); //REFS1=0,REFS0=1 (AREF=5V, AVCC with external capacitor at AREF pin), ADLAR=0 (ADC right Adjust Result), MUX4:0 = (pin & 0x07) (select PIN together with MUX5)
   
   //clear ADC-INTR-Flag by writing a one to ADIF (maybe analogRead was used before), enable ADC-INTR, start the conversion
   ADCSRA |= _BV(ADIF) | _BV(ADIE) | _BV(ADSC);
@@ -322,6 +325,10 @@ ISR(ADC_vect) {
   ADCSRA &= ~(_BV(ADIE));
 
   //workaround-replacement for set_poti_servo_revolutions
-  if (!((STATE1>>STATE1_CONTROL_ACTIVE_BIT)&1)) OCR5A = OCR5A_max + OCR5A_min - map(adcvalue, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+  if (adcpin == APIN_SERVO_CONTROL_POTI) {
+    //Convert 10-bit Value from Analog-Input (0-1023) to 460-3220 rpm
+    target_revolutions = map(adcvalue, 0, 1023, REVOLUTIONS_MIN, REVOLUTIONS_MAX);
+    OCR5A = OCR5A_max + OCR5A_min - map(target_revolutions, REVOLUTIONS_MIN, REVOLUTIONS_MAX, OCR5A_max, OCR5A_min);
+  }
 }
 
