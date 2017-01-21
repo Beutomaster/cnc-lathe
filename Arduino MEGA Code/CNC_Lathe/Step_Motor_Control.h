@@ -47,7 +47,7 @@ void set_x_steps(int, int);
 void set_z_steps(int, int);
 void get_current_x_step();
 void get_current_z_step();
-void get_stepper_on_off();
+boolean get_stepper_on_off();
 void get_feed();
 void save_current_x_step();
 void save_current_z_step();
