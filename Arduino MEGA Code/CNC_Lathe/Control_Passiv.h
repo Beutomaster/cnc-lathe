@@ -6,6 +6,8 @@
 
 boolean get_control_active();
 void observe_machine();
+void enable_observe_machine_PCINT2();
+void disable_observe_machine_PCINT2();
 
 #endif
 
