@@ -163,9 +163,9 @@ void setup() {
   /*
   //debug Watchdog
   #ifndef DEBUG_SERIAL_CODE_OFF
-    Serial.print("Watchdog WDTCSR: ");
+    Serial.print(F("Watchdog WDTCSR: "));
     Serial.println(WDTCSR, BIN);
-    Serial.print("Watchdog MCUCSR: ");
+    Serial.print(F("Watchdog MCUCSR: "));
     Serial.println(MCUSR, BIN);
   #endif
   */
@@ -245,7 +245,7 @@ void loop() {
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_RPM_ON
       if(!(millis()%2000)) {
         //#error RPM debug-msg compilation activated!
-        Serial.print("RPM-set-Value: ");
+        Serial.print(F("RPM-set-Value: "));
         Serial.println (target_revolutions);
       }
     #endif

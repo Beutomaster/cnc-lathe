@@ -145,7 +145,7 @@ void set_revolutions(int target_revolutions_local) {
   //Debug
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_RPM_ON
     //#error RPM debug-msg compilation activated!
-    Serial.print("RPM-set-Value: ");
+    Serial.print(F("RPM-set-Value: "));
     Serial.println (target_revolutions_local);
   #endif
 }

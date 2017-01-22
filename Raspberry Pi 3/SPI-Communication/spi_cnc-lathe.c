@@ -65,7 +65,7 @@
 #define H_MAX 999
 #define REVOLUTIONS_MIN 460  //rpm
 #define REVOLUTIONS_MAX 3220 //rpm
-#define ERROR_RESET_MASK_MIN 0
+#define ERROR_RESET_MASK_MIN 1
 #define ERROR_RESET_MASK_MAX 255
 
 //Byte Postions of Arduino-Answer
@@ -1084,7 +1084,7 @@ static int spi_create_command_msg(const char *pipe_msg_buffer, char msg_type, ui
 						return EXIT_FAILURE;
 					}
 					
-					if ((error_reset_mask>>ERROR_SPI_BIT)&1) {
+					if ((error_reset_mask>>ERROR_SPI_BIT)&1 && messages_notreceived) { //maybe messages_notreceived not right!!!
 						msg_number = (lastsuccessful_msg+1)%256; //Reset Msg-No
 						pos--;
 						tx[pos++] = msg_number;
