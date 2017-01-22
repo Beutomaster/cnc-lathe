@@ -70,11 +70,11 @@ void spi_buffer_handling() {
 
     //debug
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-        Serial.print("Messages to process: ");
+        Serial.print(F("Messages to process: "));
         Serial.print(messages_to_process, DEC);
-        Serial.print(", rx_ringbuffer_read_pos: ");
+        Serial.print(F(", rx_ringbuffer_read_pos: "));
         Serial.print(rx_ringbuffer_read_pos, DEC);
-        Serial.print(", rx_ringbuffer_write_pos: ");
+        Serial.print(F(", rx_ringbuffer_write_pos: "));
         Serial.println(rx_ringbuffer_write_pos, DEC);
     #endif
     
@@ -82,9 +82,9 @@ void spi_buffer_handling() {
     //String debug_string;
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
       //#error SPI debug-msg compilation activated!
-        Serial.print("SPI-Buffer:");
+        Serial.print(F("SPI-Buffer:"));
         for (int i=0; i<SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL; i++) {
-          Serial.print(" ");
+          Serial.print(F(" 0x"));
           //debug_string =  String(rx_doublebuf[rx_ringbuffer_read_pos][i], DEC);
           //Serial.print(debug_string);
           Serial.print(rx_doublebuf[rx_ringbuffer_read_pos][i], HEX);
@@ -102,11 +102,11 @@ void spi_buffer_handling() {
 
     //debug
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-        Serial.print("Messages to process: ");
+        Serial.print(F("Messages to process: "));
         Serial.print(messages_to_process, DEC);
-        Serial.print(", rx_ringbuffer_read_pos: ");
+        Serial.print(F(", rx_ringbuffer_read_pos: "));
         Serial.print(rx_ringbuffer_read_pos, DEC);
-        Serial.print(", rx_ringbuffer_write_pos: ");
+        Serial.print(F(", rx_ringbuffer_write_pos: "));
         Serial.println(rx_ringbuffer_write_pos, DEC);
     #endif
     
@@ -137,11 +137,11 @@ unsigned char CRC8 (volatile unsigned char * buf, unsigned char message_offset, 
 boolean check_msg(unsigned char msg_length, boolean force_action) {
   //debug lastsuccessful_msg
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-    Serial.print("lastsuccessful_msg DEC: ");
+    Serial.print(F("lastsuccessful_msg DEC: "));
     Serial.print(lastsuccessful_msg, DEC);
-    Serial.print(", lastsuccessful_msg HEX: ");
+    Serial.print(F(", lastsuccessful_msg HEX: "));
     Serial.print(lastsuccessful_msg, HEX);
-    Serial.print(", actual_msg HEX: ");
+    Serial.print(F(", actual_msg HEX: "));
     Serial.println(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_NO], HEX);
   #endif
   boolean success = true;
@@ -149,7 +149,7 @@ boolean check_msg(unsigned char msg_length, boolean force_action) {
     success=false; //msg-failure
     ERROR_NO |= _BV(ERROR_SPI_BIT);
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-      Serial.println("CRC-Error");
+      Serial.println(F("CRC-Error"));
     #endif
   }
   else if (rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
@@ -158,6 +158,9 @@ boolean check_msg(unsigned char msg_length, boolean force_action) {
   else {
     if (force_action) success=false; //message lost
     ERROR_NO |= _BV(ERROR_SPI_BIT);
+    #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
+      Serial.println(F("Msg lost"));
+    #endif
   }
   return success;
 }
@@ -175,7 +178,7 @@ boolean process_incomming_msg() {
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if (get_control_active() && initialized && ((STATE1>>STATE1_PAUSE_BIT)&1) && command_completed) {
                 #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
-                  Serial.println("Programm Start");
+                  Serial.println(F("Programm Start"));
                 #endif
                 programm_start((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L]);
               }
@@ -255,13 +258,13 @@ boolean process_incomming_msg() {
               else if (get_control_active() && initialized && ((STATE1>>STATE1_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
                 /*
                 #ifndef DEBUG_SERIAL_CODE_OFF
-                  Serial.print("Z DEC: ");
+                  Serial.print(F("Z DEC: "));
                   Serial.print(((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), DEC);
-                  Serial.print(", ZH HEX: ");
+                  Serial.print(F(", ZH HEX: "));
                   Serial.print((rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H]), HEX);
-                  Serial.print(", ZL HEX: ");
+                  Serial.print(F(", ZL HEX: "));
                   Serial.print((rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
-                  Serial.print(", Z HEX: ");
+                  Serial.print(F(", Z HEX: "));
                   Serial.println(((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
                 #endif
                 */
@@ -283,7 +286,7 @@ boolean process_incomming_msg() {
               if (!check_msg(msg_length, false)) success=false; //msg-failure
               else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
                 #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
-                  Serial.println("New CNC-Programm");
+                  Serial.println(F("New CNC-Programm"));
                 #endif
                 //some Error-Handling needed, if message is ignored
                 programm_stop();
@@ -313,19 +316,19 @@ boolean process_incomming_msg() {
                 cnc_code[N].FTLK = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_L];
                 cnc_code[N].HS = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_HS_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_HS_L];
                 #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
-                  Serial.print("New CNC-Code-Block ");
+                  Serial.print(F("New CNC-Code-Block "));
                   Serial.print(N);
-                  Serial.print(", Code-Type ");
+                  Serial.print(F(", Code-Type "));
                   Serial.write(cnc_code[N].GM);
-                  Serial.print(", Code-No ");
+                  Serial.print(F(", Code-No "));
                   Serial.print(cnc_code[N].GM_NO);
-                  Serial.print(", XI ");
+                  Serial.print(F(", XI "));
                   Serial.print(cnc_code[N].XI);
-                  Serial.print(", ZK ");
+                  Serial.print(F(", ZK "));
                   Serial.print(cnc_code[N].ZK);
-                  Serial.print(", FTLK ");
+                  Serial.print(F(", FTLK "));
                   Serial.print(cnc_code[N].FTLK);
-                  Serial.print(", HS ");
+                  Serial.print(F(", HS "));
                   Serial.println(cnc_code[N].HS);
                 #endif
               }
@@ -363,7 +366,6 @@ boolean process_incomming_msg() {
               else {
                 //ERROR_NO &= ~rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK] | _BV(ERROR_CNC_CODE_BIT) | _BV(ERROR_SPINDLE_BIT); //for debugging only resetting of ERROR_SPI_BIT is allowed
                 ERROR_NO &= ~rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK];
-                //should be resetted with a received mask
               }
               break;
     default:  //SPI-Error "PID unkown"

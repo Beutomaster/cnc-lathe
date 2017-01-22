@@ -74,12 +74,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_STEPPER_ON
     //#error Stepper debug-msg compilation activated!
-    Serial.print("XStepper starts moving ");
+    Serial.print(F("XStepper starts moving "));
     Serial.print(x_steps, DEC);
-    Serial.println("Steps");
-    Serial.print("ZStepper starts moving ");
+    Serial.println(F("Steps"));
+    Serial.print(F("ZStepper starts moving "));
     Serial.print(z_steps, DEC);
-    Serial.println("Steps");
+    Serial.println(F("Steps"));
   #endif
 
   clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min
@@ -230,13 +230,13 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_STEPPER_ON
     //#error Stepper debug-msg compilation activated!
-    Serial.print("XStepper clk_xfeed ");
+    Serial.print(F("XStepper clk_xfeed "));
     Serial.println(clk_xfeed, DEC);
-    Serial.print("ZStepper clk_zfeed ");
+    Serial.print(F("ZStepper clk_zfeed "));
     Serial.println(clk_zfeed, DEC);
-    Serial.print("XStepper ICR1 ");
+    Serial.print(F("XStepper ICR1 "));
     Serial.println(ICR1, DEC);
-    Serial.print("ZStepper ICR3 ");
+    Serial.print(F("ZStepper ICR3 "));
     Serial.println(ICR3, DEC);
   #endif
   
