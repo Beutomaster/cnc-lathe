@@ -20,7 +20,7 @@ void set_tool_position(byte tool) {
 
         #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_TOOL_ON
           //#error Tool debug-msg compilation activated!
-          Serial.print("Tool Changer starts moving to Position ");
+          Serial.print(F("Tool Changer starts moving to Position "));
           Serial.println(tool, DEC);
         #endif
 

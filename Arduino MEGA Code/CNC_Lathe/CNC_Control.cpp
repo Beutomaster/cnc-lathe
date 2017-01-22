@@ -42,19 +42,19 @@ void programm_abort() {
 boolean process_cnc_listing() {
 	boolean success=0; //0=success, 1=failure    
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
-      Serial.print("Process CNC-Code-Line ");
+      Serial.print(F("Process CNC-Code-Line "));
       Serial.print(STATE_N);
-      Serial.print(", Code-Type ");
+      Serial.print(F(", Code-Type "));
       Serial.write(cnc_code[STATE_N].GM);
-      Serial.print(", Code-No ");
+      Serial.print(F(", Code-No "));
       Serial.print(cnc_code[STATE_N].GM_NO);
-      Serial.print(", XI ");
+      Serial.print(F(", XI "));
       Serial.print(cnc_code[STATE_N].XI);
-      Serial.print(", ZK ");
+      Serial.print(F(", ZK "));
       Serial.print(cnc_code[STATE_N].ZK);
-      Serial.print(", FTLK ");
+      Serial.print(F(", FTLK "));
       Serial.print(cnc_code[STATE_N].FTLK);
-      Serial.print(", HS ");
+      Serial.print(F(", HS "));
       Serial.println(cnc_code[STATE_N].HS);
     #endif
     //next_cnc_code

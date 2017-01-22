@@ -286,8 +286,10 @@ $(document).ready(function(){
 		if (document.getElementById("SpiError").checked) error_reset_mask += Number($("#SpiError").val());
 		if (document.getElementById("CNCError").checked) error_reset_mask += Number($("#CNCError").val());
 		if (document.getElementById("SpindleError").checked) error_reset_mask += Number($("#SpindleError").val());
-		var data = {command: "ResetErrors", error_reset_mask: error_reset_mask};
-		sendCommand(data);
+		if (error_reset_mask) {
+			var data = {command: "ResetErrors", error_reset_mask: error_reset_mask};
+			sendCommand(data);
+		}
 	});
 	
 	$("#LoadOldParameter").click(function(){
