@@ -447,14 +447,14 @@ ISR (SPI_STC_vect) {
     }
     
     // if Praeambel detected later reset pos
-    if (pos > SPI_BYTE_LENGTH_PRAEAMBEL) {
-      if (rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+1] == 0xFF && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+2] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+3] == 0xFF) {
+    else if (pos >= SPI_BYTE_LENGTH_PRAEAMBEL) {
+      if (rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+1] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+2] == 0xFF && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+3] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+4] == 0xFF) {
         rx_buf[0] = 0x7F;
         rx_buf[1] = 0xFF;
         rx_buf[2] = 0x7F;
         rx_buf[3] = 0xFF;
-        rx_buf[SPI_BYTE_LENGTH_PRAEAMBEL] = rx_buf [pos];
-        pos = SPI_BYTE_LENGTH_PRAEAMBEL;
+        //rx_buf[SPI_BYTE_LENGTH_PRAEAMBEL] = rx_buf [pos];
+        pos = SPI_BYTE_LENGTH_PRAEAMBEL-1;
       }
     }
 

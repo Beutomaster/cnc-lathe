@@ -276,8 +276,9 @@ void signal_callback_handler(int signum) {
 }
 
 static void print_usage(const char *prog) {
+	//by some mysterious reason short options also need a leading "--". Should be fixed or Instructions should be changed!
 	printf("Usage: %s [-DsbdlHOLC3]\n", prog);
-	puts("  -D --device   device to use (default /dev/spidev1.1)\n"
+	puts("  -D --device   device to use (default /dev/spidev0.0)\n"
 	     "  -s --speed    max speed (Hz)\n"
 	     "  -d --delay    delay (usec)\n"
 	     "  -b --bpw      bits per word \n"
