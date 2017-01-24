@@ -254,6 +254,8 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		document.getElementById("SpindleErrorLED").className = "led-grey";
 	}
 	
+	//mtime_WaitForUpdate does not work sometimes, there must be some race condition between the xml-download and file-upload-response
+	/*
 	if (mtime_WaitForUpdate == 0) {
 		if (mtime_last == -1) mtime_last=mtime;
 		if (mtime != mtime_last) {
@@ -263,6 +265,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 			alert("CNC-Code-File on Server changed! You can reload it with Reset Changes");
 		}
 	}
+	*/
 	
 	if (t_actual != t_last) {
 		t_last = t_actual;

@@ -71,8 +71,10 @@ void setup() {
   //pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
   pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
-  pinMode(PIN_USART1_RX, INPUT);
-  pinMode(PIN_USART1_TX, OUTPUT);
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined SPINDLEDRIVER_EXTRA_BOARD
+    pinMode(PIN_USART1_RX, INPUT);
+    pinMode(PIN_USART1_TX, OUTPUT);
+  #endif
   pinMode(PIN_SPI_MISO, OUTPUT); 		//Arduino is SPI-Slave
   pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SCK, INPUT); 	//Arduino is SPI-Slave
