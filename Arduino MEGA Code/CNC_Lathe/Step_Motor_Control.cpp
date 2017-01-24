@@ -146,27 +146,45 @@ void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { 
   
   //set signal with feed and direction
   if (command_completed) {
-    //calculate needed Coordinates for s/2
+    //calculate needed Coordinates for a movement of 0,5s
     if (xz_stepper) {
-      Z = feed * 100 / 120; //100 for mm * min/60s * 1/2
+      Z = feed * 100 / 120; //feed (mm/min) * t (0,5s) * (min/60s) * 100 (because coordinates are in 1/100 mm)
       if (negativ_direction) Z *= -1;
       if (absolute) Z += STATE_Z;
     }
     else {
-      X = feed * 100 / 120; //100 for mm * min/60s * 1/2
+      X = feed * 100 / 120; //feed (mm/min) * t (0,5s) * (min/60s) * 100 (because coordinates are in 1/100 mm)
       if (negativ_direction) X *= -1;
       if (absolute) X += STATE_X;
     }
     set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
   }
   else {
-    //increase steps
+    //increase steps for a movement of 0,5s
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-      if (!x_command_completed) {
-        x_steps += x_step;
+      if (xz_stepper && !x_command_completed) {
+        if (!negativ_direction) x_steps += x_step;
+        else x_steps -= x_step;
+        /*
+        if (!negativ_direction) x_steps += feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        else x_steps -= feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        */
+        /*
+        if (!negativ_direction) x_steps = x_step + feed * STEPS_PER_MM / 120; //feed (mm/min) * 72steps/mm * t (0,5 s) * (min/60s)
+        else x_steps = x_step - feed * STEPS_PER_MM / 120; //feed (mm/min) * 72steps/mm * t (0,5 s) * (min/60s)
+        */
       }
-      if (!z_command_completed) {
-        z_steps += z_step;
+      if (!xz_stepper && !z_command_completed) {
+        if (!negativ_direction) z_steps += z_step;
+        else z_steps -= z_step;
+        /*
+        if (!negativ_direction) z_steps += feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        else z_steps -= feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        */
+        /*
+        if (!negativ_direction) z_steps = z_step + feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        else z_steps = z_step - feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        */
       } 
     }
   }
