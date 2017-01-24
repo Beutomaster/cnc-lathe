@@ -130,12 +130,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //set Timer-Compare-Values
     if (X) {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR1 = RAPID_MIN; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/499s)-1
+        ICR1 = RAPID_MIN; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/(499(mm/min)*STEPS_PER_MM))-1
       }
     }
     if (Z) {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR3 = RAPID_MIN; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(s/min)/(256*clk_zfeed))-1 = (62500Hz*60(s/min)/499s)-1
+        ICR3 = RAPID_MIN; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(s/min)/(256*clk_zfeed))-1 = (62500Hz*60(s/min)/(499(mm/min)*STEPS_PER_MM))-1
       }
     }
   }

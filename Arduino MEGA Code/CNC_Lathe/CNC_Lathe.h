@@ -82,9 +82,13 @@
 //PINs
 #define PIN_CONTROL_ACTIVE 2              //PE4: Switch between EMCO and alternative Control (Usable for extINTR !!!)
 #define PIN_REVOLUTIONS_SYNC 3            //PE5: Revolution-Sensor SYNC (Usable for extINTR !!!) We should change the PIN with PIN_REVOLUTIONS_COUNT in V2!!!
-#define PIN_TOOL_CHANGER_HOLD 4           //PG5: Tool-Changer hold (-3,3V)
+#ifdef BOARDVERSION_1_25
+  #define PIN_TOOL_CHANGER_HOLD 4           //PG5: Tool-Changer hold (-3,3V)
+#endif
 #define PIN_TOOL_CHANGER_CHANGE 5         //PE3: Tool-Changer change (+12,9V)
-//#define PIN_TOOL_CHANGER_FIXING 6       //PH3: Tool-Changer fixing (-4,35V)
+#ifndef BOARDVERSION_1_25
+  #define PIN_TOOL_CHANGER_FIXING 6       //PH3: Tool-Changer fixing (-4,35V)
+#endif
 #define PIN_SPINDLE_ON 7                  //PH4: Spindle on
 #define PIN_SPINDLEPWM_NIKO 8             //PH5: Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
 #define PIN_SPINDLE_DIRECTION 9           //PH6: HIGH=Inverse Direction
