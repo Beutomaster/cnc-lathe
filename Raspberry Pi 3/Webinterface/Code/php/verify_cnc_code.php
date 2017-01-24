@@ -1,5 +1,5 @@
 <?php
-	ini_set("auto_detect_line_endings", true);
+	//ini_set("auto_detect_line_endings", true); //needed for support of old MAC-Line-Endings, but spi_cnc-lathe does not support it (fgets)
 
 	//Input Parameter Ranges
 	define("CNC_CODE_NMIN", 0);
@@ -125,6 +125,12 @@
 		$code_stop_line = $lines+1; //if no Stop-Sign is found
 		$i=0;
 		foreach ($cnc_code_reference as $line => $linevalue) {
+			/*
+			if (!preg_match('/^([^\n]*)\n/m', $linevalue)) {
+				echo "Line $line: MAC-Line-Endings are not supported!<br />";
+				$success = 0;
+			}
+			*/
 			if (preg_match('/^%/', $linevalue)) {
 				if ($i == 0) {
 					$code_start_line = $line+1;
