@@ -486,14 +486,14 @@ ISR(TIMER1_OVF_vect) {
         if (x_steps) {
           if (x_step < x_steps/2) {
             if (ICR1>RAPID_MAX) {
-              ICR1 = RAPID_MIN-x_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/499s)-1
+              ICR1 = RAPID_MIN-x_step*ACCELERATION; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
               if (ICR1<RAPID_MAX) {
                 ICR1=RAPID_MAX;
               }
             }
           }
-          else if ((x_steps-x_step) < 17) {
-            ICR1 = RAPID_MIN-(x_steps-x_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/499s)-1
+          else if ((x_steps-x_step) < (RAPID_MIN - RAPID_MAX)/ACCELERATION) { //has to be rounded up!!!
+            ICR1 = RAPID_MIN-(x_steps-x_step)*ACCELERATION; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
             if (ICR1>RAPID_MIN) {
               ICR1=RAPID_MIN;
             }
@@ -605,13 +605,13 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       if (z_steps) {
         if (z_step < z_steps/2) {
           if (ICR3>RAPID_MAX) {
-            ICR3 = RAPID_MIN-z_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
+            ICR3 = RAPID_MIN-z_step*ACCELERATION; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
             if (ICR3<RAPID_MAX) {
               ICR3=RAPID_MAX;
             }
           }
-        } else if ((z_steps-z_step) < 17) {
-          ICR3 = RAPID_MIN-(z_steps-z_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
+        } else if ((z_steps-z_step) < (RAPID_MIN - RAPID_MAX)/ACCELERATION) { //has to be rounded up!!!
+          ICR3 = RAPID_MIN-(z_steps-z_step)*ACCELERATION; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
           if (ICR3>RAPID_MIN) {
             ICR3=RAPID_MIN;
           }
