@@ -1,4 +1,6 @@
 <?php
+	ini_set("auto_detect_line_endings", true);
+
 	//Input Parameter Ranges
 	define("CNC_CODE_NMIN", 0);
 	define("CNC_CODE_NMAX", 499);
@@ -27,6 +29,15 @@
 	define("REVOLUTIONS_MAX", 3220); //rpm
 	define("ERROR_RESET_MASK_MIN", 1);
 	define("ERROR_RESET_MASK_MAX", 255);
+	
+	//for debugging
+	function String2Hex($string){
+		$hex='';
+		for ($i=0; $i < strlen($string); $i++){
+			$hex .= dechex(ord($string[$i]));
+		}
+		return $hex;
+	}
 	
 	function test_input($data) {
 		//information about changes needed!!!
@@ -82,7 +93,7 @@
 	function get_next_cnc_code_parameter(&$RestParameterString, $line, $block, $name, &$var, $optional, $min, $max) {
 		$success = 1;
 		//check String for Parameter
-		if (preg_match('/^(['.$name.'])(-?[0-9]{1,5})[ ]?(.*$)/', $RestParameterString, $RestParameterStringArray)) {
+		if (preg_match('/^(['.$name.'])(-?[0-9]{1,5})[ ]?(.*)/', $RestParameterString, $RestParameterStringArray)) {
 			$var=$RestParameterStringArray[2];
 			//Return Rest-String
 			$RestParameterString = $RestParameterStringArray[3];
@@ -146,7 +157,7 @@
 		for ($line = $code_start_line+1; $line < $code_stop_line; $line++) {
 			//echo "Line $line: ". $cnc_code_reference[$line-1]."<br />";
 			//check if every Code-line has a Blocknumber at the beginning and that they are increasing per line (N>N_last)
-			if (preg_match('/^([N])([0-9]{4})[ ]?(.*$)/', $cnc_code_reference[$line-1], $code_line)) {
+			if (preg_match('/^([N])([0-9]{4})[ ]?([^\n\r]*)/', $cnc_code_reference[$line-1], $code_line)) { //maybe (\r\n|\r|\n) needed
 				$N = $code_line[2];
 				if (test_value_range_cnc_code($line, $N, "N", $N, CNC_CODE_NMIN, CNC_CODE_FILE_PARSER_NMAX)) {
 					if ($N<=$N_last) {
@@ -161,7 +172,7 @@
 				else {
 					$success = 0;
 				}
-				if (preg_match('/^([GM])([0-9]{1,3})[ ]?(.*$)/', $code_line[3], $code)) {
+				if (preg_match('/^([GM])([0-9]{1,3})[ ]?(.*)/', $code_line[3], $code)) {
 					//Check if every Code-line has a correct G- or M-Code as next Parameter
 					//Check if the following Parameters are matching and are in range
 					//Check for extra characters
@@ -346,7 +357,11 @@
 									$success = 0;
 						}
 					}
-					if ($Parameter != "") echo "Line $line, N".$N.": extra characters<br />";
+					if ($Parameter != "") echo "Line $line, N".$N.": extra characters: ".$Parameter."<br />";
+					//if ($Parameter != "" && $Parameter != "\r") echo "Line $line, N".$N.": extra characters ".$Parameter."<br />";
+					//if (empty($Parameter)) echo "Line $line, N".$N.": extra characters " . String2Hex($Parameter) . "<br />";
+					//if (!preg_match('/^$/', $Parameter)) echo "Line $line, N".$N.": extra characters " . String2Hex($Parameter) . "<br />";
+					//if (preg_match('/^(.*)$/', $Parameter)) echo "Line $line, N".$N.": extra characters " . String2Hex($Parameter) . "<br />";
 					//Check for metric-/inch-commands
 				}
 				else {
