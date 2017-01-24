@@ -30,7 +30,9 @@ void set_tool_position(byte tool) {
           //Step1 TOOL_CHANGER_CHANGE 2,9s
           tool_step=1;
           command_completed=0;
-          digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+          #ifdef BOARDVERSION_1_25
+            digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+          #endif
           digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
     
           //Step1 and 2 are setting PINS in Timerinterrupt
@@ -76,7 +78,9 @@ ISR(TIMER1_CAPT_vect) {
     //Step2 TOOL_CHANGER_FIXING 3,5s
     tool_step=2;
     digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
-    //digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
+    #ifndef BOARDVERSION_1_25
+      digitalWrite(PIN_TOOL_CHANGER_FIXING, HIGH);
+    #endif
     //set and start Timer1 for 3,5s
     ICR1 = 54687; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 3,5s*16MHz/1024 -1 = 54686,5 = 54687
     TCNT1 = 0; //set Start Value
@@ -84,8 +88,11 @@ ISR(TIMER1_CAPT_vect) {
   else if (tool_step==2) {
     //Step0 TOOL_CHANGER_HOLD
     tool_step=0;
-    //digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
-    digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+    #ifndef BOARDVERSION_1_25
+      digitalWrite(PIN_TOOL_CHANGER_FIXING, LOW);
+    #else
+      digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+    #endif
     i_tool--;
     if (i_tool==0) {
     //stop Timer1
@@ -97,7 +104,9 @@ ISR(TIMER1_CAPT_vect) {
     else {
       //Step1 TOOL_CHANGER_CHANGE 2,9s
       tool_step=1;
-      digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+      #ifdef BOARDVERSION_1_25
+        digitalWrite(PIN_TOOL_CHANGER_HOLD, LOW);
+      #endif
       digitalWrite(PIN_TOOL_CHANGER_CHANGE, HIGH);
       ICR1 = 45312; //ICR1 = T_ICF1*16MHz/Prescaler -1 = 2,9s*16MHz/1024 -1 = 45311,5 = 45312
       TCNT1 = 0; //set Start Value
