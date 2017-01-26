@@ -1,7 +1,10 @@
 <?php
 	//Logged in?
 	session_start();
-	if(!$_SESSION['logged_in']) header("Location: /login.html");
+	if(!$_SESSION['logged_in']) {
+		header("Location: /login.html");
+		exit;
+	}
 	
 	include 'verify_cnc_code.php';
 	
