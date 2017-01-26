@@ -1,13 +1,15 @@
 ﻿<?php
-session_start();
-if(!$_SESSION['logged_in'])
-	header("Location: /login.html");
+	session_start();
+	if(!$_SESSION['logged_in']) {
+		header("Location: /login.html");
+		exit;
+	}
 ?>
 <!-- Login muss noch auf https eingeschraenkt werden!!!-->
 
 <!doctype html>
 
-<!-- Development-Version 0.2 -->
+<!-- Development-Version 1.0 -->
 
 <html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 <head>
