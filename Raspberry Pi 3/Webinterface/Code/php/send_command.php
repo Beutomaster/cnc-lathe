@@ -1,7 +1,10 @@
 <?php
 	//Logged in?
 	session_start();
-	if(!$_SESSION['logged_in']) header("Location: /login.html");
+	if(!$_SESSION['logged_in']) {
+		header("Location: /login.html");
+		exit;
+	}
 	
 	include 'verify_cnc_code.php';
 
@@ -13,7 +16,7 @@
 	$success=0;
 	
 	$msg = session_id() . " ";
-	echo "session_id: " . session_id() . " <br />";
+	//echo "session_id: " . session_id() . " <br />"; //only for debugging, maybe a security risk
 	
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		foreach($_POST as $name => $value) { // Most people refer to $key => $value
