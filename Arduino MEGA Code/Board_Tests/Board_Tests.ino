@@ -6,7 +6,7 @@ char toolposition = 0;
 
 volatile byte STATE_T=0;
 volatile boolean command_completed=1;
-volatile boolean debug=true, debug_spi=false, debug_stepper=false, debug_active=false, debug_rpm=false, debug_tool=false;
+volatile boolean debug=true, debug_spi=false, debug_stepper=false, debug_active=false, debug_rpm=false, debug_tool=true;
 
 void setup() {
   // put your setup code here, to run once:
@@ -20,9 +20,11 @@ void setup() {
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
-  pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
-  pinMode(PIN_SPINDLE_NEW, OUTPUT);
-  pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
+  #ifdef SPINDLEDRIVER_NEW
+    pinMode(PIN_SPINDLEPWM_NIKO, OUTPUT); //needed for Fast PWM
+    pinMode(PIN_SPINDLE_NEW, OUTPUT);
+    pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
+  #endif
   pinMode(PIN_DEBUG_INPUT_STEPPER, INPUT_PULLUP);
   pinMode(PIN_DEBUG_INPUT_WZW, INPUT_PULLUP);
   pinMode(PIN_DEBUG_INPUT_SPINDLE, INPUT_PULLUP);
@@ -34,13 +36,18 @@ void setup() {
   pinMode(PIN_STEPPER_Z_B, OUTPUT);
   pinMode(PIN_STEPPER_Z_C, OUTPUT);
   pinMode(PIN_STEPPER_Z_D, OUTPUT);
-  pinMode(PIN_TOOL_CHANGER_HOLD, OUTPUT);
+  #ifdef BOARDVERSION_1_25
+    pinMode(PIN_TOOL_CHANGER_HOLD, OUTPUT);
+  #else
+    pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
+  #endif
   pinMode(PIN_TOOL_CHANGER_CHANGE, OUTPUT);
-  //pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
   pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
-  //pinMode(PIN_USART1_RX, INPUT);
-  //pinMode(PIN_USART1_TX, OUTPUT);
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined SPINDLEDRIVER_EXTRA_BOARD
+    pinMode(PIN_USART1_RX, INPUT);
+    pinMode(PIN_USART1_TX, OUTPUT);
+  #endif
   //pinMode(PIN_SPI_MISO, OUTPUT); 		//Arduino is SPI-Slave
   //pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
   //pinMode(PIN_SPI_SCK, INPUT); 	//Arduino is SPI-Slave
@@ -98,8 +105,9 @@ void setup() {
   }
 
   //Toolchanger
-  digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
-
+  #ifdef BOARDVERSION_1_25
+    digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+  #endif
   //set interrupt enable
   sei();
 
