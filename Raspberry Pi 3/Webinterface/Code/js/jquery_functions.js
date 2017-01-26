@@ -1,4 +1,9 @@
-﻿$(document).ready(function(){
+﻿var mtime_last=-1;
+var mtime_WaitForUpdate=0;
+var t_last=0;
+var n_last=0;
+
+$(document).ready(function(){
 
     // jQuery methods go here...
 	
@@ -37,6 +42,13 @@
 	   $(".cnc").show();
 	});
 	
+	$("#EmcoButton").click(function(){
+	   //$(".manual").hide();
+	   //$(".cnc").hide();
+	   $(".help").hide();
+	   $(".emco").show();
+	});
+	
 	$("#HelpButton").click(function(){
 		$(".manual").hide();
 		$(".cnc").hide();
@@ -49,7 +61,7 @@
 	});
 	
 		
-	function UpdateAndResizeTextarea() {		
+	function UpdateAndResizeTextarea() {
 		$.ajax({
 			url: "/uploads/cnc_code.txt",
 			success: function(result){
@@ -66,122 +78,41 @@
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
 				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
 			}
+		}).always(function() {
+			mtime_WaitForUpdate=0;
 		});
-		
-		/*
-		$("#CncCodeTxt").load("/uploads/cnc_code.txt", function(responseTxt, statusTxt, xhr){  //load does not work sometimes ... why???
-			if(statusTxt == "success") {
-				//alert("External content loaded successfully!");
-				$("#responses").append("<br />Textarea Updated!");
-				var txt = $("#CncCodeTxt").val();
-				//console.log(txt);
-				var lines = txt.split(/\r|\r\n|\n/);
-				var count = lines.length;
-				//console.log(count);
-				document.getElementById("CncCodeTxt").rows=count;
-			}
-			if(statusTxt == "error") {
-				//alert("Error: " + xhr.status + ": " + xhr.statusText);
-				$("#responses").append("<br />Error updating Textarea: " + xhr.status + ": " + xhr.statusText);
-			}
-		});
-		*/
 	}
 	
 	//load last CNC-Code-File from Server
+	$("#responses").html("CNC-Code from previous uploaded File.");
 	UpdateAndResizeTextarea();
 	
 	//Reload CNC-Code-File from Server
 	$("#ResetChanges").click(function(){
+		$("#responses").html("CNC-Code resetted to previous uploaded File.");
 		UpdateAndResizeTextarea();
 	}); 
 	
 	//Upload Changes to CNC-Code-File on Server
 	$("#UploadChanges").click(function(){
+		mtime_WaitForUpdate=1;
 		$.ajax({
 			type:'POST',
 			url: '/php/update_cam-file.php',
 			data:$('#CncCode').serialize(),
 			success: function(response) {
-				$("#responses").html("Response: " +  JSON.stringify(response));
+				mtime_last=-1;
+				mtime_WaitForUpdate=0;
+				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 				//Load new CNC-Code-File from Server (for Security)
-				UpdateAndResizeTextarea(); //Error-Handling needed!!!
+				//UpdateAndResizeTextarea(); //Error-Handling needed!!!
 			},
 			error: function(xhr){
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
 				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
 			}
 		});
-		
-		/*
-		$.ajax({type:'POST', url: '/php/update_cam-file.php', data:$('#CncCode').serialize(), success: function(response) {
-				//$('#ContactForm').find('.form_result').html(response);
-				//$("#responses").html("Response: " +  JSON.stringify(data));
-			}
-		}).done(function (data) {
-			// Bei Erfolg
-			//alert("Erfolgreich:" + data);
-			$("#responses").html("Response: " +  JSON.stringify(data));
-		}).fail(function() {
-			// Bei Fehler
-			$("#responses").html("Request-Error: Upload failed!");
-			//alert("Fehler!");
-		}).always(function() {
-			// Immer
-			//$("#responses").html("Finished unexpected: " + JSON.stringify(data));
-			//alert("Beendet!");
-			//Load new CNC-Code-File from Server (for Security)
-			//$("#CncCodeTxt").load("/uploads/cnc_code.txt"); //does not work ... why???
-			UpdateAndResizeTextarea(); //Error-Handling needed!!!
-		});
-		*/
 	}); 
-
-	/*
-	//Ajax Form Submit for form #tool
-	$(function() {
-    //hang on event of form with id=myform
-		$("#tool").submit(function(e) {
-
-			//prevent Default functionality
-			e.preventDefault();
-
-			//get the action-url of the form
-			var actionurl = e.currentTarget.action;
-
-			//do your own request and handle the results
-			$.ajax({
-					url: actionurl,
-					type: 'post',
-					dataType: 'json',
-					data: $("#tool").serialize(),
-					success: function(data) {
-						//... do something with the data...
-					}
-			});
-
-		});
-
-	});
-	*/
-	
-	/*
-	//Ajax Form Submit with name and value of Submit-Button (does not work)
-	var form = $("form");
-	$(":submit",form).click(function(){
-			if($(this).attr('name')) {
-				$(form).append(
-					$("<input type='hidden'>").attr( { 
-						name: $(this).attr('name'), 
-						value: $(this).attr('value') })
-				);
-			}
-		});
-
-	$(form).submit(function(){
-	 console.log($(this).serializeArray());
-	});
-	*/
 	
 	function sendCommand(data) {
 		// AJAX-Call
@@ -201,7 +132,7 @@
 	
 	$("#ProgramStart").click(function(){
 		var StartBlock = document.getElementById("block").value;
-		var data = {command: "ProgramStart", block: StartBlock};
+		var data = {command: "ProgramStart", block: StartBlock, FileParserOverride: "0"};
 		sendCommand(data);
 	});
 	
@@ -216,6 +147,11 @@
 	});
 	
 	$("#SpindleOff").click(function(){
+		var data = {command: "SpindleOff"};
+		sendCommand(data);
+	});
+	
+	$("#SpindleOffEMCO").click(function(){
 		var data = {command: "SpindleOff"};
 		sendCommand(data);
 	});
@@ -346,8 +282,14 @@
 	*/
 	
 	$("#ResetErrors").click(function(){
-		var data = {command: "ResetErrors"};
-		sendCommand(data);
+		var error_reset_mask=0;
+		if (document.getElementById("SpiError").checked) error_reset_mask += Number($("#SpiError").val());
+		if (document.getElementById("CNCError").checked) error_reset_mask += Number($("#CNCError").val());
+		if (document.getElementById("SpindleError").checked) error_reset_mask += Number($("#SpindleError").val());
+		if (error_reset_mask) {
+			var data = {command: "ResetErrors", error_reset_mask: error_reset_mask};
+			sendCommand(data);
+		}
 	});
 	
 	$("#LoadOldParameter").click(function(){
@@ -370,16 +312,16 @@
 	
 	//Ajax Form Submit
 	$("form").submit(function(event) {
-		// Das eigentliche Absenden verhindern
+		// prevent submit
 		event.preventDefault();
 		
-		// Das sendende Formular und die Metadaten bestimmen
-		var form = $(this); // Dieser Zeiger $(this) oder $("form"), falls die ID form im HTML exisitiert, klappt übrigens auch ohne jQuery ;)
-		var action = form.attr("action"), // attr() kann enweder den aktuellen Inhalt des gennanten Attributs auslesen, oder setzt ein neuen Wert, falls ein zweiter Parameter gegeben ist
+		// get Form
+		var form = $(this); // Pointer $(this) or $("form"), if ID form in HTML exists
+		var action = form.attr("action"),
 			method = form.attr("method"),
-			data   = form.serialize(); // baut die Daten zu einem String nach dem Muster vorname=max&nachname=Müller&alter=42 ... zusammen
+			data   = form.serialize(); // builds a string like firstname=max&surname=Müller&age=42 ...
 			
-		// Der eigentliche AJAX Aufruf
+		//AJAX Call
 		$.ajax({
 			url : action,
 			type : method,
@@ -393,39 +335,54 @@
 			}
 		/*
 		}).done(function (data) {
-			// Bei Erfolg
-			alert("Erfolgreich:" + data);
+			alert("Success:" + data);
 		}).fail(function() {
-			// Bei Fehler
-			alert("Fehler!");
+			alert("Error!");
 		}).always(function() {
-			// Immer
-			alert("Beendet!");
+			alert("Finished!");
 		*/
 		});
 	});
 	
-	// Wir registrieren einen EventHandler für unser Input-Element (#file-1)
-	// wenn es sich ändert
+	/*
+	//Ajax Form Submit with name and value of Submit-Button (does not work)
+	var form = $("form");
+	$(":submit",form).click(function(){
+			if($(this).attr('name')) {
+				$(form).append(
+					$("<input type='hidden'>").attr( { 
+						name: $(this).attr('name'), 
+						value: $(this).attr('value') })
+				);
+			}
+		});
+
+	$(form).submit(function(){
+	 console.log($(this).serializeArray());
+	});
+	*/
+	
+	// Register an EventHandler for a change of the Input-Element (#file-1)
 	$('body').on('change', '#file-1', function() {
-	   var data = new FormData(); // das ist unser Daten-Objekt ...
-	   data.append('file-1', this.files[0]); // ... an die wir unsere Datei anhängen
-	   $.ajax({
-			url: '/php/upload_cam-file.php', // Wohin soll die Datei geschickt werden?
-			data: data,          // Das ist unser Datenobjekt.
-			type: 'POST',         // HTTP-Methode, hier: POST
+		mtime_WaitForUpdate=1;
+		var data = new FormData(); // new data-objekt ...
+		data.append('file-1', this.files[0]); // ... to append the file
+		$.ajax({
+			url: '/php/upload_cam-file.php',
+			data: data,
+			type: 'POST',         // HTTP-Method: POST
 			processData: false,
 			//contentType : 'multipart/form-data',
 			contentType: false,
 			success: function(response) {
-				$("#responses").html("Response: " +  JSON.stringify(response));
+				mtime_last=-1;
+				$("#responses").html("Response:<br />" +  JSON.stringify(response));
 			},
 			error: function(xhr){
 				//alert("An error occured: " + xhr.status + " " + xhr.statusText);
 				$("#responses").append("Request-Error: Upload failed!, " + xhr.status + ": " + xhr.statusText);
 			}
-			// und wenn alles erfolgreich verlaufen ist, schreibe eine Meldung
-			// in das Response-Div
+			// at success write a message to the response-div
 			//success: function() { $("#responses").html("File successfully uploaded!");}
 			//success: function() { $("#responses").html("Success: " +  JSON.stringify(data));},
 			//error: function( jqXhr, textStatus, errorThrown ){console.log( errorThrown );}
@@ -439,13 +396,11 @@
 			*/
 			/*
 		}).done(function (data) {
-			// Bei Erfolg
-			//alert("Erfolgreich:" + data);
+			//alert("Success:" + data);
 			$("#responses").html("Response: " +  JSON.stringify(data));
 		}).fail(function() {
-			// Bei Fehler
 			$("#responses").html("Request-Error: Upload failed!");
-			//alert("Fehler!");
+			//alert("Error!");
 			*/
 		}).always(function() {
 			// Immer
@@ -456,5 +411,4 @@
 			UpdateAndResizeTextarea();
 		});
 	})
-
 }); 

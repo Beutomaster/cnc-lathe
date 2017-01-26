@@ -2,14 +2,15 @@
 
 //global vars
 
-//Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!)
-const int lookup_cosinus[91] = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
+//Cosinus LookUp-Table for Quarter Circle in Q15 (max. 32767 !!!) (saved in Flash-Memory)
+const int lookup_cosinus[91] PROGMEM = {32767, 32762, 32747, 32722, 32687, 32642, 32587, 32523, 32448, 32364, 32269, 32165, 32051, 31927, 31794, 31650, 31498, 31335, 31163, 30982, 30791, 30591, 30381, 30162, 29934, 29697, 29451, 29196, 28932, 28659, 28377, 28087, 27788, 27481, 27165, 26841, 26509, 26169, 25821, 25465, 25101, 24730, 24351, 23964, 23571, 23170, 22762, 22347, 21925, 21497, 21062, 20621, 20173, 19720, 19260, 18794, 18323, 17846, 17364, 16876, 16384, 15886, 15383, 14876, 14364, 13848, 13328, 12803, 12275, 11743, 11207, 10668, 10126, 9580, 9032, 8481, 7927, 7371, 6813, 6252, 5690, 5126, 4560, 3993, 3425, 2856, 2286, 1715, 1144, 572, 0};
 
 //ERROR-Numbers
 volatile byte ERROR_NO = 0; //actual ERROR-Numbers Bit-coded (bit2_SPINDLE|bit1_CNC_CODE|bit0_SPI)
 
 //Machine State
-volatile byte STATE=0; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile byte STATE1=0; //bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+volatile byte STATE2=0; //STATE2_CNC_CODE_NEEDED_BIT | STATE2_TOOLCHANGER_RUNNING_BIT | STATE2_ZSTEPPER_RUNNING_BIT | STATE2_XSTEPPER_RUNNING_BIT | STATE2_COMMAND_TIME_BIT | STATE2_COMMAND_RUNNING_BIT
 volatile int STATE_RPM=0;
 volatile int STATE_X=0;
 volatile int STATE_Z=0;
@@ -51,7 +52,7 @@ void setup() {
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_A, INPUT);
   pinMode(PIN_OLD_CONTROL_STEPPER_Z_B, INPUT);
   pinMode(PIN_SERVO_ENGINE, OUTPUT); //needed for Fast PWM
-  pinMode(PIN_SPINDELPWM_NIKO, OUTPUT); //needed for Fast PWM
+  pinMode(PIN_SPINDLEPWM_NIKO, OUTPUT); //needed for Fast PWM
   pinMode(PIN_SPINDLE_NEW, OUTPUT);
   pinMode(PIN_SPINDLE_CHARGERESISTOR_OFF, OUTPUT);
   pinMode(PIN_DEBUG_INPUT_1, INPUT_PULLUP);
@@ -70,24 +71,31 @@ void setup() {
   //pinMode(PIN_TOOL_CHANGER_FIXING, OUTPUT);
   pinMode(PIN_SPINDLE_ON, OUTPUT);
   pinMode(PIN_SPINDLE_DIRECTION, OUTPUT);
-  pinMode(PIN_USART1_RX, INPUT);
-  pinMode(PIN_USART1_TX, OUTPUT);
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined SPINDLEDRIVER_EXTRA_BOARD
+    pinMode(PIN_USART1_RX, INPUT);
+    pinMode(PIN_USART1_TX, OUTPUT);
+  #endif
   pinMode(PIN_SPI_MISO, OUTPUT); 		//Arduino is SPI-Slave
   pinMode(PIN_SPI_MOSI, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SCK, INPUT); 	//Arduino is SPI-Slave
   pinMode(PIN_SPI_SS, INPUT); 	//Arduino is SPI-Slave
-  //potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
+  #ifdef SERVO_LIB
+    potiservo.attach(PIN_SERVO_ENGINE);   //Attach Servo-Pin
+  #endif
 
   //set initial State
-  STATE |= _BV(STATE_MANUAL_BIT) | _BV(STATE_PAUSE_BIT); //set = 1
-  get_control_active(); //get initial state
+  STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT); //set = 1
+  if(!get_control_active()) get_stepper_on_off(); //get initial state
   
   //Serial Communication
   #ifndef DEBUG_SERIAL_CODE_OFF
     //#error Serial compilation activated!
     //Serial.begin(115200); //for Debugging with Serial Monitor (115200 baud * 4 bit/baud = 460800 bit/s)
     Serial.begin(74880); //for Debugging with Serial Monitor (74880 baud * 4 bit/baud = 299520 bit/s)
-    //Serial1.begin(9600); //Nikos Platine
+  #endif
+
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined SPINDLEDRIVER_EXTRA_BOARD
+    Serial1.begin(9600); //Nikos Platine
   #endif
   
   //SPI
@@ -116,28 +124,30 @@ void setup() {
   //Stepper-Timeout
 
   //Timer1
-  //Toolchanger + set command_completed
+  //Toolchanger + set x_command_completed
   //+X-Stepper
-  //command_complete isr
+  //command_running isr (conflict with stepper!!! => must be changed to another timer)
   
   //Timer2 
   //tone() function uses Timer2
     
   //Timer3
-  //Z-Stepper output + set command_completed while in active mode and maybe observing Stepper in passive mode
+  //Z-Stepper output + set z_command_completed while in active mode and maybe observing Stepper in passive mode
 
-  //Timer4
-  //spindle PWM
-  //set and start Timer4 (Clk = 16MHz/(Prescaler*(TOP+1)) = 16MHz/(1023+1) = 15,625 kHz)
-  TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
-  TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM
-  TCCR4C = 0; //no Force of Output Compare
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
-    TCNT4 = 0; //set Start Value
-  }
-  //Prescaler 1 and Start Timer
-  TCCR4B |= _BV(CS40); //set 1
+  #ifdef SPINDLEDRIVER_NEW
+    //Timer4
+    //spindle PWM
+    //set and start Timer4 (Clk = 16MHz/(Prescaler*(TOP+1)) = 16MHz/(1023+1) = 15,625 kHz)
+    TCCR4B = 0b00001000; //connect no Input-Compare-PINs, WGM43=0, WGM42=1 for Fast PWM, 10-bit and Disbale Timer with Prescaler=0 while setting it up
+    TCCR4A = 0b00001011; //connect OC4C-PIN (PIN 8) to Output Compare and WGM41=1, WGM40=1 for Fast PWM
+    TCCR4C = 0; //no Force of Output Compare
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      OCR4C = 0; //OCR4C max. = 1023 *0,55338792 = 566 !!! Engine is only for 180V DC
+      TCNT4 = 0; //set Start Value
+    }
+    //Prescaler 1 and Start Timer
+    TCCR4B |= _BV(CS40); //set 1
+  #endif
   
   //Timer5 Servo and spindle regulator
   set_Timer5();
@@ -155,21 +165,13 @@ void setup() {
   /*
   //debug Watchdog
   #ifndef DEBUG_SERIAL_CODE_OFF
-    Serial.print("Watchdog WDTCSR: ");
+    Serial.print(F("Watchdog WDTCSR: "));
     Serial.println(WDTCSR, BIN);
-    Serial.print("Watchdog MCUCSR: ");
+    Serial.print(F("Watchdog MCUCSR: "));
     Serial.println(MCUSR, BIN);
   #endif
   */
   //watchdogSetup();
-}
-
-void set_error(byte error_bit_position) {
-  ERROR_NO |= _BV(error_bit_position);
-}
-
-void reset_error(byte error_bit_position) {
-  ERROR_NO &= ~(_BV(error_bit_position));
 }
 
 void loop() {
@@ -182,29 +184,80 @@ void loop() {
     spi_buffer_handling();
   #endif
 
-  //CNC-Lathe State-Machine  
-  if (get_control_active()) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
-    if (initialized) {
-      if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
-          command_completed=1;
-          STATE_F = 0;
-          stepper_timeout();
-      }
-      if (command_completed) {
-        if (!((STATE>>STATE_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
-          if (!pause) process_cnc_listing();
+  //CNC-Lathe State-Machine
+  if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
+    STATE_F = 0; //maybe not needed
+    if (wait_for_spindle_stop) {
+      wait_for_spindle_stop=0;
+    }
+    else if (callback_spindle_direction_change) {
+      callback_spindle_direction_change=0;
+      spindle_direction(target_spindle_direction);
+    }
+    else if (wait_for_spindle_spindle_direction_relais) {
+      wait_for_spindle_spindle_direction_relais=0;
+    }
+    else if (callback_spindle_start) {
+      callback_spindle_start=0;
+      spindle_on();
+    }
+    else {
+      command_completed=1;
+      #ifdef RPM_ERROR_TEST
+        if ((STATE1>>STATE1_SPINDLE_BIT)&1) if(!test_for_spindle_rpm(target_revolutions, 100)) ERROR_NO |= _BV(ERROR_SPINDLE_BIT); //test for wrong rpm (not finished)
+      #endif
+      if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+        STATE_N++;
+        if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
+          //N_Offset = N_Offset + STATE_N; //should be done by Uploader
+          STATE2 |= _BV(STATE2_CNC_CODE_NEEDED_BIT);
+          //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
         }
       }
-      else reset_stepper_timeout=true;
-	  }
-    //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
+    }
   }
+  
+  if (get_control_active()) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
+    if (initialized) {
+      if (pause) stepper_timeout();
+    }
+    if (command_completed) {
+      if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
+        if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+          if (process_cnc_listing()) { //error
+            STATE1 |= _BV(STATE1_MANUAL_BIT) | _BV(STATE1_PAUSE_BIT);
+            ERROR_NO |= _BV(ERROR_CNC_CODE_BIT);
+          }
+          else {
+            #ifdef DEBUG_CNC_ON
+              //programm_pause();
+            #endif
+          }
+        }
+      }
+    }
+    else reset_stepper_timeout=true;
+  }
+  //else intitialize(); //without sensors useless, Tool-Changer- and Origin-Init by SPI command (Origin not needed at the moment)
   else {
-    reset_initialization();
     observe_machine();
-    set_revolutions(get_SERVO_CONTROL_POTI());
+    if(!(millis()%100)) set_revolutions(get_SERVO_CONTROL_POTI()); //problematic with spi-communication, analogRead should be replaced by an adc-isr, because it waits 100us for adc-conversion
+    //if(!(millis()%100)) intr_analogRead(APIN_SERVO_CONTROL_POTI); //also problematic with spi-communication, but why?
+    //Debug
+    #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_RPM_ON
+      if(!(millis()%2000)) {
+        //#error RPM debug-msg compilation activated!
+        Serial.print(F("RPM-set-Value: "));
+        Serial.println (target_revolutions);
+      }
+    #endif
     //set spindle-direction
   }
+
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("0");
+  #endif
+  
   //wdt_reset(); // reset the WDT timer
 }
 

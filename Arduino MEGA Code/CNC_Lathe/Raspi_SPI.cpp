@@ -28,17 +28,17 @@ Praeambel 011 msg_no XX ZZ T 10xZero CRC-8 #Set Tool-Position (and INIT)
 Praeambel 012 msg_no XX 13xZero CRC-8 #Origin-XOffset
 Praeambel 013 msg_no ZZ 13xZero CRC-8 #Origin-ZOffset
 Praeambel 014 msg_no metric 14xZero CRC-8 #metric or inch (maybe not needed)
-Praeambel 015 msg_no NN metric 12xZero CRC-8 #New CNC-Programm wit NN Blocks in metric or inch
+Praeambel 015 msg_no NN NN metric 10xZero CRC-8 #New CNC-Programm wit NN Offset and NN Blocks in metric or inch
 Praeambel 016 msg_no NN GG XX ZZ FF HH 3xZero CRC-8 #CNC-Code-Block (6 Byte im 8kB Speicher pro Zeile CNC-Code)
 Praeambel 017 msg_no 15xZero CRC-8 #shutdown
 Praeambel 018 msg_no 15xZero CRC-8 #Load last coordinates and tool position and init
-Praeambel 019 msg_no 15xZero CRC-8 #Reset Errors
+Praeambel 019 msg_no error_reset_mask 14xZero CRC-8 #Reset Errors
 
 //Transmission-Factor needed for Calculation of Revolutions !!!
 //Change Spindle-Direction
 
 From Arduino:
-Praeambel 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
+Praeambel 100 lastsuccessful_msg byte2=bit7_stepper|bit6_spindle_direction|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active RPM_H&L STATE2 XX ZZ FF HH T NN ERROR_Numbers CRC-8 #Machine State
 (Praeambel 101 ERROR_Number 14xZero CRC-8 #Error) obsolete
 */
 
@@ -50,12 +50,12 @@ volatile byte pos=0; // buffer empty
 volatile boolean byte_received=false; //first byte of transmission received)
 volatile boolean process_it=false; //not end of string (newline received)
 volatile unsigned char lastsuccessful_msg = 0;
-volatile char messages_to_process=0, rx_ringbufer_write_pos=0, rx_ringbufer_read_pos=0;
+volatile signed char messages_to_process=0, rx_ringbuffer_write_pos=0, rx_ringbuffer_read_pos=0;
 
 //Update messages_to_process
 void update_messages_to_process() {
-  if ((rx_ringbufer_write_pos - rx_ringbufer_read_pos)<0) messages_to_process = SPI_RX_RINGBUFFERSIZE + rx_ringbufer_write_pos - rx_ringbufer_read_pos;
-  else messages_to_process = rx_ringbufer_write_pos - rx_ringbufer_read_pos;
+  if ((rx_ringbuffer_write_pos - rx_ringbuffer_read_pos)<0) messages_to_process = SPI_RX_RINGBUFFERSIZE + rx_ringbuffer_write_pos - rx_ringbuffer_read_pos;
+  else messages_to_process = rx_ringbuffer_write_pos - rx_ringbuffer_read_pos;
 }
 
 // SPI-Transmission - wait for flag set in interrupt routine
@@ -64,46 +64,50 @@ void spi_buffer_handling() {
   if (messages_to_process>0){
     //rx_buf [pos] = 0; //set end of string
 
+    #ifdef DEBUG_PROGRAM_FLOW_ON
+      Serial.println("1");
+    #endif
+
     //debug
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-        Serial.print("Messages to process: ");
+        Serial.print(F("Messages to process: "));
         Serial.print(messages_to_process, DEC);
-        Serial.print(", rx_ringbufer_read_pos: ");
-        Serial.print(rx_ringbufer_read_pos, DEC);
-        Serial.print(", rx_ringbufer_write_pos: ");
-        Serial.println(rx_ringbufer_write_pos, DEC);
+        Serial.print(F(", rx_ringbuffer_read_pos: "));
+        Serial.print(rx_ringbuffer_read_pos, DEC);
+        Serial.print(F(", rx_ringbuffer_write_pos: "));
+        Serial.println(rx_ringbuffer_write_pos, DEC);
     #endif
     
     //Debug
     //String debug_string;
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
       //#error SPI debug-msg compilation activated!
-        Serial.print("SPI-Buffer:");
-        for (int i=0; i<pos; i++) {
-          Serial.print(" ");
-          //debug_string =  String(rx_doublebuf[rx_ringbufer_read_pos][i], DEC);
+        Serial.print(F("SPI-Buffer:"));
+        for (int i=0; i<SPI_MSG_LENGTH-SPI_BYTE_LENGTH_PRAEAMBEL; i++) {
+          Serial.print(F(" 0x"));
+          //debug_string =  String(rx_doublebuf[rx_ringbuffer_read_pos][i], DEC);
           //Serial.print(debug_string);
-          Serial.print(rx_doublebuf[rx_ringbufer_read_pos][i], HEX);
+          Serial.print(rx_doublebuf[rx_ringbuffer_read_pos][i], HEX);
         }
         Serial.println();
     #endif
 
     process_incomming_msg();
 
-    //Update rx_ringbufer_read_pos
-    if (rx_ringbufer_read_pos<SPI_RX_RINGBUFFERSIZE-1) rx_ringbufer_read_pos++;
-    else rx_ringbufer_read_pos = 0;
+    //Update rx_ringbuffer_read_pos
+    if (rx_ringbuffer_read_pos<SPI_RX_RINGBUFFERSIZE-1) rx_ringbuffer_read_pos++;
+    else rx_ringbuffer_read_pos = 0;
 
     update_messages_to_process();
 
     //debug
     #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-        Serial.print("Messages to process: ");
+        Serial.print(F("Messages to process: "));
         Serial.print(messages_to_process, DEC);
-        Serial.print(", rx_ringbufer_read_pos: ");
-        Serial.print(rx_ringbufer_read_pos, DEC);
-        Serial.print(", rx_ringbufer_write_pos: ");
-        Serial.println(rx_ringbufer_write_pos, DEC);
+        Serial.print(F(", rx_ringbuffer_read_pos: "));
+        Serial.print(rx_ringbuffer_read_pos, DEC);
+        Serial.print(F(", rx_ringbuffer_write_pos: "));
+        Serial.println(rx_ringbuffer_write_pos, DEC);
     #endif
     
     create_machine_state_msg();
@@ -130,27 +134,33 @@ unsigned char CRC8 (volatile unsigned char * buf, unsigned char message_offset, 
   return crc_8;
 }
 
-boolean check_msg(char msg_length, boolean force_action) {
+boolean check_msg(unsigned char msg_length, boolean force_action) {
   //debug lastsuccessful_msg
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
-    Serial.print("lastsuccessful_msg DEC: ");
+    Serial.print(F("lastsuccessful_msg DEC: "));
     Serial.print(lastsuccessful_msg, DEC);
-    Serial.print(", lastsuccessful_msg HEX: ");
+    Serial.print(F(", lastsuccessful_msg HEX: "));
     Serial.print(lastsuccessful_msg, HEX);
-    Serial.print(", actual_msg HEX: ");
-    Serial.println(rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_NO], HEX);
+    Serial.print(F(", actual_msg HEX: "));
+    Serial.println(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_NO], HEX);
   #endif
   boolean success = true;
-  if (CRC8(rx_doublebuf[rx_ringbufer_read_pos], 0, msg_length, true, rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_CRC8])) {
+  if (CRC8(rx_doublebuf[rx_ringbuffer_read_pos], 0, msg_length, true, rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_CRC8])) {
     success=false; //msg-failure
-    set_error(ERROR_SPI_BIT);
+    ERROR_NO |= _BV(ERROR_SPI_BIT);
+    #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
+      Serial.println(F("CRC-Error"));
+    #endif
   }
-  else if (rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
+  else if (rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_NO] == (lastsuccessful_msg+1)%256) { //no message lost
     lastsuccessful_msg++;
   }
   else {
     if (force_action) success=false; //message lost
-    set_error(ERROR_SPI_BIT);
+    ERROR_NO |= _BV(ERROR_SPI_BIT);
+    #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPI_ON
+      Serial.println(F("Msg lost"));
+    #endif
   }
   return success;
 }
@@ -158,16 +168,19 @@ boolean check_msg(char msg_length, boolean force_action) {
 boolean process_incomming_msg() {
   boolean success=true;
   int N=0;
-  char msg_length=2;
-  switch(rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_TYPE]) {
+  unsigned char msg_length=2;
+  switch(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TYPE]) {
     case 1:   //Update Machine State
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               break;
     case 2:   //Programm Start at Block
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_PAUSE_BIT)&1) && command_completed) {
-                programm_start((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_N_L]);
+              else if (get_control_active() && initialized && ((STATE1>>STATE1_PAUSE_BIT)&1) && command_completed) {
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
+                  Serial.println(F("Programm Start"));
+                #endif
+                programm_start((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L]);
               }
               break;
     case 3:   //Programm Stop
@@ -181,21 +194,21 @@ boolean process_incomming_msg() {
     case 5:   //Spindle on with RPM and Direction
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1)) {
-                set_revolutions((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_RPM_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_RPM_L]);
-                spindle_direction(rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION]);
+              else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
+                if (get_control_active()) set_revolutions((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_RPM_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_RPM_L]);
+                spindle_direction(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION]);
                 spindle_on();
               }
               break;
     case 6:   //Spindle off
               if (!check_msg(msg_length, true)) success=false; //msg-failure
-              else if ((STATE>>STATE_MANUAL_BIT)&1) {
+              else if ((STATE1>>STATE1_MANUAL_BIT)&1) {
                 spindle_off();
               }
               break;
     case 7:   //Stepper on
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1)) {
+              else if (get_control_active() && initialized && ((STATE1>>STATE1_MANUAL_BIT)&1)) {
                 if (command_completed) { //Error Handling needed
                   stepper_on();
                 }
@@ -203,7 +216,7 @@ boolean process_incomming_msg() {
               break;
     case 8:   //Stepper off
               if (!check_msg(msg_length, true)) success=false; //msg-failure
-              else if ((STATE>>STATE_MANUAL_BIT)&1) {
+              else if ((STATE1>>STATE1_MANUAL_BIT)&1) {
                 if (command_completed) { //Error Handling needed
                   stepper_off();
                 }
@@ -212,92 +225,112 @@ boolean process_incomming_msg() {
     case 9:   //X-Stepper move with feed
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
-                set_xz_stepper_manual((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION], 0);
+              else if (get_control_active() && initialized && ((STATE1>>STATE1_MANUAL_BIT)&1) && !command_time && !i_command_time) {
+                set_xz_stepper_manual((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION], 0);
               }
               break;
     case 10:   //Z-Stepper move with feed
               msg_length=5;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
-                set_xz_stepper_manual((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION], 1);
+              else if (get_control_active() && initialized && ((STATE1>>STATE1_MANUAL_BIT)&1) && !command_time && !i_command_time) {
+                set_xz_stepper_manual((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_F_L], rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_DIRECTION], 1);
               }
               break;
     case 11:   //Set Tool-Position (and INIT)
               msg_length=7;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
-                get_Tool_X((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_X_L]);
-                get_Tool_Z((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_L]);
-                set_tool_position(rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_T]);
+              else if (get_control_active() && ((STATE1>>STATE1_MANUAL_BIT)&1) && command_completed) {
+                get_Tool_X((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_X_L]);
+                get_Tool_Z((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_Z_L]);
+                set_tool_position(rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_TOOL_T]);
               }
               break;
     case 12:   //Origin-XOffset
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
-                set_x_coordinate((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_X_L]);
+              else if (get_control_active() && initialized && ((STATE1>>STATE1_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
+                set_x_coordinate((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_X_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_X_L]);
               }
               break;
     case 13:   //Origin-ZOffset
               msg_length=4;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && initialized && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
+              else if (get_control_active() && initialized && ((STATE1>>STATE1_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
                 /*
                 #ifndef DEBUG_SERIAL_CODE_OFF
-                  Serial.print("Z DEC: ");
-                  Serial.print(((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), DEC);
-                  Serial.print(", ZH HEX: ");
-                  Serial.print((rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H]), HEX);
-                  Serial.print(", ZL HEX: ");
-                  Serial.print((rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
-                  Serial.print(", Z HEX: ");
-                  Serial.println(((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
+                  Serial.print(F("Z DEC: "));
+                  Serial.print(((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), DEC);
+                  Serial.print(F(", ZH HEX: "));
+                  Serial.print((rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H]), HEX);
+                  Serial.print(F(", ZL HEX: "));
+                  Serial.print((rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
+                  Serial.print(F(", Z HEX: "));
+                  Serial.println(((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]), HEX);
                 #endif
                 */
-                set_z_coordinate((((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]);
+                set_z_coordinate((((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_Z_L]);
               }
               break;
     case 14:  //metric or inch (maybe not needed)
               msg_length=3;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if (get_control_active() && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
-                if (rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_INCH]){
-                  STATE |= _BV(STATE_INCH_BIT); //set STATE_bit4 = 1
+              else if (get_control_active() && ((STATE1>>STATE1_MANUAL_BIT)&1) && command_completed) { //Error Handling needed
+                if (rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_INCH]){
+                  STATE1 |= _BV(STATE1_INCH_BIT); //set STATE1_bit4 = 1
                 }
-                else STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
+                else STATE1 &= ~(_BV(STATE1_INCH_BIT)); //set STATE1_bit4 = 0
               }
               break;
     case 15:  //New CNC-Programm wit N Blocks in metric or inch
-              msg_length=5;
+              msg_length=7;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if ((STATE>>STATE_PAUSE_BIT)&1) {
+              else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
+                  Serial.println(F("New CNC-Programm"));
+                #endif
                 //some Error-Handling needed, if message is ignored
                 programm_stop();
-                //int NMAX = ((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_N_L]) //maybe not needed
-                for (N=0; N<CNC_CODE_NMAX; N++) {
+                N_Offset = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_OFFSET_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_OFFSET_N_L]; //needed for loading more data
+                N_MAX = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_MAX_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_MAX_N_L];
+                for (N=0; N<=CNC_CODE_NMAX; N++) {
                   cnc_code[N].GM = 0;
                 }
                 //metric or inch? maybe better replaced by G-Code
-                if (rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_G_INCH]){
-                  STATE |= _BV(STATE_INCH_BIT); //set STATE_bit4 = 1
+                if (rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_G_INCH]){
+                  STATE1 |= _BV(STATE1_INCH_BIT); //set STATE1_bit4 = 1
                 }
-                else STATE &= ~(_BV(STATE_INCH_BIT)); //set STATE_bit4 = 0
+                else STATE1 &= ~(_BV(STATE1_INCH_BIT)); //set STATE1_bit4 = 0
               }
               else success=1;
               break;
     case 16:  //CNC-Code-Block
               msg_length=14;
               if (!check_msg(msg_length, false)) success=false; //msg-failure
-              else if ((STATE>>STATE_PAUSE_BIT)&1) {
+              else if ((STATE1>>STATE1_PAUSE_BIT)&1) {
                 //some Error-Handling needed, if message is ignored
-                N = (((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_N_L];
-                cnc_code[N].GM = rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_GM];
-                cnc_code[N].GM_NO = rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_GM_NO];
-                cnc_code[N].XI = (((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_XI_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_XI_L];
-                cnc_code[N].ZK = (((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_ZK_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_ZK_L];
-                cnc_code[N].FTLK = (((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_L];
-                cnc_code[N].HS = (((int)rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_HS_H])<<8) | rx_doublebuf[rx_ringbufer_read_pos][SPI_BYTE_RASPI_MSG_HS_L];
+                N = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_N_L];
+                cnc_code[N].GM = rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_GM_TYPE];
+                cnc_code[N].GM_NO = rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_GM_NO];
+                cnc_code[N].XI = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_XI_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_XI_L];
+                cnc_code[N].ZK = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ZK_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ZK_L];
+                cnc_code[N].FTLK = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_FTLK_L];
+                cnc_code[N].HS = (((int)rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_HS_H])<<8) | rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_HS_L];
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_CNC_ON
+                  Serial.print(F("New CNC-Code-Block "));
+                  Serial.print(N);
+                  Serial.print(F(", Code-Type "));
+                  Serial.write(cnc_code[N].GM);
+                  Serial.print(F(", Code-No "));
+                  Serial.print(cnc_code[N].GM_NO);
+                  Serial.print(F(", XI "));
+                  Serial.print(cnc_code[N].XI);
+                  Serial.print(F(", ZK "));
+                  Serial.print(cnc_code[N].ZK);
+                  Serial.print(F(", FTLK "));
+                  Serial.print(cnc_code[N].FTLK);
+                  Serial.print(F(", HS "));
+                  Serial.println(cnc_code[N].HS);
+                #endif
               }
               else success=1;
               break;
@@ -309,24 +342,30 @@ boolean process_incomming_msg() {
                 spindle_off();
                 save_current_x_step();
                 save_current_z_step();
+                save_current_x_coordinate();
+                save_current_z_coordinate();
                 save_current_tool_position();
               }
               break;
     case 18:  //Load last coordinates and tool position and init
               if (!check_msg(msg_length, true)) success=false; //msg-failure
-              else if (get_control_active() && ((STATE>>STATE_MANUAL_BIT)&1) && command_completed) {
+              else if (get_control_active() && ((STATE1>>STATE1_MANUAL_BIT)&1) && command_completed) {
                 read_last_x_step();
                 read_last_z_step();
+                read_last_x_coordinate();
+                read_last_z_coordinate();
                 read_current_tool_position();
                 //initialize
-                STATE |= _BV(STATE_INIT_BIT); //set STATE_bit1 = STATE_INIT
+                STATE1 |= _BV(STATE1_INIT_BIT); //set STATE1_bit1 = STATE_INIT
                 initialized=1;
               }
               break;
     case 19:  //Reset Errors
+              msg_length=3;
               if (!check_msg(msg_length, true)) success=false; //msg-failure
               else {
-                ERROR_NO = 0;
+                //ERROR_NO &= ~rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK] | _BV(ERROR_CNC_CODE_BIT) | _BV(ERROR_SPINDLE_BIT); //for debugging only resetting of ERROR_SPI_BIT is allowed
+                ERROR_NO &= ~rx_doublebuf[rx_ringbuffer_read_pos][SPI_BYTE_RASPI_MSG_ERROR_RESET_MASK];
               }
               break;
     default:  //SPI-Error "PID unkown"
@@ -349,7 +388,8 @@ void create_machine_state_msg() {
   //maybe the whole function needs to be atomic or tx double buffered!!!
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_TYPE] = 100; //PID
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_LASTSUCCESS_MSG_NO] = lastsuccessful_msg;
-  tx_doublebuf [SPI_BYTE_ARDUINO_MSG_STATE] = STATE; //bit6_stepper|bit5_spindle|bit4_inch|bit3_pause|bit2_manual|bit1_init|bit0_control_active
+  tx_doublebuf [SPI_BYTE_ARDUINO_MSG_STATE1] = STATE1;
+  tx_doublebuf [SPI_BYTE_ARDUINO_MSG_STATE2] = STATE2;
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_RPM_H] = STATE_RPM>>8;
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_RPM_L] = STATE_RPM;
   tx_doublebuf [SPI_BYTE_ARDUINO_MSG_X_H] = STATE_X>>8;
@@ -407,14 +447,14 @@ ISR (SPI_STC_vect) {
     }
     
     // if Praeambel detected later reset pos
-    if (pos > SPI_BYTE_LENGTH_PRAEAMBEL) {
-      if (rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+1] == 0xFF && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+2] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+3] == 0xFF) {
+    else if (pos >= SPI_BYTE_LENGTH_PRAEAMBEL) {
+      if (rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+1] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+2] == 0xFF && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+3] == 0x7F && rx_buf[pos-SPI_BYTE_LENGTH_PRAEAMBEL+4] == 0xFF) {
         rx_buf[0] = 0x7F;
         rx_buf[1] = 0xFF;
         rx_buf[2] = 0x7F;
         rx_buf[3] = 0xFF;
-        rx_buf[SPI_BYTE_LENGTH_PRAEAMBEL] = rx_buf [pos];
-        pos = SPI_BYTE_LENGTH_PRAEAMBEL;
+        //rx_buf[SPI_BYTE_LENGTH_PRAEAMBEL] = rx_buf [pos];
+        pos = SPI_BYTE_LENGTH_PRAEAMBEL-1;
       }
     }
 
@@ -444,16 +484,16 @@ ISR (SPI_STC_vect) {
   //process buffer at fixed SPI_MSG_LENGTH
   if (pos == SPI_MSG_LENGTH) {
     if (messages_to_process<SPI_RX_RINGBUFFERSIZE) {
-      //copy rx_buf to rx_doublebuf[rx_ringbufer_write_pos] without praeambel
+      //copy rx_buf to rx_doublebuf[rx_ringbuffer_write_pos] without praeambel
       for (int i=SPI_BYTE_LENGTH_PRAEAMBEL; i<SPI_MSG_LENGTH; i++) {
-        rx_doublebuf[rx_ringbufer_write_pos][i-SPI_BYTE_LENGTH_PRAEAMBEL] = rx_buf[i];
+        rx_doublebuf[rx_ringbuffer_write_pos][i-SPI_BYTE_LENGTH_PRAEAMBEL] = rx_buf[i];
       }
-      //Update rx_ringbufer_write_pos
-      if (rx_ringbufer_write_pos<SPI_RX_RINGBUFFERSIZE-1) rx_ringbufer_write_pos++;
-      else rx_ringbufer_write_pos = 0;
+      //Update rx_ringbuffer_write_pos
+      if (rx_ringbuffer_write_pos<SPI_RX_RINGBUFFERSIZE-1) rx_ringbuffer_write_pos++;
+      else rx_ringbuffer_write_pos = 0;
       update_messages_to_process();
     }
-    else set_error(ERROR_SPI_BIT);
+    else ERROR_NO |= _BV(ERROR_SPI_BIT);
     pos = 0;
     SPDR = tx_buf [0]; //first byte for sending at next interrupt
     //process_it = true;

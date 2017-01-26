@@ -50,7 +50,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   interpolationmode=local_interpolationmode;
 
   //turn stepper on with last step
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 
   X0 = STATE_X;
   Z0 = STATE_Z;
@@ -61,6 +61,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     Z=get_inc_Z(Z);
   }
 
+  //end if nothing to do
+  if (!X && !Z) {
+    command_completed=1;
+    return;
+  }
+
   //calculate needed steps
   x_steps = (long)X*STEPS_PER_MM/100;
   z_steps = (long)Z*STEPS_PER_MM/100;
@@ -68,12 +74,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   
   #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_STEPPER_ON
     //#error Stepper debug-msg compilation activated!
-    Serial.print("XStepper starts moving ");
+    Serial.print(F("XStepper starts moving "));
     Serial.print(x_steps, DEC);
-    Serial.println("Steps");
-    Serial.print("ZStepper starts moving ");
+    Serial.println(F("Steps"));
+    Serial.print(F("ZStepper starts moving "));
     Serial.print(z_steps, DEC);
-    Serial.println("Steps");
+    Serial.println(F("Steps"));
   #endif
 
   clk_feed = (long)STATE_F * STEPS_PER_MM; //clk_feed in Steps/min
@@ -124,12 +130,12 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     //set Timer-Compare-Values
     if (X) {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR1 = RAPID_MIN; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/499s)-1
+        ICR1 = RAPID_MIN; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(s/min)/(256*clk_xfeed))-1 = (62500Hz*60(s/min)/(499(mm/min)*STEPS_PER_MM))-1
       }
     }
     if (Z) {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        ICR3 = RAPID_MIN; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(s/min)/(256*clk_zfeed))-1 = (62500Hz*60(s/min)/499s)-1
+        ICR3 = RAPID_MIN; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(s/min)/(256*clk_zfeed))-1 = (62500Hz*60(s/min)/(499(mm/min)*STEPS_PER_MM))-1
       }
     }
   }
@@ -169,48 +175,32 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     
     if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
       //calculation of next x- and z-clk (Direction)
-      if (z_steps < 0) {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
+      if ((z_steps<0)==(x_steps<0)) {
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
       }
       else {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
       }
     }
     else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
       //calculation of next x- and z-clk (Direction)
-      if (z_steps < 0) {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
+      if ((z_steps<0)==(x_steps<0)) {
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
       }
       else {
-        if (x_steps < 0) {
-          clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-        }
-        else {
-          clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-        }
+        clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+        clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+        //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
+        //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
       }
     }
     
@@ -238,24 +228,40 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
     }
   }
 
+  #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_STEPPER_ON
+    //#error Stepper debug-msg compilation activated!
+    Serial.print(F("XStepper clk_xfeed "));
+    Serial.println(clk_xfeed, DEC);
+    Serial.print(F("ZStepper clk_zfeed "));
+    Serial.println(clk_zfeed, DEC);
+    Serial.print(F("XStepper ICR1 "));
+    Serial.println(ICR1, DEC);
+    Serial.print(F("ZStepper ICR3 "));
+    Serial.println(ICR3, DEC);
+  #endif
+  
   //start Timer
   if (X) {
+    STATE2 |= _BV(STATE2_XSTEPPER_RUNNING_BIT);
     x_command_completed=0;
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
     }
-    //Output Compare A Match Interrupt Enable
-    TIMSK1 |= _BV(OCIE1A); //set 1
+    TIFR1 = _BV(TOV1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+    //OVF1 Interrupt Enable
+    TIMSK1 |= _BV(TOIE1); //set 1
     //Prescaler 256 and Start Timer
     TCCR1B |= _BV(CS12); //set 1
   }
   if (Z) {
+    STATE2 |= _BV(STATE2_ZSTEPPER_RUNNING_BIT);
     z_command_completed=0;
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT3 = 0; //set Start Value
     }
-    //Output Compare A Match Interrupt Enable
-    TIMSK3 |= _BV(OCIE3A); //set 1
+    TIFR3 = _BV(TOV3); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+    //OVF3 Interrupt Enable
+    TIMSK3 |= _BV(TOIE3); //set 1
     //Prescaler 256 and Start Timer
     TCCR3B |= _BV(CS32); //set 1
   }
@@ -263,7 +269,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
 
 int get_xz_coordinates(int XZ0, int xz_step) { //calculate Coordinates
   int XZ_delta;
-  long XZ_delta_fixpoint = ((xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
+  long XZ_delta_fixpoint = (((long)xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
       //Rounding
       if ((XZ_delta_fixpoint%512) < 256) {
         XZ_delta = XZ_delta_fixpoint>>9;
@@ -289,15 +295,13 @@ int get_xz_feed_related_to_revolutions(int feed_per_revolution) { // for G95 - F
 //still needed for G04
 
 void command_running(int local_command_time) { //command_time in 1/100s
-  command_completed=0;
-  
   //handling durations over 1s
-  i_command_time = local_command_time/100;
+  i_command_time = 1+(local_command_time/100);
   command_time = local_command_time%100;
 
   //set and start Timer1 for command_time
   TCCR1B = 0b00011000; //connect no Input-Compare-PINs, WGM13=1, WGM12=1 for Fast PWM and Disbale Timer with Prescaler=0 while setting it up
-  TCCR1A = 0b00000011; //connect no Output-Compare-PINs and WGM11=1, WGM10=1 for Fast PWM
+  TCCR1A = 0b00000010; //connect no Output-Compare-PINs and WGM11=1, WGM10=0 for Fast PWM with ICR1 as TOP
   TCCR1C = 0; //no Force of Output Compare
     
   if (i_command_time) {
@@ -314,8 +318,11 @@ void command_running(int local_command_time) { //command_time in 1/100s
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
       TCNT1 = 0; //set Start Value
     }
-    //Output Compare A Match Interrupt Enable
-    TIMSK1 |= _BV(OCIE1A); //set 1
+    command_completed=0;
+    STATE2 |= _BV(STATE2_COMMAND_TIME_BIT);
+    TIFR1 = _BV(TOV1); //clear Interrupt flag by writing a logical one to it's bit, zeros don't alter the register
+    //OVF Interrupt Enable
+    TIMSK1 |= _BV(TOIE1); //set 1
     //Prescaler 256 and Start Timer
     TCCR1B |= _BV(CS12); //set 1
   }

@@ -1,7 +1,10 @@
 <?php
 	//Logged in?
 	session_start();
-	if(!$_SESSION['logged_in']) header("Location: /login.html");
+	if(!$_SESSION['logged_in']) {
+		header("Location: /login.html");
+		exit;
+	}
 	
 	include 'verify_cnc_code.php';
 
@@ -45,7 +48,7 @@
 	//debug
 	//var_dump($cnc_code);
 	
-	verify_cnc_code($cnc_code) or die("File not uploaded because of CNC-Code-Error!");
+	verify_cnc_code($cnc_code, 0, 0) or die("File not uploaded because of CNC-Code-Error!");
 	
 	/*
 	$tmpfile = fopen($_FILES["file-1"]["tmp_name"], "r") or die("Unable to open tmp file!");

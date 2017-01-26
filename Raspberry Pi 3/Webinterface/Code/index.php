@@ -1,13 +1,15 @@
 ﻿<?php
-session_start();
-if(!$_SESSION['logged_in'])
-	header("Location: /login.html");
+	session_start();
+	if(!$_SESSION['logged_in']) {
+		header("Location: /login.html");
+		exit;
+	}
 ?>
 <!-- Login muss noch auf https eingeschraenkt werden!!!-->
 
 <!doctype html>
 
-<!-- Development-Version 0.2 -->
+<!-- Development-Version 1.0 -->
 
 <html manifest="cnc_lathe.appcache" lang="en-US" class="no-js">
 <head>
@@ -30,7 +32,8 @@ if(!$_SESSION['logged_in'])
     <script>(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);</script>
 </head>
 
-<body onload="{loadDoc('/xml/cnc_code.xml', cnc_code_table);}">
+<!-- <body onload="{loadDoc('/xml/cnc_code.xml', cnc_code_table);}"> -->
+<body>
 
 <header class="clearfix">
     <h1>CNC-Lathe-Control</h1>
@@ -40,7 +43,7 @@ if(!$_SESSION['logged_in'])
 	<ul class="top_nav">
 		<li id="ManButton" class="clearfix">Manual Control</li>
 		<li id="CncButton" class="clearfix">CNC Control</li>
-		<li id="EmcoButton" class="emco clearfix">EMCO Control</li>
+		<li id="EmcoButton" class="clearfix">EMCO Control</li>
 		<li id="HelpButton" class="clearfix">Help</li>
 	</ul>
     <ul class="top_login">
@@ -50,11 +53,11 @@ if(!$_SESSION['logged_in'])
 
 <section class="clearfix">
 	<noscript>
-		<h1>In Ihrem Browser ist JavaScript deaktiviert.</h1>
+		<h2>In your Browser JavaScript is deactivated.</h2>
 		<p>
-			Ohne JavaScript funktioniert diese Seite nicht.
+			Without JavaScript this page does not work.
 			<br />
-			Im SELFHTML-Wiki erfahren Sie, <a href="https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/JavaScript_aktivieren"> wie Sie JavaScript in Ihrem Browser aktivieren können. </a>
+			<a href="https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/JavaScript_aktivieren">SELFHTML-Wiki</a> provides informations about activating JavaScript in your browser. (German)
 		</p>
 	</noscript>
 
@@ -79,7 +82,7 @@ if(!$_SESSION['logged_in'])
 				<fieldset>
 					<legend>X-Origin-Offset:</legend>
 					<input type="hidden" name="command" value="SetXOffset" />
-					<label>X-Offset (+-5999):<br />
+					<label><span class="smallfont">(+-5999 mm/100)</span><br />
 					<input type="number" name="xoffset" min="-5999" max="5999" value="0" autocomplete="off" required />
 					</label>
 					<br />
@@ -93,7 +96,7 @@ if(!$_SESSION['logged_in'])
 				<fieldset>
 					<legend>Z-Origin-Offset:</legend>
 					<input type="hidden" name="command" value="SetZOffset" />
-					<label>Z-Offset (+-32760):<br />
+					<label><span class="smallfont">(+-32760 mm/100)</span><br />
 					<input type="number" name="zoffset" min="-32760" max="32760" value="0" autocomplete="off" required />
 					</label>
 					<br />
@@ -108,11 +111,12 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Spindle:</legend>
 				<input type="hidden" name="command" value="SpindleSetRPM" />
-				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />Rotation right handed</label>
+				Rotation<br />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />right handed</label>
 				<br />
-				<label><input type="radio" name="spindle_direction" value="1" />Rotation left handed</label>
+				<label><input type="radio" name="spindle_direction" value="1" />left handed</label>
 				<br />
-				<label>RPM (460 to 3220):<br />
+				<label>RPM <span class="smallfont">(460 to 3220 U/min)</span>:<br />
 				<input type="number" name="rpm" min="460" max="3220" value="460" autocomplete="off" required />
 				</label>
 				<br />
@@ -129,7 +133,7 @@ if(!$_SESSION['logged_in'])
 		<form action="/php/send_command.php" method="post">
 			<fieldset>
 				<legend>Stepper:</legend>
-				<label>Feed (2 to 499):<br />
+				<label>Feed <span class="smallfont">(2 to 499 mm/min)</span>:<br />
 				<input type="number" id="feed" name="feed" min="2" max="499" value="50" autocomplete="off" required />
 				</label>
 				<br />
@@ -145,15 +149,15 @@ if(!$_SESSION['logged_in'])
 			<fieldset>
 				<legend>Tool:</legend>
 				<input type="hidden" name="command" value="SetTool" />
-				<label>Tool (1 to 6):<br />
-				<input type="number" name="tool" min="1" max="6" value="0" autocomplete="off" required />
+				<label>Tool <span class="smallfont">(1 to 6)</span>:<br />
+				<input type="number" id="toolnumber" name="tool" min="1" max="6" value="0" autocomplete="off" required />
 				</label>
 				<br />
-				<label>X-Correction (+-5999):<br />
+				<label>X-Correction <span class="smallfont">(+-5999 mm/100)</span>:<br />
 				<input type="number" name="tool_x-correction" min="-5999" max="5999" value="0" autocomplete="off" required />
 				</label>
 				<br />
-				<label>Z-Correction (+-32760):<br />
+				<label>Z-Correction <span class="smallfont">(+-32760 mm/100)</span>:<br />
 				<input type="number" name="tool_z-correction" min="-32760" max="32760" value="0" autocomplete="off" required />
 				</label>
 				<br />
@@ -210,9 +214,11 @@ if(!$_SESSION['logged_in'])
 			</fieldset>
 		</form>
 		
+		<!--
         <table id="code"><thead><tr><th>N</th><th>G/M</th><th>G/M-Code</th><th>X/I</th><th>Z/K</th><th>F/T/L/K</th><th>H/S</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
 		
 		<p></p>
+		-->
 		
 		<form id="CncCode">
 			<label for="CncCodeTxt">CNC-Code:</label><br />
@@ -222,6 +228,26 @@ if(!$_SESSION['logged_in'])
 	
 	<article class="emco clearfix">
         <h2>EMCO-Control</h2>
+		<div class="left">
+		<form action="/php/send_command.php" method="post">
+			<fieldset>
+				<legend>Spindle:</legend>
+				<input type="hidden" name="command" value="SpindleSetRPM" />
+				Rotation<br />
+				<label><input type="radio" name="spindle_direction" value="0" checked="checked" />right handed</label>
+				<br />
+				<label><input type="radio" name="spindle_direction" value="1" />left handed</label>
+				<br />
+				<label style="display: none;">RPM <span class="smallfont">(460 to 3220 U/min)</span>:<br />
+				<input type="hidden" name="rpm" value="460" autocomplete="off" />
+				</label>
+				<br />
+				<input type="submit" id="SpindleOnEMCO" class="button" name="SpindleOnEMCO" value="Spindle ON" />
+				<br />
+				<input type="button" id="SpindleOffEMCO" class="button button_red" name="SpindleOffEMCO" value="Spindle OFF" />
+			</fieldset>
+		</form>
+		</div>
 		<!-- Stream Video of old Emco Control
         <iframe src="http://cnc-lathe:8081/?action=stream" height="640" width="480" frameborder="0"></iframe>
 		-->
@@ -256,31 +282,51 @@ if(!$_SESSION['logged_in'])
 				<p>inch</p>
 	</div>
 	<div class="state clearfix">
-				<div id="SpindelOnLED" class="led-grey"></div>
-				<p>Spindel on</p>
+				<div id="SpindleOnLED" class="led-grey"></div>
+				<p>Spindle on</p>
 	</div>
 	<div class="state clearfix">
-				<div id="SpindelDirectionLED" class="led-grey"></div>
-				<p>Spindel-Direction</p>
+				<div id="SpindleDirectionLED" class="led-grey"></div>
+				<p>Spindle-Direction</p>
 	</div>
 	<div class="state clearfix">
 				<div id="StepperOnLED" class="led-grey"></div>
 				<p>Stepper on</p>
 	</div>
 	<div class="state clearfix">
-				<p>RPM:</p>
+				<div id="CommandTimeLED" class="led-grey"></div>
+				<p>Command-Time</p>
+	</div>
+	<div class="state clearfix">
+				<div id="XStepperMovingLED" class="led-grey"></div>
+				<p>X-Stepper moving</p>
+	</div>
+	<div class="state clearfix">
+				<div id="ZStepperMovingLED" class="led-grey"></div>
+				<p>Z-Stepper moving</p>
+	</div>
+	<div class="state clearfix">
+				<div id="ToolchangerMovingLED" class="led-grey"></div>
+				<p>Toolchanger moving</p>
+	</div>
+	<div class="state clearfix">
+				<div id="CNCCodeNeededLED" class="led-grey"></div>
+				<p>CNC-Code needed</p>
+	</div>
+	<div class="state clearfix">
+				<p>RPM <span class="smallfont">[U/min]</span>:</p>
 				<div id="RPMDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>X:</p>
+				<p>X <span class="smallfont">[mm/100]</span>:</p>
 				<div id="XDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>Z:</p>
+				<p>Z <span class="smallfont">[mm/100]</span>:</p>
 				<div id="ZDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
-				<p>Feed:</p>
+				<p>Feed <span class="smallfont">[mm/min]</span>:</p>
 				<div id="FeedDisplaybox" class="Displaybox"></div>	
 	</div>
 	<div class="state clearfix">
@@ -295,17 +341,29 @@ if(!$_SESSION['logged_in'])
 				<p>N:</p>
 				<div id="NDisplaybox" class="Displaybox"></div>	
 	</div>
+	<form>
+		<input type="button" name="LoadOldParameter" id="LoadOldParameter" class="button" value="Load Parameter" />
+	</form>
 	<div class="state clearfix">
 				<div id="SpiErrorLED" class="led-grey"></div>
 				<p>SPI-Error</p>
+				<form class="errorcheckboxes">
+					<input type="checkbox" name="SpiError" id="SpiError" value="1" />
+				</form>
 	</div>
 	<div class="state clearfix">
 				<div id="CNCErrorLED" class="led-grey"></div>
 				<p>CNC-Code-Error</p>
+				<form class="errorcheckboxes">
+					<input type="checkbox" name="CNCError" id="CNCError" value="2" />
+				</form>
 	</div>
 	<div class="state clearfix">
-				<div id="SpindelErrorLED" class="led-grey"></div>
-				<p>Spindel-Error</p>
+				<div id="SpindleErrorLED" class="led-grey"></div>
+				<p>Spindle-Error</p>
+				<form class="errorcheckboxes">
+					<input type="checkbox" name="SpindleError" id="SpindleError" value="4" />
+				</form>
 	</div>
 	
 <!--
@@ -330,31 +388,51 @@ if(!$_SESSION['logged_in'])
 			<input type="text" name="inch" id="inch" />
 			</label>
 			<br />
-			<label>Spindel on:<br />
-			<input type="text" name="spindel_on" id="spindel_on" />
+			<label>Spindle on:<br />
+			<input type="text" name="spindle_on" id="spindle_on" />
 			</label>
 			<br />
-			<label>Spindel-Direction:<br />
-			<input type="text" name="init" id="spindel_direction" />
+			<label>Spindle-Direction:<br />
+			<input type="text" name="init" id="spindle_direction" />
 			</label>
 			<br />
 			<label>Stepper on:<br />
 			<input type="text" name="stepper_on" id="stepper_on" />
 			</label>
+			<br />
+			<label>Command-Time:<br />
+			<input type="text" name="command_time" id="command_time" />
+			</label>
+			<br />
+			<label>X-Stepper moving:<br />
+			<input type="text" name="xstepper_running" id="xstepper_running" />
+			</label>
+			<br />
+			<label>Z-Stepper moving:<br />
+			<input type="text" name="zstepper_running" id="zstepper_running" />
+			</label>
+			<br />
+			<label>Toolchanger moving:<br />
+			<input type="text" name="toolchanger_running" id="toolchanger_running" />
+			</label>
+			<br />
+			<label>CNC-Code needed:<br />
+			<input type="text" name="cnc_code_needed" id="cnc_code_needed" />
+			</label>
 			<br /><br />
-			<label>RPM:<br />
+			<label>RPM [U/min]:<br />
 			<input type="text" name="rpm_measure" id="rpm_measure" />
 			</label>
 			<br />
-			<label>X:<br />
+			<label>X [mm/100]:<br />
 			<input type="text" name="x_actual" id="x_actual" />
 			</label>
 			<br />
-			<label>Z:<br />
+			<label>Z [mm/100]:<br />
 			<input type="text" name="z_actual" id="z_actual" />
 			</label>
 			<br />
-			<label>Feed:<br />
+			<label>Feed [mm/min]:<br />
 			<input type="text" name="f_actual" id="f_actual" />
 			</label>
 			<br />
@@ -378,22 +456,18 @@ if(!$_SESSION['logged_in'])
 			<input type="text" name="cnc_code_error" id="cnc_code_error" />
 			</label>
 			<br />
-			<label>Spindel-Error:<br />
-			<input type="text" name="spindel_error" id="spindel_error" />
+			<label>Spindle-Error:<br />
+			<input type="text" name="spindle_error" id="spindle_error" />
 			</label>
 			<br />
 	</form>
--->
+-->	
 	<form>
-	<input type="button" name="LoadOldParameter" id="LoadOldParameter" class="button" value="Load Parameter" />
+		<input type="button" name="ResetErrors" id="ResetErrors" class="button" value="Reset Errors" />
 	</form>
 	
 	<form>
-	<input type="button" name="ResetErrors" id="ResetErrors" class="button" value="Reset Errors" />
-	</form>
-	
-	<form>
-	<input type="button" name="shutdown" id="shutdown" class="button button_red" value="Shutdown Pi" />
+		<input type="button" name="shutdown" id="shutdown" class="button button_red" value="Shutdown Pi" />
 	</form>
 </aside>
 

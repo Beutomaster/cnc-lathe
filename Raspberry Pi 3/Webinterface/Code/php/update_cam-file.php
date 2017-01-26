@@ -1,7 +1,10 @@
 <?php
 	//Logged in?
 	session_start();
-	if(!$_SESSION['logged_in']) header("Location: /login.html");
+	if(!$_SESSION['logged_in']) {
+		header("Location: /login.html");
+		exit;
+	}
 	
 	include 'verify_cnc_code.php';
 	
@@ -21,7 +24,7 @@
 	//debug
 	//var_dump($cnc_code_array);
 	
-	verify_cnc_code($cnc_code_array) or die("File not updated because of CNC-Code-Error!");
+	verify_cnc_code($cnc_code_array, 0, 0) or die("File not updated because of CNC-Code-Error!");
    
 	$target_file = "/var/www/html/uploads/cnc_code.txt";
 	$myfile = fopen($target_file, "w") or die("Unable to open file!");

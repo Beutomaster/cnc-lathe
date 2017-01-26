@@ -2,15 +2,11 @@
 #define Tool_Changer_Control_h
 
 //includes
-#include <Arduino.h>
-#include <util/atomic.h>
 #include "CNC_Lathe.h"
-#include "CNC_Control.h"
-#include "Motion_Control.h"
 
-//Positionssensor oder Eingabe benoetigt
+//Positioning-Sensor or Input needed
 
-extern volatile char i_tool;
+extern volatile signed char i_tool;
 
 void set_tool_position(byte);
 void save_current_tool_position();
