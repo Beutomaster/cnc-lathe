@@ -90,7 +90,9 @@
   #define PIN_TOOL_CHANGER_FIXING 6       //PH3: Tool-Changer fixing (-4,35V)
 #endif
 #define PIN_SPINDLE_ON 7                  //PH4: Spindle on
-#define PIN_SPINDLEPWM_NIKO 8             //PH5: Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
+#ifndef SPINDLEDRIVER_NEW
+  #define PIN_SPINDLEPWM_NIKO 8             //PH5: Timer4 Fast PWM (OC4C) for Niko's spindle driver (set Revolutions)
+#endif
 #define PIN_SPINDLE_DIRECTION 9           //PH6: HIGH=Inverse Direction
 #define PIN_STEPPER_X_A 10                //PB4: X35, PIN5 (A), Stepper X
 #define PIN_STEPPER_X_B 11                //PB5: X35, PIN6 (B), Stepper X
@@ -105,16 +107,22 @@
   #define PIN_STEPPER_Z_C 16              //PH1: X34, PIN3 (C), Stepper Z
   #define PIN_STEPPER_Z_D 17              //PH0: X34, PIN4 (D), Stepper Z
 #endif
-#define PIN_USART1_TX 18                  //D18 (OUT) : Spindle-Board Niko: set RPM per USART
-#define PIN_USART1_RX 19                  //D19 (IN): Spindle-Board Niko: set RPM per USART
-#define PIN_SPINDLE_CHARGERESISTOR_OFF 38 //Bridge Charge Resisitor for New Spindle Capacitor
+#if !defined DEBUG_SERIAL_CODE_OFF && defined SPINDLEDRIVER_EXTRA_BOARD
+  #define PIN_USART1_TX 18                  //D18 (OUT) : Spindle-Board Niko: set RPM per USART
+  #define PIN_USART1_RX 19                  //D19 (IN): Spindle-Board Niko: set RPM per USART
+#endif
+#ifdef SPINDLEDRIVER_NEW
+  #define PIN_SPINDLE_CHARGERESISTOR_OFF 38 //Bridge Charge Resisitor for New Spindle Capacitor
+#endif
 #define PIN_SERVO_ENGINE 46               //PL3: PWM for Servo (Poti to set Revolutions) Timer5 PWM on Pins 44,45,46 is occupied by Servo.h (but it is not necessary to choose these pins)
 //#define PIN_SPI_MISO 50                 //D50 (OUT): SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_MOSI 51                 //D51 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SCK 52                  //D52 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 //#define PIN_SPI_SS 53                   //D53 (IN) : SPI RaspBerry (Master) <-> Arduino (Slave) (now defined in AppData\Local\Arduino15\packages\arduino\hardware\avr\1.6.12\variants\mega/pins_arduino.h)
 #define PIN_SPINDLE_ON_DETECT 55          //A01, PF1: Detect if Spindle-Switch is on
-#define PIN_SPINDLE_NEW 59                //A05, PF5: Switch between Niko's Board and Hannes Servo
+#ifdef SPINDLEDRIVER_NEW
+  #define PIN_SPINDLE_NEW 59                //A05, PF5: Switch between Niko's Board and Hannes Servo
+#endif
 #define PIN_DEBUG_INPUT_1 60              //A06, PF6: Debug Input 1
 #define PIN_DEBUG_INPUT_2 61              //A07, PF7: Debug Input 2
 #define PIN_DEBUG_INPUT_3 58              //A04, PF4: Debug Input 3
