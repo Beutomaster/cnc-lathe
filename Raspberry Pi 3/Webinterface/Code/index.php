@@ -177,8 +177,6 @@
 				<input id="XStepperPositiv" type="button" value="+X" />
 			</fieldset>
 		</form>
-		
-		<div id="manual_responses"></div>
     </article>
     
     <article class="cnc clearfix">
@@ -257,6 +255,8 @@
         <h2>Help</h2>
 		<iframe id="helpwiki" src="/dokuwiki/index.php"></iframe> 
     </article>
+	
+	<div id="manual_responses"></div>
 </section>
 
 <aside>
