@@ -28,7 +28,9 @@ void reset_initialization() {
   
   //Tool Changer
   digitalWrite(PIN_TOOL_CHANGER_CHANGE, LOW);
-  digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+  #ifdef BOARDVERSION_1_25
+    digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+  #endif
   //Input Compare Match Interrupt Disable
   TIMSK1 &= ~(_BV(ICIE1)); //set 0
 
