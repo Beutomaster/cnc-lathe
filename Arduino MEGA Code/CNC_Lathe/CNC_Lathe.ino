@@ -157,7 +157,9 @@ void setup() {
   set_Timer5();
 
   //Toolchanger
+#ifdef BOARDVERSION_1_25
   digitalWrite(PIN_TOOL_CHANGER_HOLD, HIGH);
+#endif
 
   //set interrupt enable
   sei();

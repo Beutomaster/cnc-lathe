@@ -9,7 +9,7 @@
 //#define SERVO_LIB
 //#define STEPPER_LIB
 //#define SPINDLEDRIVER_EXTRA_BOARD
-#define BOARDVERSION_1_25 //else Bord V3.2
+//#define BOARDVERSION_1_25 //else Bord V3.2
 //#define SPINDLEDRIVER_NEW
 
 //#define RPM_ERROR_TEST
