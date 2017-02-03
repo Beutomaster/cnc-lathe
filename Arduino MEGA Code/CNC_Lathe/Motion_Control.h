@@ -27,7 +27,7 @@ int get_inc_Z(int);
 int get_Tool_X(int);
 int get_Tool_Z(int);
 void set_xz_move(int, int, int, byte);
-int get_xz_coordinates(int, int);
+extern int get_xz_coordinates(int, int);
 int get_xz_feed();
 int get_xz_feed_related_to_revolutions(int);
 void command_running(int);

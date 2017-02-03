@@ -59,7 +59,7 @@ void stepper_off() {
   STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT
 }
 
-void set_xstep(byte nextstep) {
+static inline void set_xstep(byte nextstep) { //avr-gcc ignores "inline" with default Optimizationlevel "-Os" used by Arduino-IDE. use -O3 instead.
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
@@ -95,7 +95,7 @@ void set_xstep(byte nextstep) {
     }
 }
 
-void set_zstep(byte nextstep) {
+static inline void set_zstep(byte nextstep) { //avr-gcc ignores "inline" with default Optimizationlevel "-Os" used by Arduino-IDE. use -O3 instead.
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B

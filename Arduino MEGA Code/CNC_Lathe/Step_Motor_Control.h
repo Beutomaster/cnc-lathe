@@ -39,8 +39,8 @@ extern volatile boolean reset_stepper_timeout;
 
 void stepper_on();
 void stepper_off();
-void set_xstep(byte);
-void set_zstep(byte);
+extern void set_xstep(byte);
+extern void set_zstep(byte);
 void stepper_timeout();
 void set_xz_stepper_manual(int, char, char);
 void set_xz_stepper_manual_direct(int, char, char);

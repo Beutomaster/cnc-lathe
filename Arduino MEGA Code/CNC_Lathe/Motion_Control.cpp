@@ -267,7 +267,7 @@ void set_xz_move(int X, int Z, int feed, byte local_interpolationmode) {
   }
 }
 
-int get_xz_coordinates(int XZ0, int xz_step) { //calculate Coordinates
+static inline int get_xz_coordinates(int XZ0, int xz_step) { //calculate Coordinates (avr-gcc ignores "inline" with default Optimizationlevel "-Os" used by Arduino-IDE. use -O3 instead.)
   int XZ_delta;
   long XZ_delta_fixpoint = (((long)xz_step*100)<<9)/STEPS_PER_MM; //max 22 bit used with Z=32700 Fixpoint-Format => Q22.9
       //Rounding
