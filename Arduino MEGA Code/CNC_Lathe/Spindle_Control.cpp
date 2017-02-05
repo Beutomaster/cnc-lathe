@@ -56,6 +56,21 @@ boolean test_for_spindle_off() {
     }
 }
 
+void get_spindle_state_passiv() {
+  #ifndef BOARDVERSION_1_25
+    if (digitalRead(PIN_SPINDLE_ON_DETECT)) {
+      STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+    }
+  #else
+    if (STATE_RPM) {
+      STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+    }
+  #endif
+    else {
+      STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
+    }
+}
+
 void spindle_direction(boolean spindle_reverse) {
   //don't change the spindle-direction, while the spindle is turning!!! Turn the Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!
   if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) {

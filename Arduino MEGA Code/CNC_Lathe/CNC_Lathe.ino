@@ -195,6 +195,7 @@ void loop() {
     STATE_F = 0; //maybe not needed
     if (wait_for_spindle_stop) {
       wait_for_spindle_stop=0;
+      test_for_spindle_off();
     }
     else if (callback_spindle_direction_change) {
       callback_spindle_direction_change=0;
@@ -212,6 +213,7 @@ void loop() {
       #ifdef RPM_ERROR_TEST
         if ((STATE1>>STATE1_SPINDLE_BIT)&1) if(!test_for_spindle_rpm(target_revolutions, 100)) ERROR_NO |= _BV(ERROR_SPINDLE_BIT); //test for wrong rpm (not finished)
       #endif
+      get_spindle_state_passiv();
       if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
         STATE_N++;
         if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
@@ -257,7 +259,6 @@ void loop() {
         Serial.println (target_revolutions);
       }
     #endif
-    //set spindle-direction
   }
 
   #ifdef DEBUG_PROGRAM_FLOW_ON

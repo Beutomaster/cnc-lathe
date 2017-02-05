@@ -39,6 +39,8 @@ extern volatile int adcvalue; // adc value read by ISR(ADC_vect)
 void spindle_on();
 void spindle_off();
 void spindle_direction(boolean);
+boolean test_for_spindle_off();
+void get_spindle_state_passiv();
 void set_revolutions(int);
 int get_SERVO_CONTROL_POTI();
 void set_poti_servo(int);
