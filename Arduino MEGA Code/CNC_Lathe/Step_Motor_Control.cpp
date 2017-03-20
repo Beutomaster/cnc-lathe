@@ -416,18 +416,12 @@ ISR(TIMER1_OVF_vect) {
     //next step in direction
     //Movement in -X-Direction
     if (x_steps < 0) {
-      if (current_x_step==0) {
-        current_x_step=3;
-      }
-      else current_x_step--;
+      current_x_step=(current_x_step--)%4;
       x_step--;
     }
     //Movement in +X-Direction
     else {
-      if (current_x_step==3) {
-        current_x_step=0;
-      }
-      else current_x_step++;
+      current_x_step=(current_x_step++)%4;
       x_step++;
     }
     
@@ -435,7 +429,7 @@ ISR(TIMER1_OVF_vect) {
     set_xstep(current_x_step);
 
     //set coordinate
-    STATE_X = get_xz_coordinates(X0, x_step);
+    STATE_X = get_xz_coordinates(X0, x_step); //should be done in main
 
     if (x_step==x_steps) { //last step reached?
       phi_x=0;

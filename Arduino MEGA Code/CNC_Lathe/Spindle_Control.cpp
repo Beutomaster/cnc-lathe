@@ -187,7 +187,7 @@ void get_revolutions_ISR() { //read revolution-sensor
   #ifndef BOARDVERSION_1_25
     STATE_RPM = 600000L/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms)/(100Count/U) = 600000
   #else
-    STATE_RPM = 60000000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U) = 60000000
+    STATE_RPM = 60000000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U) = 60000000 //should be done in main (moving average calculation)
   #endif
   last_rpm_time = rpm_time;
 }
