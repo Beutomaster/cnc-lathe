@@ -15,7 +15,7 @@
 //#define RPM_ERROR_TEST
 
 //Debug-Switches
-#define DEBUG_SERIAL_CODE_OFF
+//#define DEBUG_SERIAL_CODE_OFF
 //#define DEBUG_SPI_CODE_OFF
 //#define DEBUG_STEPPER_CODE_OFF
 //#define DEBUG_RPM_CODE_OFF
@@ -24,6 +24,7 @@
 #define DEBUG_MSG_STEPPER_ON
 //#define DEBUG_MSG_ACTIVE_ON
 #define DEBUG_MSG_RPM_ON
+#define DEBUG_MSG_SPINDLE_ON
 #define DEBUG_MSG_TOOL_ON
 //#define DEBUG_PROGRAM_FLOW_ON //for debugging with Serial-Plotter (Graph shows an approximately timeline of function-IDs)
 #define DEBUG_CNC_ON

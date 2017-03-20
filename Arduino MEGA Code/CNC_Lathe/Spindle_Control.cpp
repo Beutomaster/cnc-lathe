@@ -24,7 +24,7 @@ void spindle_on() {
       digitalWrite(PIN_SPINDLE_ON, HIGH);
       STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
       //wait until spindle is turning with target-RPM (time could be shortend by comparing STATE_RPM with target_RPM)
-      wait_for_spindle_start=1;
+      wait_for_spindle_start=1; //is resetted in main
       command_running(SPINDLE_ON_WAIT_TIME);
     }
     else callback_spindle_start=1; //is resetted in main
@@ -53,6 +53,21 @@ boolean test_for_spindle_off() {
     else { //if spindle is still turning after wait time, set Spindle-Error
       if (!((STATE1>>STATE1_SPINDLE_BIT)&1) && !wait_for_spindle_stop) ERROR_NO |= _BV(ERROR_SPINDLE_BIT);
       return false;
+    }
+}
+
+void get_spindle_state_passiv() {
+  #ifndef BOARDVERSION_1_25
+    if (digitalRead(PIN_SPINDLE_ON_DETECT)) {
+      STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+    }
+  #else
+    if (STATE_RPM) {
+      STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+    }
+  #endif
+    else {
+      STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
     }
 }
 
@@ -92,7 +107,7 @@ void spindle_direction(boolean spindle_reverse) {
         command_running(RELAIS_WAIT_TIME); //wait time needed!!! Relais needs a few ms
       }
     } //end of if (!((STATE1>>STATE1_SPINDLE_BIT)&1) && !wait_for_spindle_stop)
-    else if (spindle_reverse != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) { //maybe better to change it only, when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
+    else if (spindle_reverse != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) { //maybe better to change it only when needed, but not usable with Hotfix for Board V1.25, should be changed in V2.1
       callback_spindle_direction_change=1; //is resetted in main
       spindle_off();
     }
