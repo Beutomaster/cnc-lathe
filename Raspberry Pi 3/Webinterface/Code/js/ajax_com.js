@@ -25,9 +25,14 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var manual=xmlDoc.getElementsByTagName("manual")[0].textContent;
 	var pause=xmlDoc.getElementsByTagName("pause")[0].textContent;
 	var inch=xmlDoc.getElementsByTagName("inch")[0].textContent;
-	var spindel_on=xmlDoc.getElementsByTagName("spindel_on")[0].textContent;
-	var spindel_direction=xmlDoc.getElementsByTagName("spindel_direction")[0].textContent;
+	var spindle_on=xmlDoc.getElementsByTagName("spindle_on")[0].textContent;
+	var spindle_direction=xmlDoc.getElementsByTagName("spindle_direction")[0].textContent;
 	var stepper_on=xmlDoc.getElementsByTagName("stepper_on")[0].textContent;
+	var command_time=xmlDoc.getElementsByTagName("command_time")[0].textContent;
+	var xstepper_running=xmlDoc.getElementsByTagName("xstepper_running")[0].textContent;
+	var zstepper_running=xmlDoc.getElementsByTagName("zstepper_running")[0].textContent;
+	var toolchanger_running=xmlDoc.getElementsByTagName("toolchanger_running")[0].textContent;
+	var cnc_code_needed=xmlDoc.getElementsByTagName("cnc_code_needed")[0].textContent;
 	var rpm_measure=xmlDoc.getElementsByTagName("rpm_measure")[0].textContent;
 	var x_actual=xmlDoc.getElementsByTagName("x_actual")[0].textContent;
 	var z_actual=xmlDoc.getElementsByTagName("z_actual")[0].textContent;
@@ -36,18 +41,23 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	var t_actual=xmlDoc.getElementsByTagName("t_actual")[0].textContent;
 	var spi_error=xmlDoc.getElementsByTagName("spi_error")[0].textContent;
 	var cnc_code_error=xmlDoc.getElementsByTagName("cnc_code_error")[0].textContent;
-	var spindel_error=xmlDoc.getElementsByTagName("spindel_error")[0].textContent;
+	var spindle_error=xmlDoc.getElementsByTagName("spindle_error")[0].textContent;
 	var n_actual=xmlDoc.getElementsByTagName("n_actual")[0].textContent;
-
+	var mtime=xmlDoc.getElementsByTagName("mtime")[0].textContent;
 	/*
 	document.getElementById("active").setAttribute("value", active);
 	document.getElementById("init").setAttribute("value", init);
 	document.getElementById("manual").setAttribute("value", manual);
 	document.getElementById("pause").setAttribute("value", pause);
 	document.getElementById("inch").setAttribute("value", inch);
-	document.getElementById("spindel_on").setAttribute("value", spindel_on);
-	document.getElementById("spindel_direction").setAttribute("value", spindel_direction);
+	document.getElementById("spindle_on").setAttribute("value", spindle_on);
+	document.getElementById("spindle_direction").setAttribute("value", spindle_direction);
 	document.getElementById("stepper_on").setAttribute("value", stepper_on);
+	document.getElementById("command_time").setAttribute("value", command_time);
+	document.getElementById("xstepper_running").setAttribute("value", xstepper_running);
+	document.getElementById("xstepper_running").setAttribute("value", zstepper_running);
+	document.getElementById("toolchanger_running").setAttribute("value", toolchanger_running);
+	document.getElementById("cnc_code_needed").setAttribute("value", cnc_code_needed);
 	document.getElementById("rpm_measure").setAttribute("value", rpm_measure);
 	document.getElementById("x_actual").setAttribute("value", x_actual);
 	document.getElementById("z_actual").setAttribute("value", z_actual);
@@ -56,7 +66,7 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 	document.getElementById("t_actual").setAttribute("value", t_actual);
 	document.getElementById("spi_error").setAttribute("value", spi_error);
 	document.getElementById("cnc_code_error").setAttribute("value", cnc_code_error);
-	document.getElementById("spindel_error").setAttribute("value", spindel_error);
+	document.getElementById("spindle_error").setAttribute("value", spindle_error);
 	document.getElementById("n_actual").setAttribute("value", n_actual);
 	*/
 	
@@ -70,7 +80,10 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 
 	if (active == 1) {
 	  document.getElementById("activeLED").className = "led-red";
-	  if (!debug) HideClass("emco");
+	  if (!debug) {
+		  HideClass("emco");
+		  HideId("EmcoButton");
+	  }
 	  ShowId("CncButton");
 	  if (manual == 1) {
 		  //if (!debug) HideClass("cnc"); //should be shown while pause
@@ -79,28 +92,6 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 			  if (!debug) HideClass("cnc");
 			  ShowClass("manual");
 		  }
-		  if (spindel_on == 1) {
-			  document.getElementById("SpindleOff").style.display='';
-			  //document.getElementById("SpindleOff").disabled = false;
-			  document.getElementById("SpindleOn").value = "Set RPM";
-		  }
-		  else {
-			  document.getElementById("SpindleOff").style.display='none';
-			  //document.getElementById("SpindleOff").disabled = true;
-			  document.getElementById("SpindleOn").value = "Spindle ON";
-		  }
-		  if (stepper_on == 1) {
-			  document.getElementById("StepperOff").style.display='';
-			  //document.getElementById("StepperOff").disabled = false;
-			  document.getElementById("StepperOn").value = "Set Feed";
-		  }
-		  else {
-			  document.getElementById("StepperOff").style.display='none';
-			  //document.getElementById("StepperOff").disabled = true;
-			  document.getElementById("StepperOn").value = "Stepper ON";
-		  }
-		  if (init == 0) document.getElementById("SetTool").value = "Init Tool";
-		  else document.getElementById("SetTool").value = "Set Tool";
 	  }
 	  else {
 		  if (!pause && !debug) {
@@ -124,16 +115,21 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		  HideId("ManButton");
 		  HideId("CncButton");
 	  }
-	  ShowClass("emco");
+	  if (active_last != active) {
+		  ShowClass("emco");
+	  }
+	  ShowId("EmcoButton");
 	}
 
 	active_last = active;
   
 	if (init == 1) {
+		document.getElementById("SetTool").value = "Set Tool";
 		document.getElementById("initLED").className = "led-red";
 		document.getElementById("LoadOldParameter").style.display='none';
 	} 
 	else {
+		document.getElementById("SetTool").value = "Init Tool";
 		document.getElementById("initLED").className = "led-grey";
 		document.getElementById("LoadOldParameter").style.display='';
 	}
@@ -165,25 +161,76 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		document.getElementById("inchLED").className = "led-grey";
 	}
 	
-	if (spindel_on == 1) {
-		document.getElementById("SpindelOnLED").className = "led-red";
+	if (spindle_on == 1) {
+		document.getElementById("SpindleOff").style.display='';
+		document.getElementById("SpindleOffEMCO").style.display='';
+		//document.getElementById("SpindleOff").disabled = false;
+		document.getElementById("SpindleOn").value = "Set RPM";
+		document.getElementById("SpindleOnEMCO").value = "Change Direction";
+		document.getElementById("SpindleOnLED").className = "led-red";
 	} 
 	else {
-		document.getElementById("SpindelOnLED").className = "led-grey";
+		document.getElementById("SpindleOff").style.display='none';
+		document.getElementById("SpindleOffEMCO").style.display='none';
+		//document.getElementById("SpindleOff").disabled = true;
+		document.getElementById("SpindleOn").value = "Spindle ON";
+		document.getElementById("SpindleOnEMCO").value = "Spindle ON";
+		document.getElementById("SpindleOnLED").className = "led-grey";
 	}
 	
-	if (spindel_direction == 1) {
-		document.getElementById("SpindelDirectionLED").className = "led-red";
+	if (spindle_direction == 1) {
+		document.getElementById("SpindleDirectionLED").className = "led-red";
 	} 
 	else {
-		document.getElementById("SpindelDirectionLED").className = "led-grey";
+		document.getElementById("SpindleDirectionLED").className = "led-grey";
 	}
 	
 	if (stepper_on == 1) {
+		document.getElementById("StepperOff").style.display='';
+		//document.getElementById("StepperOff").disabled = false;
+		document.getElementById("StepperOn").value = "Set Feed";
 		document.getElementById("StepperOnLED").className = "led-red";
 	} 
 	else {
+		document.getElementById("StepperOff").style.display='none';
+		//document.getElementById("StepperOff").disabled = true;
+		document.getElementById("StepperOn").value = "Stepper ON";
 		document.getElementById("StepperOnLED").className = "led-grey";
+	}
+	
+	if (command_time == 1) {
+		document.getElementById("CommandTimeLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("CommandTimeLED").className = "led-grey";
+	}
+	
+	if (xstepper_running == 1) {
+		document.getElementById("XStepperMovingLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("XStepperMovingLED").className = "led-grey";
+	}
+	
+	if (zstepper_running == 1) {
+		document.getElementById("ZStepperMovingLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("ZStepperMovingLED").className = "led-grey";
+	}
+	
+	if (toolchanger_running == 1) {
+		document.getElementById("ToolchangerMovingLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("ToolchangerMovingLED").className = "led-grey";
+	}
+	
+	if (cnc_code_needed == 1) {
+		document.getElementById("CNCCodeNeededLED").className = "led-red";
+	} 
+	else {
+		document.getElementById("CNCCodeNeededLED").className = "led-grey";
 	}
 	
 	if (spi_error == 1) {
@@ -200,60 +247,36 @@ function machine_state(xml) { //loadDoc('xml/machine_state.xml', machine_state);
 		document.getElementById("CNCErrorLED").className = "led-grey";
 	}
 	
-	if (spindel_error == 1) {
-		document.getElementById("SpindelErrorLED").className = "led-red";
+	if (spindle_error == 1) {
+		document.getElementById("SpindleErrorLED").className = "led-red";
 	} 
 	else {
-		document.getElementById("SpindelErrorLED").className = "led-grey";
+		document.getElementById("SpindleErrorLED").className = "led-grey";
+	}
+	
+	//mtime_WaitForUpdate does not work sometimes, there must be some race condition between the xml-download and file-upload-response
+	/*
+	if (mtime_WaitForUpdate == 0) {
+		if (mtime_last == -1) mtime_last=mtime;
+		if (mtime != mtime_last) {
+			//cnc-code-file on server changed
+			mtime_last=mtime;
+			document.getElementById("responses").innerHTML = "CNC-Code-File on Server changed! You can reload it with Reset Changes";
+			alert("CNC-Code-File on Server changed! You can reload it with Reset Changes");
+		}
+	}
+	*/
+	
+	if (t_actual != t_last) {
+		t_last = t_actual;
+		document.getElementById("toolnumber").value = t_actual;
+	}
+	
+	if (n_actual != n_last) {
+		n_last = n_actual;
+		document.getElementById("block").value = n_actual;
 	}
 }
-
-/*
-//send command
-function sendCommand(str) {
-    if (str.length == 0) {
-        document.getElementById("debug").innerHTML = "";
-        return;
-    } else {
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("debug").innerHTML = this.responseText;
-            }
-        };
-        xmlhttp.open("POST", "gethint.php?q=" + str, true); //has to be changed
-        xmlhttp.send();
-    }
-}
-
-function testekennwortqualitaet(inhalt)
-{
-    if (inhalt=="")
-    {
-        document.getElementById("sicherheitshinweise").innerHTML="keine Eingabe da";
-        return;
-    }
-    if (window.XMLHttpRequest)
-    {
-        // AJAX nutzen mit IE7+, Chrome, Firefox, Safari, Opera
-        xmlhttp=new XMLHttpRequest();
-    }
-    else
-    {
-        // AJAX mit IE6, IE5
-        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-    }
-    xmlhttp.onreadystatechange=function()
-    {
-        if (xmlhttp.readyState==4 && xmlhttp.status==200)
-        {
-            document.getElementById("sicherheitshinweise").innerHTML=xmlhttp.responseText;
-        }
-    }
-    xmlhttp.open("GET","kennworttesten.php?q="+inhalt,true);
-    xmlhttp.send();
-}
-*/
 
 //Show CNC Code from cnc_code.xml
 function cnc_code_table(xml) { //loadDoc('xml/cnc_code.xml', cnc_code_table);
@@ -294,6 +317,8 @@ function saveTextAsFile()
     downloadLink.download = fileNameToSaveAs;
     downloadLink.innerHTML = "Download File";
     downloadLink.href = textToSaveAsURL;
+	//downloadLink.target="_blank";
+	downloadLink.setAttribute("target", "_blank");
     downloadLink.onclick = destroyClickedElement;
     downloadLink.style.display = "none";
     document.body.appendChild(downloadLink);

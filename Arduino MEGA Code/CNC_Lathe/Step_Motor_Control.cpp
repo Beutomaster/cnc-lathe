@@ -18,23 +18,25 @@ volatile int phi_z=0;
 volatile byte current_x_step=0, current_z_step=0, last_x_step=0, last_z_step=0;
 volatile boolean reset_stepper_timeout=false;
 
-Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
-Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
+#ifdef STEPPER_LIB
+  Stepper xstepper(XSTEPS_PER_TURN, PIN_STEPPER_X_A, PIN_STEPPER_X_B); //configure X-Stepper
+  Stepper zstepper(ZSTEPS_PER_TURN, PIN_STEPPER_Z_A, PIN_STEPPER_Z_B); //configure Z-Stepper
+#endif
 
 void stepper_on() {
-  STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT
+  STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT
   //turn stepper on with last_x_step & last_z_step (at Init from eeprom)
   set_xstep(current_x_step);
   set_zstep(current_z_step);
 }
 
 void stepper_off() {
-  if (!command_time) {
+  if (!i_command_time && !command_time) {
     TCCR1B = 0; //Disable Timer 1
-    TIMSK1 |= ~(_BV(OCIE1A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+    TIMSK1 &= ~(_BV(TOIE1)); //set 0 => Disable OVF1 Interrupt Enable
   }
   TCCR3B = 0; //Disable Timer 3
-  TIMSK3 |= ~(_BV(OCIE3A)); //set 0 => Disable Output Compare A Match Interrupt Enable
+  TIMSK3 &= ~(_BV(TOIE3)); //set 0 => Disable OVF3 Interrupt Enable
   phi_z=0;
   phi_x=0;
   x_step=0;
@@ -53,10 +55,11 @@ void stepper_off() {
   digitalWrite(PIN_STEPPER_Z_B, LOW);
   digitalWrite(PIN_STEPPER_Z_C, LOW);
   digitalWrite(PIN_STEPPER_Z_D, LOW);
-  STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT
+  STATE2 &= ~(_BV(STATE2_XSTEPPER_RUNNING_BIT)) & ~(_BV(STATE2_ZSTEPPER_RUNNING_BIT));
+  STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT
 }
 
-void set_xstep(byte nextstep) {
+static inline void set_xstep(byte nextstep) { //avr-gcc ignores "inline" with default Optimizationlevel "-Os" used by Arduino-IDE. use -O3 instead.
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
@@ -92,7 +95,7 @@ void set_xstep(byte nextstep) {
     }
 }
 
-void set_zstep(byte nextstep) {
+static inline void set_zstep(byte nextstep) { //avr-gcc ignores "inline" with default Optimizationlevel "-Os" used by Arduino-IDE. use -O3 instead.
   //+X/+Z: B 90° before A,
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
@@ -138,33 +141,50 @@ void stepper_timeout() {
 //continuous movement for manual control
 void set_xz_stepper_manual(int feed, char negativ_direction, char xz_stepper) { //x: xz_stepper=0, z: xz_stepper=1
   //manual control
-  //if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  //if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
   int X=0, Z=0;
-  
-  //calculate needed Coordinates for s/2
-  if (xz_stepper) {
-    Z = feed * 100 / 120; //100 for mm * min/60s * 1/2
-    if (negativ_direction) Z *= -1;
-    if (absolute) Z += STATE_Z;
-  }
-  else {
-    X = feed * 100 / 120; //100 for mm * min/60s * 1/2
-    if (negativ_direction) X *= -1;
-    if (absolute) X += STATE_X;
-  }
   
   //set signal with feed and direction
   if (command_completed) {
+    //calculate needed Coordinates for a movement of 0,5s
+    if (xz_stepper) {
+      Z = feed * 100 / 120; //feed (mm/min) * t (0,5s) * (min/60s) * 100 (because coordinates are in 1/100 mm)
+      if (negativ_direction) Z *= -1;
+      if (absolute) Z += STATE_Z;
+    }
+    else {
+      X = feed * 100 / 120; //feed (mm/min) * t (0,5s) * (min/60s) * 100 (because coordinates are in 1/100 mm)
+      if (negativ_direction) X *= -1;
+      if (absolute) X += STATE_X;
+    }
     set_xz_move(X, Z, feed, INTERPOLATION_LINEAR);
   }
   else {
-    //increase steps
+    //increase steps for a movement of 0,5s
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-      if (!x_command_completed) {
-        x_steps += x_step;
+      if (xz_stepper && !x_command_completed) {
+        if (!negativ_direction) x_steps += x_step;
+        else x_steps -= x_step;
+        /*
+        if (!negativ_direction) x_steps += feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        else x_steps -= feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        */
+        /*
+        if (!negativ_direction) x_steps = x_step + feed * STEPS_PER_MM / 120; //feed (mm/min) * 72steps/mm * t (0,5 s) * (min/60s)
+        else x_steps = x_step - feed * STEPS_PER_MM / 120; //feed (mm/min) * 72steps/mm * t (0,5 s) * (min/60s)
+        */
       }
-      if (!z_command_completed) {
-        z_steps += z_step;
+      if (!xz_stepper && !z_command_completed) {
+        if (!negativ_direction) z_steps += z_step;
+        else z_steps -= z_step;
+        /*
+        if (!negativ_direction) z_steps += feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        else z_steps -= feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        */
+        /*
+        if (!negativ_direction) z_steps = z_step + feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        else z_steps = z_step - feed * STEPS_PER_MM / 150; //feed (mm/min) * 72steps/mm * t (0,4 s) * (min/60s)
+        */
       } 
     }
   }
@@ -182,7 +202,7 @@ void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_step
   interpolationmode=INTERPOLATION_LINEAR;
 
   //turn stepper on with last step
-  if (!((STATE>>STATE_STEPPER_BIT)&1)) stepper_on();
+  if (!((STATE1>>STATE1_STEPPER_BIT)&1)) stepper_on();
 
   X0 = STATE_X;
   Z0 = STATE_Z;
@@ -195,12 +215,14 @@ void set_xz_stepper_manual_direct(int feed, char negativ_direction, char xz_step
     z_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
     if (negativ_direction) z_steps *= -1;
     x_command_completed = 0;
+    STATE2 |= _BV(STATE2_ZSTEPPER_RUNNING_BIT);
   }
   else { //x_stepper
     z_steps = 0;
     x_steps = feed * STEPS_PER_MM / 120; //min/60s * 1/2
     if (negativ_direction) x_steps *= -1;
     z_command_completed = 0;
+    STATE2 |= _BV(STATE2_XSTEPPER_RUNNING_BIT);
   }
   //set signal with feed and direction
   //configure and start Timer
@@ -239,12 +261,10 @@ void set_z_steps(int z_steps_local, int z_feed_local) { //maybe not needed anymo
 void get_current_x_step() { //to observe EMCO Control (ISR)
   //needs all four stepper pins to detect stepper off !!!
   //Problem: Switching Stepper off in Step 0 can't be detected
-  last_xstep_time=xstep_time;
-  xstep_time=micros();
-  byte step_bincode;
-  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A))<<1);
-  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B));
-  switch (step_bincode) {
+  byte x_step_bincode;
+  x_step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_A))<<1);
+  x_step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_X_B));
+  switch (x_step_bincode) {
     case 0: //A=B=0
             if (last_x_step == 3) x_steps++;
             if (last_x_step == 1) x_steps--;
@@ -265,19 +285,21 @@ void get_current_x_step() { //to observe EMCO Control (ISR)
             if (last_x_step == 0) x_steps--;
             current_x_step = 3;
   }
-  last_x_step = current_x_step;
-  get_xz_coordinates(X0, x_steps);
+  if (last_x_step != current_x_step) {
+    last_xstep_time=xstep_time;
+    xstep_time=micros();
+    last_x_step = current_x_step;
+    get_xz_coordinates(X0, x_steps);
+  }
 }
 
 void get_current_z_step() { //to observe EMCO Control (ISR)
   //needs all four stepper pins to detect stepper off !!!
   //Problem: Switching Stepper off in Step 0 can't be detected
-  last_zstep_time=zstep_time;
-  zstep_time=micros();
-  byte step_bincode;
-  step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A))<<1);
-  step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B));
-  switch (step_bincode) {
+  byte z_step_bincode;
+  z_step_bincode = ((byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_A))<<1);
+  z_step_bincode |= (byte)(digitalRead(PIN_OLD_CONTROL_STEPPER_Z_B));
+  switch (z_step_bincode) {
     case 0: //A=B=0
             if (last_z_step == 3) z_steps++;
             if (last_z_step == 1) z_steps--;
@@ -298,35 +320,55 @@ void get_current_z_step() { //to observe EMCO Control (ISR)
             if (last_z_step == 0) z_steps--;
             current_z_step = 3;
   }
-  last_z_step = current_z_step;
-  get_xz_coordinates(Z0, z_steps);
+  if (last_z_step != current_z_step) {
+    last_zstep_time=zstep_time;
+    zstep_time=micros();
+    last_z_step = current_z_step;
+    get_xz_coordinates(Z0, z_steps);
+  }
 }
 
-void get_stepper_on_off() { //to observe EMCO Control (ISR)
+boolean get_stepper_on_off() { //to observe EMCO Control (ISR)
   //detect stepper off !!! (X-Stepper)
   if (digitalRead(PIN_OLD_CONTROL_STEPPER_X_OFF)){
-    STATE &= ~(_BV(STATE_STEPPER_BIT)); //delete STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
+    STATE1 &= ~(_BV(STATE1_STEPPER_BIT)); //delete STATE1_bit7 = STATE1_STEPPER_BIT (Stepper off)
+    return false;
   }
   else {
-    STATE |= _BV(STATE_STEPPER_BIT); //set STATE_bit7 = STATE_STEPPER_BIT (Stepper off)
+    STATE1 |= _BV(STATE1_STEPPER_BIT); //set STATE1_bit7 = STATE1_STEPPER_BIT (Stepper on)
+    return true;
   }
 }
 
 void get_feed() { //to observe EMCO Control
   //Errors at overflow of TIMER0
-  long x_feed = 60000000L/((xstep_time-last_xstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
-  long z_feed = 60000000L/((zstep_time-last_zstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
-  STATE_F = sqrt(x_feed*x_feed+z_feed*z_feed);
+  long x_feed, z_feed; //not really correct!!!
+  if (xstep_time-last_xstep_time>0 && xstep_time-last_xstep_time<STEPPER_STEP_T_MAX) x_feed = 60000000L/((long)(xstep_time-last_xstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
+  else x_feed=0;
+  if (zstep_time-last_zstep_time>0 && zstep_time-last_zstep_time<STEPPER_STEP_T_MAX) z_feed = 60000000L/((long)(zstep_time-last_zstep_time)*STEPS_PER_MM); //(60s/min)*(1000ms/s)*(1000us/ms) = 60000000
+  else z_feed=0;
+  if (x_feed || z_feed) STATE_F = sqrt((long)x_feed*x_feed+(long)z_feed*z_feed);
+  else STATE_F=0;
 }
 
 // Write/Erase Cycles:10,000 Flash/100,000 EEPROM
 
 void save_current_x_step() { //needed to switch on stepper without movement, save in eeprom !!!
-	EEPROM.write(LAST_X_STEP_ADDRESS, current_x_step);
+	EEPROM.update(LAST_X_STEP_ADDRESS, current_x_step);
 }
 
 void save_current_z_step() { //needed to switch on stepper without movement, save in eeprom !!!
-	EEPROM.write(LAST_Z_STEP_ADDRESS, current_z_step);
+	EEPROM.update(LAST_Z_STEP_ADDRESS, current_z_step);
+}
+
+void save_current_x_coordinate() { //save in eeprom !!!
+  EEPROM.update(LAST_X_ADDRESS, STATE_X>>8);
+  EEPROM.update(LAST_X_ADDRESS+1, STATE_X);
+}
+
+void save_current_z_coordinate() { //save in eeprom !!!
+  EEPROM.update(LAST_Z_ADDRESS, STATE_Z>>8);
+  EEPROM.update(LAST_Z_ADDRESS+1, STATE_Z);
 }
 
 void read_last_x_step() { //needed to switch on stepper without movement
@@ -337,7 +379,19 @@ void read_last_z_step() { //needed to switch on stepper without movement
   current_z_step = EEPROM.read(LAST_Z_STEP_ADDRESS);
 }
 
+void read_last_x_coordinate() {
+  STATE_X = ((EEPROM.read(LAST_X_ADDRESS))<<8) | EEPROM.read(LAST_X_ADDRESS+1);
+}
+
+void read_last_z_coordinate() {
+  STATE_Z = ((EEPROM.read(LAST_Z_ADDRESS))<<8) | EEPROM.read(LAST_Z_ADDRESS+1);
+}
+
 ISR(TIMER1_OVF_vect) {
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("2");
+  #endif
+
   if (i_command_time || command_time) { //Dwell
     if (i_command_time==1 && command_time) {
       ICR1 = (62500L*command_time/100)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*command_time/(256*100))-1 = (62500Hz*command_time/100)-1
@@ -349,8 +403,11 @@ ISR(TIMER1_OVF_vect) {
     else if ((!i_command_time && command_time) || (i_command_time==1 && !command_time)) {
         //If time is over
         TCCR1B = 0; //Disable Timer
-        command_completed=1;
+        //Disable OVF1 Interrupt Enable
+        TIMSK1 &= ~(_BV(TOIE1)); //set 0
         command_time=0;
+        STATE2 &= ~(_BV(STATE2_COMMAND_TIME_BIT));
+        //STATE_N++;
     }
     if (i_command_time) i_command_time--;
   }
@@ -384,9 +441,10 @@ ISR(TIMER1_OVF_vect) {
       phi_x=0;
       x_step=0;
       x_steps=0;
+      STATE2 &= ~(_BV(STATE2_XSTEPPER_RUNNING_BIT));
       x_command_completed=1;
-      //Disable Output Compare A Match Interrupt Enable
-      TIMSK1 |= ~(_BV(OCIE1A)); //set 0
+      //Disable OVF1 Interrupt Enable
+      TIMSK1 &= ~(_BV(TOIE1)); //set 0
       TCCR1B = 0; //Disable Timer
     }
     else { //next Timer-Compare-Value
@@ -411,40 +469,24 @@ ISR(TIMER1_OVF_vect) {
         
         if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
           //calculation of next x-clk (Direction)
-          if (z_steps < 0) {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
+          if ((z_steps<0)==(x_steps<0)) {
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
           }
           else {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
           }
         }
         else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
           //calculation of next x-clk (Direction)
-          if (z_steps < 0) {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
+          if ((z_steps<0)==(x_steps<0)) {
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
           }
           else {
-            if (x_steps < 0) {
-            clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
-            }
-            else {
-            clk_xfeed = (clk_feed * lookup_cosinus[phi_x])>>15;
-            }
+            clk_xfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_x))>>15;
+            //clk_xfeed = (clk_feed * lookup_cosinus[90-phi_x])>>15;
           }
         }
         
@@ -453,7 +495,8 @@ ISR(TIMER1_OVF_vect) {
         if (clk_xfeed) { //clock not zero
           ICR1 = (3750000L/clk_xfeed)-1; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/clk_xfeed)-1
           //Overflow possible!!!
-        } else ICR1 = 62499U;
+        }
+        else ICR1 = 62499U;
       }
       
       else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
@@ -461,16 +504,17 @@ ISR(TIMER1_OVF_vect) {
         if (x_steps) {
           if (x_step < x_steps/2) {
             if (ICR1>RAPID_MAX) {
-              ICR1 = RAPID_MIN-x_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/499s)-1
+              ICR1 = RAPID_MIN-x_step*ACCELERATION; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
               if (ICR1<RAPID_MAX) {
                 ICR1=RAPID_MAX;
               }
             }
-          } else if ((x_steps-x_step) < 17) {
-            ICR1 = RAPID_MIN-(x_steps-x_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_xfeed))-1 = (62500Hz*60(min/s)/499s)-1
-              if (ICR1>RAPID_MIN) {
-                ICR1=RAPID_MIN;
-              }
+          }
+          else if ((x_steps-x_step) < (RAPID_MIN - RAPID_MAX)/ACCELERATION) { //has to be rounded up!!!
+            ICR1 = RAPID_MIN-(x_steps-x_step)*ACCELERATION; //ICR1 = (16MHz/(Prescaler*F_ICF1))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
+            if (ICR1>RAPID_MIN) {
+              ICR1=RAPID_MIN;
+            }
           }
         }
       }
@@ -484,6 +528,10 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
   //many calculations could be done before starting the timer
   //changing timer settings inside the ISR could replace some calculations and optimize CPU-time
   //Start-/Stop-Frequency
+
+  #ifdef DEBUG_PROGRAM_FLOW_ON
+    Serial.println("3");
+  #endif
 
   //next step in direction
   //Movement in -Z-Direction
@@ -513,9 +561,10 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     phi_z=0;
     z_step=0;
     z_steps=0;
+    STATE2 &= ~(_BV(STATE2_ZSTEPPER_RUNNING_BIT));
     z_command_completed=1;
-    //Disable Output Compare A Match Interrupt Enable
-    TIMSK3 |= ~(_BV(OCIE3A)); //set 0
+    //Disable OVF3 Interrupt Enable
+    TIMSK3 &= ~(_BV(TOIE3)); //set 0
     TCCR3B = 0; //Disable Timer
   }
   else { //next Timer-Compare-Value
@@ -540,40 +589,24 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
       
       if (interpolationmode==INTERPOLATION_CIRCULAR_CLOCKWISE) {
         //calculation of next z-clk (Direction)
-        if (z_steps < 0) {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
+        if ((z_steps<0)==(x_steps<0)) {
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
         }
         else {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
         }
       }
       else if (interpolationmode==INTERPOLATION_CIRCULAR_COUNTERCLOCKWISE) {
         //calculation of next z-clk (Direction)
-        if (z_steps < 0) {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
+        if ((z_steps<0)==(x_steps<0)) {
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+90-phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
         }
         else {
-          if (x_steps < 0) {
-          clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
-          }
-          else {
-          clk_zfeed = (clk_feed * lookup_cosinus[90-phi_z])>>15;
-          }
+          clk_zfeed = (clk_feed * pgm_read_word_near(lookup_cosinus+phi_z))>>15;
+          //clk_zfeed = (clk_feed * lookup_cosinus[phi_z])>>15;
         }
       }
       
@@ -586,23 +619,23 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
     }
 
     else if (interpolationmode==RAPID_LINEAR_MOVEMENT) {
-        //set Timer-Compare-Values
-          if (z_steps) {
-            if (z_step < z_steps/2) {
-              if (ICR3>RAPID_MAX) {
-                ICR3 = RAPID_MIN-z_step*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
-                if (ICR3<RAPID_MAX) {
-                  ICR3=RAPID_MAX;
-                }
-              }
-            } else if ((z_steps-z_step) < 17) {
-              ICR3 = RAPID_MIN-(z_steps-z_step)*10; //ICR1 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_zfeed))-1 = (62500Hz*60(min/s)/499s)-1
-                if (ICR3>RAPID_MIN) {
-                  ICR3=RAPID_MIN;
-                }
+    //set Timer-Compare-Values
+      if (z_steps) {
+        if (z_step < z_steps/2) {
+          if (ICR3>RAPID_MAX) {
+            ICR3 = RAPID_MIN-z_step*ACCELERATION; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
+            if (ICR3<RAPID_MAX) {
+              ICR3=RAPID_MAX;
             }
           }
+        } else if ((z_steps-z_step) < (RAPID_MIN - RAPID_MAX)/ACCELERATION) { //has to be rounded up!!!
+          ICR3 = RAPID_MIN-(z_steps-z_step)*ACCELERATION; //ICR3 = (16MHz/(Prescaler*F_ICF3))-1 = (16MHz*60(min/s)/(256*clk_feed))-1 = (62500Hz*60(s/min)/(feed(mm/min)*STEPS_PER_MM))-1
+          if (ICR3>RAPID_MIN) {
+            ICR3=RAPID_MIN;
+          }
         }
+      }
+    }
   }
   //reset INTR-flag? OVF resets automatically
 }

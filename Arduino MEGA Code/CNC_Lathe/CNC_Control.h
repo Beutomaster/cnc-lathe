@@ -2,10 +2,7 @@
 #define CNC_Control_h
 
 //includes
-#include <util/atomic.h>
-#include <Arduino.h>
 #include "CNC_Lathe.h"
-#include "Motion_Control.h"
 
 
 struct cnc_code_block { //not finished, Format of Siemens NX Postprocessor???
@@ -20,14 +17,14 @@ struct cnc_code_block { //not finished, Format of Siemens NX Postprocessor???
 //global vars
 extern volatile boolean command_completed, x_command_completed, z_command_completed;
 extern volatile boolean pause;
-extern struct cnc_code_block cnc_code[CNC_CODE_NMAX]; //Array of CNC-Code-Blocks, fixed length should be replaced
+extern struct cnc_code_block cnc_code[CNC_CODE_NMAX+1]; //Array of CNC-Code-Blocks, fixed length should be replaced
+extern volatile int N_Offset, N_MAX;
 
 //functions
 void programm_start(int);
 void programm_pause();
 void programm_stop();
 void programm_abort();
-void set_cnc_code_error(boolean);
 boolean process_cnc_listing();
 
 //G-/M-/S-/T-Codes:
@@ -43,12 +40,12 @@ void G24(); //Radius programing
 void G25(int); //Sub-routine call-up (L = Jump address)
 void G26(int, int Z, byte T); //Tool correction and tool call-up (obsolete, backward compatibility for M06)
 void G27(int); //Jump instruction
-void G33(int, char); //Threading with constant pitch (K = Thread Pitch)
+void G33(int, int); //Threading with constant pitch (K = Thread Pitch)
 void G64(); //Feed motors currentless
 //void G65(); //Cassette operation (obsolete)
 //void G66(); //RS 232 operation (obsolete)
 void G73(int, int); //Chip breakage cycle
-void G78(int, int, char, int); //Threading cycle
+void G78(int, int, int, int); //Threading cycle
 void G81(int, int); //Drilling cycle
 void G82(int, int); //Drilling cycle with dwell
 void G83(int, int); //Drilling cycle, deep hole with withdrawal
@@ -73,7 +70,7 @@ void M06(int, int, byte); //Tool length compensation (T = Tool address)
 void M17(); //return command to the main program
 void M30(); //End of Program
 void M98(int, int); //Automatic compensation of play
-void M99(int, char); //Circle parameter (I, K = Center point coordinates)
+void M99(int, int); //Circle parameter (I, K = Center point coordinates)
 
 #endif
 

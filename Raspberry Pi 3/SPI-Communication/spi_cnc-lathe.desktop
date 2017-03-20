@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=CNC-Lathe-Control Webinterface Backend
+Exec=/home/pi/spi_com/spi_cnc-lathe
+Type=Application
+Terminal=true
+Icon=/home/pi/spi_com/CNC-Icon-grau.png
