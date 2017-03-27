@@ -11,6 +11,8 @@
 //#define SPINDLEDRIVER_EXTRA_BOARD
 //#define BOARDVERSION_1_25 //else Bord V3.2
 //#define SPINDLEDRIVER_NEW
+#define SPINDLE_STATE_CODE_NEW
+#define STEPPER_CODE_NEW
 
 //#define RPM_ERROR_TEST
 
@@ -23,7 +25,7 @@
 //#define DEBUG_MSG_SPI_ON
 #define DEBUG_MSG_STEPPER_ON
 //#define DEBUG_MSG_ACTIVE_ON
-#define DEBUG_MSG_RPM_ON
+//#define DEBUG_MSG_RPM_ON
 #define DEBUG_MSG_SPINDLE_ON
 #define DEBUG_MSG_TOOL_ON
 //#define DEBUG_PROGRAM_FLOW_ON //for debugging with Serial-Plotter (Graph shows an approximately timeline of function-IDs)

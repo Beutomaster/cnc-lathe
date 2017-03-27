@@ -64,33 +64,54 @@ static inline void set_xstep(byte nextstep) { //avr-gcc ignores "inline" with de
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
   last_x_step = current_x_step;
+  //digitalWrite has a lot of Overhead!!!
   switch (nextstep) {
       case 0:  // 0011
-        digitalWrite(PIN_STEPPER_X_A, LOW);
-        digitalWrite(PIN_STEPPER_X_B, LOW);
-        digitalWrite(PIN_STEPPER_X_C, HIGH);
-        digitalWrite(PIN_STEPPER_X_D, HIGH);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_X_A, LOW);
+          digitalWrite(PIN_STEPPER_X_B, LOW);
+          digitalWrite(PIN_STEPPER_X_C, HIGH);
+          digitalWrite(PIN_STEPPER_X_D, HIGH);
+        #else
+          PORTB &= ~(_BV(PB4)) & ~(_BV(PB5)); //PB4 & PB5 Low
+          PORTB |= _BV(PB6) | _BV(PB7);  //PB6 & PB7 High
+        #endif
         current_x_step = 0;
       break;
       case 1:  // 0110
-        digitalWrite(PIN_STEPPER_X_A, LOW);
-        digitalWrite(PIN_STEPPER_X_B, HIGH);
-        digitalWrite(PIN_STEPPER_X_C, HIGH);
-        digitalWrite(PIN_STEPPER_X_D, LOW);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_X_A, LOW);
+          digitalWrite(PIN_STEPPER_X_B, HIGH);
+          digitalWrite(PIN_STEPPER_X_C, HIGH);
+          digitalWrite(PIN_STEPPER_X_D, LOW);
+        #else
+          PORTB &= ~(_BV(PB4)) & ~(_BV(PB7)); //PB4 & PB7 Low
+          PORTB |= _BV(PB5) | _BV(PB6);  //PB5 & PB6 High
+        #endif
         current_x_step = 1;
       break;
       case 2:  //1100
-        digitalWrite(PIN_STEPPER_X_A, HIGH);
-        digitalWrite(PIN_STEPPER_X_B, HIGH);
-        digitalWrite(PIN_STEPPER_X_C, LOW);
-        digitalWrite(PIN_STEPPER_X_D, LOW);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_X_A, HIGH);
+          digitalWrite(PIN_STEPPER_X_B, HIGH);
+          digitalWrite(PIN_STEPPER_X_C, LOW);
+          digitalWrite(PIN_STEPPER_X_D, LOW);
+        #else
+          PORTB &= ~(_BV(PB6)) & ~(_BV(PB7)); //PB6 & PB7 Low
+          PORTB |= _BV(PB4) | _BV(PB5);  //PB4 & PB5 High
+        #endif
         current_x_step = 2;
       break;
       case 3:  //1001
-        digitalWrite(PIN_STEPPER_X_A, HIGH);
-        digitalWrite(PIN_STEPPER_X_B, LOW);
-        digitalWrite(PIN_STEPPER_X_C, LOW);
-        digitalWrite(PIN_STEPPER_X_D, HIGH);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_X_A, HIGH);
+          digitalWrite(PIN_STEPPER_X_B, LOW);
+          digitalWrite(PIN_STEPPER_X_C, LOW);
+          digitalWrite(PIN_STEPPER_X_D, HIGH);
+        #else
+          PORTB &= ~(_BV(PB5)) & ~(_BV(PB6)); //PB5 & PB6 Low
+          PORTB |= _BV(PB4) | _BV(PB7);  //PB4 & PB7 High
+        #endif
         current_x_step = 3;
     }
 }
@@ -100,33 +121,68 @@ static inline void set_zstep(byte nextstep) { //avr-gcc ignores "inline" with de
   //-X/-Z: A 90° before B,
   //C=!A, D=!B
   last_z_step = current_z_step;
+  //digitalWrite has a lot of Overhead!!!
   switch (nextstep) {
       case 0:  // 0011
-        digitalWrite(PIN_STEPPER_Z_A, LOW);
-        digitalWrite(PIN_STEPPER_Z_B, LOW);
-        digitalWrite(PIN_STEPPER_Z_C, HIGH);
-        digitalWrite(PIN_STEPPER_Z_D, HIGH);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_Z_A, LOW); //PJ1
+          digitalWrite(PIN_STEPPER_Z_B, LOW); //PJ0
+          digitalWrite(PIN_STEPPER_Z_C, HIGH); //PH1 (Hotfix Board V1.25 PH0)
+          digitalWrite(PIN_STEPPER_Z_D, HIGH); //PH0 (Hotfix Board V1.25 PH1)
+        #else
+          PORTJ &= ~(_BV(PJ1)) & ~(_BV(PJ0)); //PJ1 & PJ0 Low
+          PORTH |= _BV(PH1) | _BV(PH0);  //PH1 & PH0 High
+        #endif
         current_z_step = 0;
       break;
       case 1:  // 0110
-        digitalWrite(PIN_STEPPER_Z_A, LOW);
-        digitalWrite(PIN_STEPPER_Z_B, HIGH);
-        digitalWrite(PIN_STEPPER_Z_C, HIGH);
-        digitalWrite(PIN_STEPPER_Z_D, LOW);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_Z_A, LOW); //PJ1
+          digitalWrite(PIN_STEPPER_Z_B, HIGH); //PJ0
+          digitalWrite(PIN_STEPPER_Z_C, HIGH); //PH1 (Hotfix Board V1.25 PH0)
+          digitalWrite(PIN_STEPPER_Z_D, LOW); //PH0 (Hotfix Board V1.25 PH1)
+        #else
+          PORTJ &= ~(_BV(PJ1)); //PJ1 Low
+          PORTJ |= _BV(PJ0);  //PJ0 High
+          #ifdef BOARDVERSION_1_25
+            PORTH |= _BV(PH0);  //PH0 High
+            PORTH &= ~(_BV(PH1)); //PH1 Low
+          #else
+            PORTH |= _BV(PH1);  //PH1 High
+            PORTH &= ~(_BV(PH0)); //PH0 Low
+          #endif
+        #endif
         current_z_step = 1;
       break;
       case 2:  //1100
-        digitalWrite(PIN_STEPPER_Z_A, HIGH);
-        digitalWrite(PIN_STEPPER_Z_B, HIGH);
-        digitalWrite(PIN_STEPPER_Z_C, LOW);
-        digitalWrite(PIN_STEPPER_Z_D, LOW);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_Z_A, HIGH); //PJ1
+          digitalWrite(PIN_STEPPER_Z_B, HIGH); //PJ0
+          digitalWrite(PIN_STEPPER_Z_C, LOW); //PH1 (Hotfix Board V1.25 PH0)
+          digitalWrite(PIN_STEPPER_Z_D, LOW); //PH0 (Hotfix Board V1.25 PH1)
+        #else
+          PORTJ |= _BV(PJ1) | _BV(PJ0);  //PJ1 & PJ0 High
+          PORTH &= ~(_BV(PH1)) & ~(_BV(PH0)); //PH1 & PH0 Low
+        #endif
         current_z_step = 2;
       break;
       case 3:  //1001
-        digitalWrite(PIN_STEPPER_Z_A, HIGH);
-        digitalWrite(PIN_STEPPER_Z_B, LOW);
-        digitalWrite(PIN_STEPPER_Z_C, LOW);
-        digitalWrite(PIN_STEPPER_Z_D, HIGH);
+        #ifndef STEPPER_CODE_NEW
+          digitalWrite(PIN_STEPPER_Z_A, HIGH); //PJ1
+          digitalWrite(PIN_STEPPER_Z_B, LOW); //PJ0
+          digitalWrite(PIN_STEPPER_Z_C, LOW); //PH1 (Hotfix Board V1.25 PH0)
+          digitalWrite(PIN_STEPPER_Z_D, HIGH); //PH0 (Hotfix Board V1.25 PH1)
+        #else
+          PORTJ |= _BV(PJ1);  //PJ1 High
+          PORTJ &= ~(_BV(PJ0)); //PJ0 Low
+          #ifdef BOARDVERSION_1_25
+            PORTH |= _BV(PH1);  //PH1 High
+            PORTH &= ~(_BV(PH0)); //PH0 Low
+          #else
+            PORTH |= _BV(PH0);  //PH0 High
+            PORTH &= ~(_BV(PH1)); //PH1 Low
+          #endif
+        #endif
         current_z_step = 3;
     }
 }
@@ -530,18 +586,12 @@ ISR(TIMER3_OVF_vect) {   //Z-Stepper
   //next step in direction
   //Movement in -Z-Direction
   if (z_steps < 0) {
-    if (current_z_step==0) {
-      current_z_step=3;
-    }
-    else current_z_step--;
+    current_z_step=(current_z_step--)%4;
     z_step--;
   }
   //Movement in +Z-Direction
   else {
-    if (current_z_step==3) {
-      current_z_step=0;
-    }
-    else current_z_step++;
+    current_z_step=(current_z_step++)%4;
     z_step++;
   }
 

@@ -151,6 +151,8 @@ void setup() {
     }
     //Prescaler 1 and Start Timer
     TCCR4B |= _BV(CS40); //set 1
+
+    spindle_wait_timestamp = millis();
   #endif
   
   //Timer5 Servo and spindle regulator
@@ -191,48 +193,158 @@ void loop() {
   #endif
 
   //CNC-Lathe State-Machine
+  #ifdef SPINDLE_STATE_CODE_NEW
+
+    //maybe too often
+    #ifndef BOARDVERSION_1_25
+      STATE_RPM = 60000000UL/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms) = 60000000 (moving average calculation for 100rpm_counts/U)
+    #else
+      STATE_RPM = 600000000UL/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U)*(10rpm_counts) = 600000 (moving average calculation for 10 rpm_counts)
+    #endif
+    
+    switch(spindle_state) {
+      #ifdef SPINDLEDRIVER_NEW
+      case SPINDLE_STATE_CHARGE_RESISTOR_ON:
+        if (millis() - spindle_wait_timestamp >= SPINDLE_CHARGE_RESISTOR_WAIT_TIME) {
+          digitalWrite(PIN_SPINDLE_CHARGERESISTOR_OFF, HIGH);
+          spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+        }
+        break;
+      #endif
+      case SPINDLE_STATE_SPINDLE_OFF:
+        if (!test_for_spindle_off()) {
+          if(!get_control_active()) set_spindle_state_spindle_error();
+          else set_spindle_state_spindle_on();
+        }
+        else if (target_spindle_direction != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) {
+          spindle_direction_private(target_spindle_direction);
+          spindle_wait_timestamp = millis();
+          spindle_state = SPINDLE_STATE_DIRECTION_CHANGE;
+        }
+        else if (target_spindle_on) {
+          last_rpm_time = micros();
+          digitalWrite(PIN_SPINDLE_ON, HIGH);
+          STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+          spindle_wait_timestamp = millis();
+          spindle_state = SPINDLE_STATE_SPINDLE_START;
+        }
+        else spindle_command_completed=1;
+        break;
+      case SPINDLE_STATE_DIRECTION_CHANGE:
+        if (millis() - spindle_wait_timestamp >= RELAIS_WAIT_TIME) {
+          spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+        }
+        break;
+      case SPINDLE_STATE_SPINDLE_START:
+        if (target_spindle_direction != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) {
+          digitalWrite(PIN_SPINDLE_ON, LOW);
+          STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
+          spindle_wait_timestamp = millis();
+          spindle_state = SPINDLE_STATE_SPINDLE_STOP;
+        }
+        else if (millis() - spindle_wait_timestamp >= SPINDLE_START_WAIT_TIME) {
+          if (!test_for_spindle_off()) spindle_state=SPINDLE_STATE_SPINDLE_ON;
+          else {
+            set_spindle_state_spindle_error();
+          }
+        }
+        break;
+      case SPINDLE_STATE_SPINDLE_ON:
+        if(!test_for_spindle_off()) {
+          if (!target_spindle_on || target_spindle_direction != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) {
+            digitalWrite(PIN_SPINDLE_ON, LOW);
+            spindle_wait_timestamp = millis();
+            spindle_state = SPINDLE_STATE_SPINDLE_STOP;
+          }
+          else spindle_command_completed=1;
+        }
+        else {
+          if (!get_control_active()) set_spindle_state_spindle_off();
+          else set_spindle_state_spindle_error();
+        }
+        break;
+      case SPINDLE_STATE_SPINDLE_STOP:
+        if (millis() - spindle_wait_timestamp >= SPINDLE_STOP_WAIT_TIME) {
+          if (test_for_spindle_off()) spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+          else {
+            if(!get_control_active()) {
+              if (target_spindle_direction != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) {
+                set_spindle_state_spindle_error();
+              }
+              else {
+                set_spindle_state_spindle_on();
+              }
+            }
+            else {
+              set_spindle_state_spindle_error();
+            }
+          }
+        }
+        break;
+      case SPINDLE_STATE_SPINDLE_ERROR:
+        if (test_for_spindle_off()) {
+          STATE1 &= ~(_BV(STATE1_SPINDLE_BIT));
+          if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+        }
+        else {
+          STATE1 |= _BV(STATE1_SPINDLE_BIT);
+          if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) {
+            if (!get_control_active()) spindle_state = SPINDLE_STATE_SPINDLE_ON;
+            else ERROR_NO |= _BV(ERROR_SPINDLE_BIT); //set Error-Bit again
+          }
+        }
+        break;
+    }
+  #endif
+  
   if (!command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
     STATE_F = 0; //maybe not needed
-    if (wait_for_spindle_stop) {
-      #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
-        Serial.println(F("End of wait_for_spindle_stop"));
-      #endif
-      wait_for_spindle_stop=0;
-      test_for_spindle_off();
-    }
-    else if (callback_spindle_direction_change) {
-      #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
-        Serial.println(F("callback_spindle_direction_change"));
-      #endif
-      callback_spindle_direction_change=0;
-      spindle_direction(target_spindle_direction);
-    }
-    else if (wait_for_spindle_spindle_direction_relais) {
-      #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
-        Serial.println(F("End of wait_for_spindle_spindle_direction_relais"));
-      #endif
-      wait_for_spindle_spindle_direction_relais=0;
-    }
-    else if (callback_spindle_start) {
-      #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
-        Serial.println(F("callback_spindle_start"));
-      #endif
-      callback_spindle_start=0;
-      spindle_on();
-    }
-    else if (wait_for_spindle_start) { //maybe not needed
-      #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
-        Serial.println(F("End of wait_for_spindle_start"));
-      #endif
-      wait_for_spindle_start=0;
-    }
-    else {
+    #ifndef SPINDLE_STATE_CODE_NEW
+      if (wait_for_spindle_stop) {
+        #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+          Serial.println(F("End of wait_for_spindle_stop"));
+        #endif
+        wait_for_spindle_stop=0;
+        test_for_spindle_off();
+      }
+      else if (callback_spindle_direction_change) {
+        #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+          Serial.println(F("callback_spindle_direction_change"));
+        #endif
+        callback_spindle_direction_change=0;
+        spindle_direction(target_spindle_direction);
+      }
+      else if (wait_for_spindle_spindle_direction_relais) {
+        #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+          Serial.println(F("End of wait_for_spindle_spindle_direction_relais"));
+        #endif
+        wait_for_spindle_spindle_direction_relais=0;
+      }
+      else if (callback_spindle_start) {
+        #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+          Serial.println(F("callback_spindle_start"));
+        #endif
+        callback_spindle_start=0;
+        spindle_on();
+      }
+      else if (wait_for_spindle_start) { //maybe not needed
+        #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+          Serial.println(F("End of wait_for_spindle_start"));
+        #endif
+        wait_for_spindle_start=0;
+      }
+      else {
+    #endif
       command_completed=1;
       #ifdef RPM_ERROR_TEST
         if ((STATE1>>STATE1_SPINDLE_BIT)&1) if(!test_for_spindle_rpm(target_revolutions, 100)) ERROR_NO |= _BV(ERROR_SPINDLE_BIT); //test for wrong rpm (not finished)
       #endif
-      get_spindle_state_passiv();
-      if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+      #ifndef SPINDLE_STATE_CODE_NEW
+        get_spindle_state_passiv();
+        if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+      #else
+      if (spindle_command_completed && !pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
+      #endif
         STATE_N++;
         if (STATE_N<0 || STATE_N>CNC_CODE_NMAX) { //should be done before process_cnc_listing()
           //N_Offset = N_Offset + STATE_N; //should be done by Uploader
@@ -240,14 +352,20 @@ void loop() {
           //wait for new code-messages and reset of STATE2_CNC_CODE_NEEDED_BIT
         }
       }
+    #ifndef SPINDLE_STATE_CODE_NEW
     }
+    #endif
   }
   
   if (get_control_active()) { //with board V1.25 turn Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!! Hotfix for Direction-Bug
     if (initialized) {
       if (pause) stepper_timeout();
     }
+    #ifndef SPINDLE_STATE_CODE_NEW
     if (command_completed) {
+    #else
+    if (spindle_command_completed && command_completed) {
+    #endif
       if (!((STATE1>>STATE1_MANUAL_BIT)&1)) { //manual maybe not needed, instead use pause
         if (!pause && !ERROR_NO && !((STATE2>>STATE2_CNC_CODE_NEEDED_BIT)&1)) {
           if (process_cnc_listing()) { //error

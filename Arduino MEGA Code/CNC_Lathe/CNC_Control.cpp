@@ -248,7 +248,10 @@ void M04() {
   spindle_on();
 }
 
-void M05() {spindle_off();} //Main Spindle OFF
+//Main Spindle OFF
+void M05() {
+  spindle_off();
+} 
 
 //Tool length compensation (T = Tool address)
 void M06(int X, int Z, byte T) {

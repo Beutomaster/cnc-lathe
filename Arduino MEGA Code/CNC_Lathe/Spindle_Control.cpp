@@ -3,14 +3,27 @@
 //global ISR vars
 volatile unsigned long rpm_time=0, last_rpm_time=0;
 volatile int max_revolutions=REVOLUTIONS_MAX, target_revolutions=0;
-volatile char wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindle_direction_change=0, target_spindle_direction=0, wait_for_spindle_spindle_direction_relais=0, callback_spindle_start=0;
+volatile char wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindle_direction_change=0, target_spindle_on=0, target_spindle_direction=0, wait_for_spindle_spindle_direction_relais=0, callback_spindle_start=0;
 #ifdef SPINDLEDRIVER_NEW
   volatile int delta_revolution_last=0;
   volatile long y=0, y_last=0;
-  volatile boolean spindle_new=LOW;
+  volatile boolean spindle_new=HIGH;
 #endif
 volatile int adcvalue = 0; // adc value read by ISR(ADC_vect)
 volatile uint8_t adcpin = 0; // actual adc-pin for intr_analogRead
+#ifdef SPINDLE_STATE_CODE_NEW
+  volatile unsigned int rpm_count=0;
+#endif
+
+//other global vars
+#ifdef SPINDLEDRIVER_NEW
+  char spindle_state = SPINDLE_STATE_CHARGE_RESISTOR_ON, spindle_command_completed=0;
+#else
+  char spindle_state = SPINDLE_STATE_SPINDLE_OFF, spindle_command_completed=1;
+#endif
+#ifdef SPINDLE_STATE_CODE_NEW
+  unsigned long spindle_wait_timestamp=0;
+#endif
 
 #ifdef SERVO_LIB
   //Create new Servo Objekt
@@ -19,25 +32,39 @@ volatile uint8_t adcpin = 0; // actual adc-pin for intr_analogRead
 
 void spindle_on() {
   if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) {
-    if (!callback_spindle_direction_change && !wait_for_spindle_spindle_direction_relais) {
-      last_rpm_time = micros();
-      digitalWrite(PIN_SPINDLE_ON, HIGH);
-      STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
-      //wait until spindle is turning with target-RPM (time could be shortend by comparing STATE_RPM with target_RPM)
-      wait_for_spindle_start=1; //is resetted in main
-      command_running(SPINDLE_ON_WAIT_TIME);
-    }
-    else callback_spindle_start=1; //is resetted in main
+    #ifndef SPINDLE_STATE_CODE_NEW
+      if (!callback_spindle_direction_change && !wait_for_spindle_spindle_direction_relais && !command_time && !i_command_time && !i_tool && x_command_completed && z_command_completed) {
+        last_rpm_time = micros();
+        digitalWrite(PIN_SPINDLE_ON, HIGH);
+        STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+        //wait until spindle is turning with target-RPM (time could be shortend by comparing STATE_RPM with target_RPM)
+        wait_for_spindle_start=1; //is resetted in main
+        command_running(SPINDLE_ON_WAIT_TIME);
+      }
+      else callback_spindle_start=1; //is resetted in main
+    #else
+      if (target_spindle_on != 1) {
+        spindle_command_completed=0;
+        target_spindle_on = 1;
+      }
+    #endif
   }
 }
 
 void spindle_off() {
-  if ((STATE1>>STATE1_SPINDLE_BIT)&1) {
-    digitalWrite(PIN_SPINDLE_ON, LOW);
-    STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
-    wait_for_spindle_stop=1; //is resetted in main
-    command_running(SPINDLE_OFF_WAIT_TIME); //wait a few seconds until spindle has stopped! (needed for a secure change of spindle-direction) do not trust STATE_RPM-measurement!!!
-  }
+  #ifndef SPINDLE_STATE_CODE_NEW
+    if ((STATE1>>STATE1_SPINDLE_BIT)&1) {
+      digitalWrite(PIN_SPINDLE_ON, LOW);
+      STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
+      wait_for_spindle_stop=1; //is resetted in main
+      command_running(SPINDLE_OFF_WAIT_TIME); //wait a few seconds until spindle has stopped! (needed for a secure change of spindle-direction) do not trust STATE_RPM-measurement!!!
+    }
+  #else
+    if (target_spindle_on != 0) {
+      spindle_command_completed=0;
+      target_spindle_on = 0;
+    }
+  #endif
 }
 
 boolean test_for_spindle_off() {
@@ -50,8 +77,11 @@ boolean test_for_spindle_off() {
       return true;
     }
   #endif
-    else { //if spindle is still turning after wait time, set Spindle-Error
-      if (!((STATE1>>STATE1_SPINDLE_BIT)&1) && !wait_for_spindle_stop) ERROR_NO |= _BV(ERROR_SPINDLE_BIT);
+    else {
+      #ifndef SPINDLE_STATE_CODE_NEW
+        //if spindle is still turning after wait time, set Spindle-Error
+        if (!((STATE1>>STATE1_SPINDLE_BIT)&1) && !wait_for_spindle_stop) ERROR_NO |= _BV(ERROR_SPINDLE_BIT);
+      #endif
       return false;
     }
 }
@@ -71,6 +101,7 @@ void get_spindle_state_passiv() {
     }
 }
 
+#ifndef SPINDLE_STATE_CODE_NEW
 void spindle_direction(boolean spindle_reverse) {
   //don't change the spindle-direction, while the spindle is turning!!! Turn the Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!
   if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) {
@@ -123,6 +154,61 @@ void spindle_direction(boolean spindle_reverse) {
     }
   } //end of if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1))
 }
+#else
+void spindle_direction(boolean spindle_reverse) {
+  if (spindle_reverse != target_spindle_direction) {
+    spindle_command_completed=0;
+    target_spindle_direction = spindle_reverse;
+  }
+}
+
+void spindle_direction_private(boolean spindle_reverse) {
+  //don't change the spindle-direction, while the spindle is turning!!! Turn the Spindle-Switch of Emco Control off, before avtivate or deactivate new control!!
+  if (spindle_reverse) {
+    #ifndef SPINDLEDRIVER_NEW
+      digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
+    #else
+      if (spindle_new) { //Hotfix for Board V1.25, should be changed in V2.1
+        digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
+      }
+      else {
+        digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
+      }
+    #endif
+    STATE1 |= _BV(STATE1_SPINDLE_DIRECTION_BIT); //set STATE1_bit6 = spindle_direction
+  }
+  else {
+    #ifndef SPINDLEDRIVER_NEW
+      digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
+    #else
+      if (spindle_new) { //Hotfix for Board V1.25, should be changed in V2.1
+        digitalWrite(PIN_SPINDLE_DIRECTION, HIGH);
+      }
+      else {
+        digitalWrite(PIN_SPINDLE_DIRECTION, LOW);
+      }
+    #endif
+    STATE1 &= ~(_BV(STATE1_SPINDLE_DIRECTION_BIT)); //delete STATE1_bit6 = spindle_direction
+  }
+}
+#endif
+
+void set_spindle_state_spindle_on() {
+  STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
+  spindle_state=SPINDLE_STATE_SPINDLE_ON;
+}
+
+void set_spindle_state_spindle_off() {
+  STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
+  spindle_state=SPINDLE_STATE_SPINDLE_OFF;
+}
+
+void set_spindle_state_spindle_error() {
+  digitalWrite(PIN_SPINDLE_ON, LOW);
+  ERROR_NO |= _BV(ERROR_SPINDLE_BIT);
+  spindle_state=SPINDLE_STATE_SPINDLE_ERROR;
+}
+
 
 void set_revolutions(int target_revolutions_local) {
 
@@ -198,13 +284,21 @@ void get_revolutions_ISR() { //read revolution-sensor
   //first value may be wrong at passive modus, overflow of timer0 may cause errors
   //We should change the PIN with PIN_REVOLUTIONS_COUNT in V2!!! Better resolution!!!
   //needs moving average calculation
-  rpm_time = micros();
-  #ifndef BOARDVERSION_1_25
-    STATE_RPM = 600000L/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms)/(100Count/U) = 600000
+  #ifndef SPINDLE_STATE_CODE_NEW
+    rpm_time = micros();
+    #ifndef BOARDVERSION_1_25
+      STATE_RPM = 600000UL/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms)/(100Count/U) = 600000, should be done in main (moving average calculation)!!!
+    #else
+      STATE_RPM = 60000000UL/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U) = 60000000, should be done in main (moving average calculation)!!!
+    #endif
+    last_rpm_time = rpm_time;
   #else
-    STATE_RPM = 60000000L/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U) = 60000000 //should be done in main (moving average calculation)
+    rpm_count++;
+    if (!(rpm_count%100)) {
+      rpm_time = micros();
+      last_rpm_time = rpm_time;
+    }
   #endif
-  last_rpm_time = rpm_time;
 }
 
 boolean test_for_spindle_rpm(int target_rpm, int range) {

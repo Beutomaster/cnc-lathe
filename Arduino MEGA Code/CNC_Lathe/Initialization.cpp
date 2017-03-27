@@ -1,7 +1,6 @@
 #include "Initialization.h"
 
-//Freigabe oder Eingabe benoetigt.
-//Kommunikation ueber Error-Code und Control-Signal
+//Needs User Input for Tool-Changer-Position (Input of X-/Z-Origin optional.)
 
 //vars
 volatile boolean initialized=0; //could be replaced by (STATE1>>STATE1_INIT_BIT)&1
