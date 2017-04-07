@@ -69,7 +69,8 @@ void spindle_off() {
 
 boolean test_for_spindle_off() {
   #ifndef BOARDVERSION_1_25
-    if (!digitalRead(PIN_SPINDLE_ON_DETECT) && !STATE_RPM) { //maybe STATE_RPM<10
+    //if (!digitalRead(PIN_SPINDLE_ON_DETECT) && !STATE_RPM) { //maybe STATE_RPM<10
+    if (!digitalRead(PIN_SPINDLE_ON_DETECT) && STATE_RPM<10) {
       return true;
     }
   #else

@@ -208,18 +208,36 @@ void loop() {
         if (millis() - spindle_wait_timestamp >= SPINDLE_CHARGE_RESISTOR_WAIT_TIME) {
           digitalWrite(PIN_SPINDLE_CHARGERESISTOR_OFF, HIGH);
           spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+            Serial.println(F("SPINDLE_STATE: CHARGE_RESISTOR_ON > SPINDLE_OFF"));
+          #endif
         }
         break;
       #endif
       case SPINDLE_STATE_SPINDLE_OFF:
         if (!test_for_spindle_off()) {
-          if(!get_control_active()) set_spindle_state_spindle_error();
-          else set_spindle_state_spindle_on();
+          if(get_control_active()) {
+            //Error: Manual Spindle-Switch ON or Relais not released!!!
+            set_spindle_state_spindle_error();
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_OFF > SPINDLE_ERROR"));
+            #endif
+          }
+          else {
+            //Manual Spindle-Switch ON
+            set_spindle_state_spindle_on();
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_OFF > SPINDLE_ON"));
+            #endif
+          }
         }
         else if (target_spindle_direction != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) {
           spindle_direction_private(target_spindle_direction);
           spindle_wait_timestamp = millis();
           spindle_state = SPINDLE_STATE_DIRECTION_CHANGE;
+          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+            Serial.println(F("SPINDLE_STATE: SPINDLE_OFF > DIRECTION_CHANGE"));
+          #endif
         }
         else if (target_spindle_on) {
           last_rpm_time = micros();
@@ -227,12 +245,18 @@ void loop() {
           STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
           spindle_wait_timestamp = millis();
           spindle_state = SPINDLE_STATE_SPINDLE_START;
+          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+            Serial.println(F("SPINDLE_STATE: SPINDLE_OFF > SPINDLE_START"));
+          #endif
         }
         else spindle_command_completed=1;
         break;
       case SPINDLE_STATE_DIRECTION_CHANGE:
         if (millis() - spindle_wait_timestamp >= RELAIS_WAIT_TIME) {
           spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+            Serial.println(F("SPINDLE_STATE: DIRECTION_CHANGE > SPINDLE_OFF"));
+          #endif
         }
         break;
       case SPINDLE_STATE_SPINDLE_START:
@@ -241,11 +265,22 @@ void loop() {
           STATE1 &= ~(_BV(STATE1_SPINDLE_BIT)); //delete STATE1_bit5 = spindle
           spindle_wait_timestamp = millis();
           spindle_state = SPINDLE_STATE_SPINDLE_STOP;
+          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+            Serial.println(F("SPINDLE_STATE: SPINDLE_START > SPINDLE_STOP"));
+          #endif
         }
         else if (millis() - spindle_wait_timestamp >= SPINDLE_START_WAIT_TIME) {
-          if (!test_for_spindle_off()) spindle_state=SPINDLE_STATE_SPINDLE_ON;
+          if (!test_for_spindle_off()) {
+            spindle_state=SPINDLE_STATE_SPINDLE_ON;
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_START > SPINDLE_ON"));
+            #endif
+          }
           else {
             set_spindle_state_spindle_error();
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_START > SPINDLE_ERROR"));
+            #endif
           }
         }
         break;
@@ -255,28 +290,55 @@ void loop() {
             digitalWrite(PIN_SPINDLE_ON, LOW);
             spindle_wait_timestamp = millis();
             spindle_state = SPINDLE_STATE_SPINDLE_STOP;
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_ON > SPINDLE_STOP"));
+            #endif
           }
           else spindle_command_completed=1;
         }
         else {
-          if (!get_control_active()) set_spindle_state_spindle_off();
-          else set_spindle_state_spindle_error();
+          if (!get_control_active()) {
+            set_spindle_state_spindle_off();
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_ON > SPINDLE_OFF"));
+            #endif
+          }
+          else {
+            set_spindle_state_spindle_error();
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_ON > SPINDLE_ERROR"));
+            #endif
+          }
         }
         break;
       case SPINDLE_STATE_SPINDLE_STOP:
         if (millis() - spindle_wait_timestamp >= SPINDLE_STOP_WAIT_TIME) {
-          if (test_for_spindle_off()) spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+          if (test_for_spindle_off()) {
+            spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_STOP > SPINDLE_OFF"));
+            #endif
+          }
           else {
             if(!get_control_active()) {
               if (target_spindle_direction != (STATE1>>STATE1_SPINDLE_DIRECTION_BIT)&1) {
                 set_spindle_state_spindle_error();
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+                  Serial.println(F("SPINDLE_STATE: SPINDLE_STOP > SPINDLE_ERROR"));
+                #endif
               }
               else {
                 set_spindle_state_spindle_on();
+                #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+                  Serial.println(F("SPINDLE_STATE: SPINDLE_STOP > SPINDLE_ON  "));
+                #endif
               }
             }
             else {
               set_spindle_state_spindle_error();
+              #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+                Serial.println(F("SPINDLE_STATE: SPINDLE_STOP > SPINDLE_ERROR"));
+              #endif
             }
           }
         }
@@ -285,11 +347,19 @@ void loop() {
         if (test_for_spindle_off()) {
           STATE1 &= ~(_BV(STATE1_SPINDLE_BIT));
           if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+            Serial.println(F("SPINDLE_STATE: SPINDLE_ERROR > SPINDLE_OFF"));
+          #endif
         }
         else {
           STATE1 |= _BV(STATE1_SPINDLE_BIT);
           if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) {
-            if (!get_control_active()) spindle_state = SPINDLE_STATE_SPINDLE_ON;
+            if (!get_control_active()) {
+              spindle_state = SPINDLE_STATE_SPINDLE_ON;
+              #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+                Serial.println(F("SPINDLE_STATE: SPINDLE_ERROR > SPINDLE_ON"));
+              #endif
+            }
             else ERROR_NO |= _BV(ERROR_SPINDLE_BIT); //set Error-Bit again
           }
         }

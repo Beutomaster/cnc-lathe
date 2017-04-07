@@ -12,6 +12,7 @@
 //#define BOARDVERSION_1_25 //else Bord V3.2
 //#define SPINDLEDRIVER_NEW
 #define SPINDLE_STATE_CODE_NEW
+//#define SPINDLE_STATE_CODE_DEBUG //deactivates test_for_spindle_off
 #define STEPPER_CODE_NEW
 
 //#define RPM_ERROR_TEST
