@@ -196,11 +196,21 @@ void loop() {
   #ifdef SPINDLE_STATE_CODE_NEW
 
     //maybe too often
-    #ifndef BOARDVERSION_1_25
-      STATE_RPM = 60000000UL/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms) = 60000000 (moving average calculation for 100rpm_counts/U)
-    #else
-      STATE_RPM = 600000000UL/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U)*(10rpm_counts) = 600000 (moving average calculation for 10 rpm_counts)
-    #endif
+    if (rpm_measurement_active) {
+      #ifndef BOARDVERSION_1_25
+      if (micros() - last_rpm_time < 1000000UL) { //measurement down to 100U/s, otherwise waiting-time for Spindle-Stop is too long
+        STATE_RPM = 60000000UL/(delta_rpm_time); //numerator for Board V3.2 with Count-Signal and moving average calculation for 100 rpm_counts/U: 1U*(60000000us/min)*(100"rpm_counts"/U)/(100"Count"/U) = 60000000 U*us/min
+      }
+      #else
+      if (micros() - last_rpm_time < 1000000UL) { //measurement down to 10U/s, otherwise waiting-time for Spindle-Stop is too long
+        STATE_RPM = 600000000UL/(delta_rpm_time); //numerator for Board V1.25 with Sync-Signal and moving average calculation for 10 rpm_counts/U: 1U*(60000000us/min)*(10"rpm_counts"/U))/(1"Sync"/U) = 600000000 U*us/min
+      }
+      #endif
+      else {
+        STATE_RPM = 0;
+        rpm_measurement_active = 0;
+      }
+    }
     
     switch(spindle_state) {
       #ifdef SPINDLEDRIVER_NEW
@@ -240,7 +250,7 @@ void loop() {
           #endif
         }
         else if (target_spindle_on) {
-          last_rpm_time = micros();
+          //last_rpm_time = micros(); //not needed with rpm_measurement_active
           digitalWrite(PIN_SPINDLE_ON, HIGH);
           STATE1 |= _BV(STATE1_SPINDLE_BIT); //set STATE1_bit5 = spindle
           spindle_wait_timestamp = millis();
@@ -314,7 +324,7 @@ void loop() {
       case SPINDLE_STATE_SPINDLE_STOP:
         if (millis() - spindle_wait_timestamp >= SPINDLE_STOP_WAIT_TIME) {
           if (test_for_spindle_off()) {
-            spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+            set_spindle_state_spindle_off();
             #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
               Serial.println(F("SPINDLE_STATE: SPINDLE_STOP > SPINDLE_OFF"));
             #endif
@@ -346,10 +356,12 @@ void loop() {
       case SPINDLE_STATE_SPINDLE_ERROR:
         if (test_for_spindle_off()) {
           STATE1 &= ~(_BV(STATE1_SPINDLE_BIT));
-          if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) spindle_state = SPINDLE_STATE_SPINDLE_OFF;
-          #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
-            Serial.println(F("SPINDLE_STATE: SPINDLE_ERROR > SPINDLE_OFF"));
-          #endif
+          if (!((ERROR_NO>>ERROR_SPINDLE_BIT)&1)) {
+            spindle_state = SPINDLE_STATE_SPINDLE_OFF;
+            #if !defined DEBUG_SERIAL_CODE_OFF && defined DEBUG_MSG_SPINDLE_ON
+              Serial.println(F("SPINDLE_STATE: SPINDLE_ERROR > SPINDLE_OFF"));
+            #endif
+          }
         }
         else {
           STATE1 |= _BV(STATE1_SPINDLE_BIT);

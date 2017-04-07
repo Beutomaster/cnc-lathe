@@ -37,9 +37,9 @@
 #define SPINDLE_STATE_SPINDLE_ERROR 6
 
 //global ISR vars
-extern volatile unsigned long rpm_time, last_rpm_time;
+extern volatile unsigned long delta_rpm_time, last_rpm_time;
 extern volatile int max_revolutions, target_revolutions;
-extern volatile char wait_for_spindle_start, wait_for_spindle_stop, callback_spindle_direction_change, target_spindle_on, target_spindle_direction, wait_for_spindle_spindle_direction_relais, callback_spindle_start;
+extern volatile char rpm_measurement_active, wait_for_spindle_start, wait_for_spindle_stop, callback_spindle_direction_change, target_spindle_on, target_spindle_direction, wait_for_spindle_spindle_direction_relais, callback_spindle_start;
 #if defined BOARDVERSION_1_25 && defined SPINDLEDRIVER_NEW
   extern volatile int delta_revolution_last;
   extern volatile long y, y_last;

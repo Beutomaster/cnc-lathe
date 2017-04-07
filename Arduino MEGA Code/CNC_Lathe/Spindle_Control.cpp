@@ -1,9 +1,9 @@
 #include "Spindle_Control.h"
 
 //global ISR vars
-volatile unsigned long rpm_time=0, last_rpm_time=0;
+volatile unsigned long delta_rpm_time=0, last_rpm_time=0;
 volatile int max_revolutions=REVOLUTIONS_MAX, target_revolutions=0;
-volatile char wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindle_direction_change=0, target_spindle_on=0, target_spindle_direction=0, wait_for_spindle_spindle_direction_relais=0, callback_spindle_start=0;
+volatile char rpm_measurement_active=0, wait_for_spindle_start=0, wait_for_spindle_stop=0, callback_spindle_direction_change=0, target_spindle_on=0, target_spindle_direction=0, wait_for_spindle_spindle_direction_relais=0, callback_spindle_start=0;
 #ifdef SPINDLEDRIVER_NEW
   volatile int delta_revolution_last=0;
   volatile long y=0, y_last=0;
@@ -69,8 +69,8 @@ void spindle_off() {
 
 boolean test_for_spindle_off() {
   #ifndef BOARDVERSION_1_25
-    //if (!digitalRead(PIN_SPINDLE_ON_DETECT) && !STATE_RPM) { //maybe STATE_RPM<10
-    if (!digitalRead(PIN_SPINDLE_ON_DETECT) && STATE_RPM<10) {
+    if (!digitalRead(PIN_SPINDLE_ON_DETECT) && !STATE_RPM) { //maybe STATE_RPM<10
+    //if (!digitalRead(PIN_SPINDLE_ON_DETECT) && STATE_RPM<10) {
       return true;
     }
   #else
@@ -288,17 +288,26 @@ void get_revolutions_ISR() { //read revolution-sensor
   #ifndef SPINDLE_STATE_CODE_NEW
     rpm_time = micros();
     #ifndef BOARDVERSION_1_25
-      STATE_RPM = 600000UL/(rpm_time-last_rpm_time); //in V2 with Count: (60s/min)*(1000ms/s)*(1000us/ms)/(100Count/U) = 600000, should be done in main (moving average calculation)!!!
+      STATE_RPM = 600000UL/(rpm_time-last_rpm_time); //numerator for Board V3.2 with Count-Signal: 1U*(60000000us/min)/(100"Count"/U) = 600000 U*us/min, should be done in main (moving average calculation)!!!
     #else
-      STATE_RPM = 60000000UL/(rpm_time-last_rpm_time); //(60s/min)*(1000ms/s)*(1000us/ms)/(1Sync/U) = 60000000, should be done in main (moving average calculation)!!!
+      STATE_RPM = 60000000UL/(rpm_time-last_rpm_time); //numerator for Board V1.25 with Sync-Signal: 1U*(60000000us/min)/(1"Sync"/U) = 60000000 U*us/min, should be done in main (moving average calculation)!!!
     #endif
     last_rpm_time = rpm_time;
   #else
-    rpm_count++;
-    if (!(rpm_count%100)) {
-      rpm_time = micros();
-      last_rpm_time = rpm_time;
+    if (rpm_count == 0) {
+      last_rpm_time = micros();
+      rpm_count++;
     }
+    #ifndef BOARDVERSION_1_25
+    else if (rpm_count == 100) {
+    #else
+    else if (rpm_count == 10)) {
+    #endif
+      rpm_count = 0;
+      delta_rpm_time = last_rpm_time - micros();
+      rpm_measurement_active = 1;
+    }
+    else rpm_count++;
   #endif
 }
 
