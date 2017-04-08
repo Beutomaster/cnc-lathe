@@ -1,29 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <machinestate>
 	<state>
-		<active>0</active>
+		<active>1</active>
 		<init>0</init>
 		<manual>1</manual>
 		<pause>1</pause>
 		<inch>0</inch>
-		<spindel_on>0</spindel_on>
-		<spindel_direction>0</spindel_direction>
+		<spindle_on>0</spindle_on>
+		<spindle_direction>0</spindle_direction>
 		<stepper_on>0</stepper_on>
+		<command_time>0</command_time>
+		<xstepper_running>0</xstepper_running>
+		<zstepper_running>0</zstepper_running>
+		<toolchanger_running>0</toolchanger_running>
+		<cnc_code_needed>0</cnc_code_needed>
 	</state>
 	<measure>
 		<rpm_measure>0</rpm_measure>
 		<x_actual>0</x_actual>
 		<z_actual>0</z_actual>
 		<f_actual>0</f_actual>
-		<h_actual>1</h_actual>
+		<h_actual>0</h_actual>
 		<t_actual>0</t_actual>
 	</measure>
 	<error>
-		<spi_error>0</spi_error>
+		<spi_error>1</spi_error>
 		<cnc_code_error>0</cnc_code_error>
-		<spindel_error>0</spindel_error>
+		<spindle_error>0</spindle_error>
 	</error>
 	<cncblock>
 		<n_actual>0</n_actual>
 	</cncblock>
+	<cncfile>
+		<mtime>1485568458</mtime>
+	</cncfile>
 </machinestate>
